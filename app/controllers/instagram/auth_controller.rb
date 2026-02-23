@@ -4,9 +4,9 @@ module Instagram
   class AuthController < ApplicationController
     OAUTH_URL    = "https://www.instagram.com/oauth/authorize"
     OAUTH_SCOPES = %w[
-      instagram_basic
-      instagram_content_publish
-      pages_read_engagement
+      instagram_business_basic
+      instagram_manage_comments
+      instagram_business_manage_messages
     ].freeze
 
     # GET /instagram/connect
