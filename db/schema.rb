@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_02_23_011551) do
+ActiveRecord::Schema[8.1].define(version: 2026_02_23_190960) do
   create_table "connected_drives", force: :cascade do |t|
     t.string "access_token"
     t.string "account_email"
@@ -72,6 +72,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_23_011551) do
     t.index [ "user_id" ], name: "index_planned_posts_on_user_id"
   end
 
+  create_table "sessions", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "ip_address"
+    t.datetime "updated_at", null: false
+    t.string "user_agent"
+    t.integer "user_id", null: false
+    t.index [ "user_id" ], name: "index_sessions_on_user_id"
+  end
+
   create_table "social_templates", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.text "default_caption"
@@ -102,5 +111,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_23_011551) do
   add_foreign_key "planned_posts", "media_assets"
   add_foreign_key "planned_posts", "social_templates"
   add_foreign_key "planned_posts", "users"
+  add_foreign_key "sessions", "users"
   add_foreign_key "social_templates", "users"
 end
