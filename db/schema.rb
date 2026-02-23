@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_02_23_000434) do
+ActiveRecord::Schema[8.1].define(version: 2026_02_23_011551) do
   create_table "connected_drives", force: :cascade do |t|
     t.string "access_token"
     t.string "account_email"
@@ -24,8 +24,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_23_000434) do
     t.datetime "token_expires_at"
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
-    t.index ["provider", "folder_id"], name: "index_connected_drives_on_provider_and_folder_id", unique: true
-    t.index ["user_id"], name: "index_connected_drives_on_user_id"
+    t.index [ "provider", "folder_id" ], name: "index_connected_drives_on_provider_and_folder_id", unique: true
+    t.index [ "user_id" ], name: "index_connected_drives_on_user_id"
   end
 
   create_table "media_assets", force: :cascade do |t|
@@ -44,10 +44,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_23_000434) do
     t.integer "status", default: 0, null: false
     t.datetime "updated_at", null: false
     t.integer "width"
-    t.index ["connected_drive_id"], name: "index_media_assets_on_connected_drive_id"
-    t.index ["external_id"], name: "index_media_assets_on_external_id", unique: true
-    t.index ["media_type"], name: "index_media_assets_on_media_type"
-    t.index ["status"], name: "index_media_assets_on_status"
+    t.index [ "connected_drive_id" ], name: "index_media_assets_on_connected_drive_id"
+    t.index [ "external_id" ], name: "index_media_assets_on_external_id", unique: true
+    t.index [ "media_type" ], name: "index_media_assets_on_media_type"
+    t.index [ "status" ], name: "index_media_assets_on_status"
   end
 
   create_table "planned_posts", force: :cascade do |t|
@@ -64,12 +64,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_23_000434) do
     t.integer "status", default: 0, null: false
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
-    t.index ["media_asset_id"], name: "index_planned_posts_on_media_asset_id"
-    t.index ["platform"], name: "index_planned_posts_on_platform"
-    t.index ["scheduled_at"], name: "index_planned_posts_on_scheduled_at"
-    t.index ["social_template_id"], name: "index_planned_posts_on_social_template_id"
-    t.index ["status"], name: "index_planned_posts_on_status"
-    t.index ["user_id"], name: "index_planned_posts_on_user_id"
+    t.index [ "media_asset_id" ], name: "index_planned_posts_on_media_asset_id"
+    t.index [ "platform" ], name: "index_planned_posts_on_platform"
+    t.index [ "scheduled_at" ], name: "index_planned_posts_on_scheduled_at"
+    t.index [ "social_template_id" ], name: "index_planned_posts_on_social_template_id"
+    t.index [ "status" ], name: "index_planned_posts_on_status"
+    t.index [ "user_id" ], name: "index_planned_posts_on_user_id"
   end
 
   create_table "social_templates", force: :cascade do |t|
@@ -82,13 +82,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_23_000434) do
     t.json "settings"
     t.datetime "updated_at", null: false
     t.integer "user_id"
-    t.index ["platform", "name"], name: "index_social_templates_on_platform_and_name", unique: true
-    t.index ["user_id"], name: "index_social_templates_on_user_id"
+    t.index [ "platform", "name" ], name: "index_social_templates_on_platform_and_name", unique: true
+    t.index [ "user_id" ], name: "index_social_templates_on_user_id"
   end
 
   create_table "users", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "email"
+    t.string "instagram_access_token"
+    t.string "instagram_page_id"
+    t.datetime "instagram_token_expires_at"
+    t.string "instagram_user_id"
     t.string "name"
     t.datetime "updated_at", null: false
   end
