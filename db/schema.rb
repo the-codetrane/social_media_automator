@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_02_23_011551) do
+ActiveRecord::Schema[8.1].define(version: 2026_02_23_190960) do
   create_table "connected_drives", force: :cascade do |t|
     t.string "access_token"
     t.string "account_email"
@@ -72,6 +72,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_23_011551) do
     t.index [ "user_id" ], name: "index_planned_posts_on_user_id"
   end
 
+  create_table "sessions", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "ip_address"
+    t.datetime "updated_at", null: false
+    t.string "user_agent"
+    t.integer "user_id", null: false
+    t.index [ "user_id" ], name: "index_sessions_on_user_id"
+  end
+
   create_table "social_templates", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.text "default_caption"
@@ -89,12 +98,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_23_011551) do
   create_table "users", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "email"
+    t.string "email_address", null: false
     t.string "instagram_access_token"
     t.string "instagram_page_id"
     t.datetime "instagram_token_expires_at"
     t.string "instagram_user_id"
     t.string "name"
+    t.string "password_digest", null: false
     t.datetime "updated_at", null: false
+    t.index [ "email_address" ], name: "index_users_on_email_address", unique: true
   end
 
   add_foreign_key "connected_drives", "users"
@@ -102,5 +114,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_23_011551) do
   add_foreign_key "planned_posts", "media_assets"
   add_foreign_key "planned_posts", "social_templates"
   add_foreign_key "planned_posts", "users"
+  add_foreign_key "sessions", "users"
   add_foreign_key "social_templates", "users"
 end
