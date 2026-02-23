@@ -1,0 +1,23 @@
+instagram_default:
+  id: <%= ActiveRecord::FixtureSet.identify(:instagram_default) %>
+  platform: 0
+  name: "Instagram Reels Default"
+  default_caption: "Check this out! ✨"
+  max_caption_length: 2200
+  recommended_aspect_ratio: "9:16"
+  settings: ~
+  user_id: ~
+  created_at: <%= Time.current %>
+  updated_at: <%= Time.current %>
+
+youtube_shorts:
+  id: <%= ActiveRecord::FixtureSet.identify(:youtube_shorts) %>
+  platform: 1
+  name: "YouTube Shorts Default"
+  default_caption: "Watch till the end! 🎬"
+  max_caption_length: 5000
+  recommended_aspect_ratio: "9:16"
+  settings: ~
+  user_id: <%= ActiveRecord::FixtureSet.identify(:one) %>
+  created_at: <%= Time.current %>
+  updated_at: <%= Time.current %>

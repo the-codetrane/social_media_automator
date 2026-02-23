@@ -1,0 +1,47 @@
+draft_post:
+  id: <%= ActiveRecord::FixtureSet.identify(:draft_post) %>
+  media_asset_id: <%= ActiveRecord::FixtureSet.identify(:sample_image) %>
+  social_template_id: <%= ActiveRecord::FixtureSet.identify(:instagram_default) %>
+  platform: 0
+  caption: "Beautiful sunset 🌅 #nature"
+  hashtags: "#nature #sunset #photography"
+  platform_payload: ~
+  status: 0
+  scheduled_at: ~
+  published_at: ~
+  external_post_id: ~
+  user_id: <%= ActiveRecord::FixtureSet.identify(:one) %>
+  created_at: <%= Time.current %>
+  updated_at: <%= Time.current %>
+
+scheduled_post:
+  id: <%= ActiveRecord::FixtureSet.identify(:scheduled_post) %>
+  media_asset_id: <%= ActiveRecord::FixtureSet.identify(:sample_video) %>
+  social_template_id: <%= ActiveRecord::FixtureSet.identify(:youtube_shorts) %>
+  platform: 1
+  caption: "Amazing reel! 🎬"
+  hashtags: "#shorts #viral"
+  platform_payload: ~
+  status: 1
+  scheduled_at: <%= 2.days.from_now %>
+  published_at: ~
+  external_post_id: ~
+  user_id: <%= ActiveRecord::FixtureSet.identify(:one) %>
+  created_at: <%= Time.current %>
+  updated_at: <%= Time.current %>
+
+published_post:
+  id: <%= ActiveRecord::FixtureSet.identify(:published_post) %>
+  media_asset_id: <%= ActiveRecord::FixtureSet.identify(:sample_image) %>
+  social_template_id: ~
+  platform: 0
+  caption: "Live on IG ✨"
+  hashtags: "#instagood"
+  platform_payload: ~
+  status: 2
+  scheduled_at: <%= 1.day.ago %>
+  published_at: <%= 1.day.ago %>
+  external_post_id: "ig_post_abc"
+  user_id: <%= ActiveRecord::FixtureSet.identify(:one) %>
+  created_at: <%= Time.current %>
+  updated_at: <%= Time.current %>

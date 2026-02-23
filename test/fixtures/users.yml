@@ -1,0 +1,6 @@
+one:
+  id: <%= ActiveRecord::FixtureSet.identify(:one) %>
+  email: "user@example.com"
+  name: "Test User"
+  created_at: <%= Time.current %>
+  updated_at: <%= Time.current %>
