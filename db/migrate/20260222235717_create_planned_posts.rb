@@ -9,7 +9,7 @@ class CreatePlannedPosts < ActiveRecord::Migration[8.1]
 
       t.text    :caption
       t.string  :hashtags
-      t.json  :platform_payload        # calculated payload (e.g., for API)
+      t.json :platform_payload        # calculated payload (e.g., for API)
 
       t.integer :status, null: false, default: 0
       # enum status: { draft: 0, scheduled: 1, published: 2, failed: 3, canceled: 4 }

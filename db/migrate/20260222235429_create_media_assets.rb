@@ -15,7 +15,7 @@ class CreateMediaAssets < ActiveRecord::Migration[8.1]
       t.integer :height
       t.float   :duration_seconds
 
-      t.json   :raw_metadata                      # full API response if needed
+      t.json :raw_metadata                      # full API response if needed
 
       t.integer :status, null: false, default: 0
       # enum status: { discovered: 0, processed: 1, failed: 2, archived: 3 }
@@ -28,6 +28,5 @@ class CreateMediaAssets < ActiveRecord::Migration[8.1]
     add_index :media_assets, :external_id, unique: true
     add_index :media_assets, :status
     add_index :media_assets, :media_type
-
   end
 end

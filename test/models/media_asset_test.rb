@@ -117,4 +117,3 @@ class MediaAssetTest < ActiveSupport::TestCase
     assert_respond_to media_assets(:sample_image), :planned_posts
   end
 end
-

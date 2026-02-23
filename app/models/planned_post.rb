@@ -31,4 +31,3 @@ class PlannedPost < ApplicationRecord
     end
   end
 end
-

@@ -16,4 +16,3 @@ class SocialTemplate < ApplicationRecord
   scope :for_platform, ->(platform) { where(platform: platform) }
   scope :global, -> { where(user_id: nil) }
 end
-

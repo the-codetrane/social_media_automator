@@ -9,12 +9,12 @@ class CreateSocialTemplates < ActiveRecord::Migration[8.1]
       t.integer :max_caption_length
       t.string  :recommended_aspect_ratio        # e.g. "9:16", "1:1"
 
-      t.json  :settings                        # platform‑specific flags
+      t.json :settings                        # platform‑specific flags
 
       t.references :user, foreign_key: true      # owner
 
       t.timestamps
     end
-    add_index :social_templates, [:platform, :name], unique: true
+    add_index :social_templates, [ :platform, :name ], unique: true
   end
 end

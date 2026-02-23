@@ -26,4 +26,3 @@ class ConnectedDrive < ApplicationRecord
     token_expires_at.present? && token_expires_at <= Time.current
   end
 end
-

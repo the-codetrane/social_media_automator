@@ -110,5 +110,3 @@ class ConnectedDriveTest < ActiveSupport::TestCase
     assert_not drive.synced_recently?
   end
 end
-
-

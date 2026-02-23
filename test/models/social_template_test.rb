@@ -99,4 +99,3 @@ class SocialTemplateTest < ActiveSupport::TestCase
     assert_respond_to social_templates(:instagram_default), :planned_posts
   end
 end
-

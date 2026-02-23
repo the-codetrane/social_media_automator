@@ -111,4 +111,3 @@ class PlannedPostTest < ActiveSupport::TestCase
     assert_respond_to planned_posts(:draft_post), :user
   end
 end
-

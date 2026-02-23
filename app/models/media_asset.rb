@@ -21,5 +21,3 @@ class MediaAsset < ApplicationRecord
   scope :videos, -> { where(media_type: :video) }
   scope :ready, -> { where(status: :processed) }
 end
-
-
