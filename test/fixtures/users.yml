@@ -4,7 +4,6 @@ one:
   id: <%= ActiveRecord::FixtureSet.identify(:one) %>
   email_address: "user1@example.com"
   password_digest: <%= password_digest %>
-  email: "user1@example.com"
   name: "Test User1"
   instagram_user_id: "17841400000000001"
   instagram_access_token: "EAAtest_valid_token"
@@ -17,7 +16,6 @@ two:
   id: <%= ActiveRecord::FixtureSet.identify(:two) %>
   email_address: "user2@example.com"
   password_digest: <%= password_digest %>
-  email: "user2@example.com"
   name: "Test User2"
   instagram_user_id: "17841400000000002"
   instagram_access_token: "EAAtest_valid_token_2"

@@ -35,9 +35,9 @@ class Instagram::AuthControllerTest < ActionDispatch::IntegrationTest
     sign_in_as users(:one)
     get instagram_connect_path
     auth_url = @controller.view_assigns["auth_url"]
-    assert_match "instagram_basic",           auth_url
-    assert_match "instagram_content_publish", auth_url
-    assert_match "pages_read_engagement",     auth_url
+    assert_match "instagram_business_basic",          auth_url
+    assert_match "instagram_manage_comments",         auth_url
+    assert_match "instagram_business_manage_messages", auth_url
   end
 
   test "connect: unauthenticated request redirects to sign-in" do
