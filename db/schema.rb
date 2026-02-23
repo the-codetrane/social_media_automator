@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_02_22_235717) do
+ActiveRecord::Schema[8.1].define(version: 2026_02_23_000434) do
   create_table "connected_drives", force: :cascade do |t|
     t.string "access_token"
     t.string "account_email"
@@ -84,6 +84,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_22_235717) do
     t.integer "user_id"
     t.index ["platform", "name"], name: "index_social_templates_on_platform_and_name", unique: true
     t.index ["user_id"], name: "index_social_templates_on_user_id"
+  end
+
+  create_table "users", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "email"
+    t.string "name"
+    t.datetime "updated_at", null: false
   end
 
   add_foreign_key "connected_drives", "users"
