@@ -2,16 +2,12 @@
 
 module Instagram
   class AuthController < ApplicationController
-    # Facebook Login is required to access Instagram Business/Creator accounts
-    # via the Graph API (/me/accounts). Using instagram.com/oauth/authorize
-    # (Instagram Basic Display API) with a Facebook-Login app causes the
-    # "Invalid platform app" error.
-    OAUTH_URL    = "https://www.facebook.com/v20.0/dialog/oauth"
+    OAUTH_URL    = "https://www.instagram.com/oauth/authorize"
     OAUTH_SCOPES = %w[
-      business_management
-      instagram_basic
-      pages_read_engagement
-      pages_show_list
+      instagram_business_basic
+      instagram_content_publish
+      instagram_manage_comments
+      instagram_business_manage_messages
     ].freeze
 
     # GET /instagram/connect
@@ -21,26 +17,14 @@ module Instagram
     end
 
     # GET /instagram/callback?code=…
-    # Meta redirects here after the user grants permission.
+    # Instagram redirects here after the user grants permission.
     def callback
       code    = params.require(:code).to_s
       service = Instagram::AuthService.new(Current.user)
-
-      # Exchange code → long-lived token via the service's public helpers.
-      long_lived = service.exchange_code_for_long_lived_token(code, redirect_uri: instagram_callback_url)
-
-      session[:ig_pending_token]      = long_lived[:token]
-      session[:ig_pending_expires_in] = long_lived[:expires_in]
-
-      @ig_accounts = service.list_ig_accounts(long_lived[:token])
-
-      if @ig_accounts.size == 1
-        finish_connection(long_lived[:token], long_lived[:expires_in], @ig_accounts.first[:ig_user_id])
-      else
-        render :select_account
-      end
+      service.exchange_code_for_token(code, redirect_uri: instagram_callback_url)
+      redirect_to "/", notice: "Instagram account connected successfully."
     rescue ActionController::ParameterMissing
-      redirect_to instagram_connect_path, alert: "No authorisation code was returned by Facebook."
+      redirect_to instagram_connect_path, alert: "No authorisation code was returned by Instagram."
     rescue Instagram::ApiError => e
       redirect_to instagram_connect_path, alert: "Instagram connection failed: #{e.message}"
     end
@@ -48,9 +32,9 @@ module Instagram
     # POST /instagram/select_account
     # Finalises the connection for the chosen Instagram Business Account.
     def select_account
-      ig_user_id  = params.require(:ig_user_id)
-      token       = session.delete(:ig_pending_token)
-      expires_in  = session.delete(:ig_pending_expires_in)
+      ig_user_id = params.require(:ig_user_id)
+      token      = session.delete(:ig_pending_token)
+      expires_in = session.delete(:ig_pending_expires_in)
 
       raise Instagram::ApiError, "Session expired – please reconnect." if token.blank?
 

@@ -5,18 +5,18 @@ module Instagram
   #
   # Usage — exchange a short-lived code from the OAuth callback:
   #   service = Instagram::AuthService.new(user)
-  #   service.exchange_code_for_token(code)        # stores long-lived token + ig_user_id
+  #   service.exchange_code_for_token(code, redirect_uri: "...")  # stores long-lived token + ig_user_id
   #
   # Usage — proactively refresh before the token expires:
   #   service = Instagram::AuthService.new(user)
   #   service.refresh_long_lived_token             # updates token + expiry in DB
   class AuthService
-    GRAPH_BASE   = "https://graph.facebook.com/v25.0/"
-    TOKEN_URL    = "#{GRAPH_BASE}oauth/access_token"
+    GRAPH_BASE = "https://graph.facebook.com/v25.0/"
+    TOKEN_URL  = "#{GRAPH_BASE}oauth/access_token"
 
     # @param user [User]
     def initialize(user)
-      @user   = user
+      @user       = user
       @app_id     = Rails.application.credentials.dig(:meta, :app_id)
       @app_secret = Rails.application.credentials.dig(:meta, :app_secret)
     end
@@ -33,11 +33,11 @@ module Instagram
       fetch_long_lived_token(short_lived)
     end
 
-    # Exchange a short-lived authorisation code (from the OAuth redirect) for
-    # a long-lived token and persist it + the IG account ID on the User record.
+    # Exchange a short-lived code for a long-lived token and persist it +
+    # the IG account ID on the User record.
     #
     # @param code [String] the `code` query param from the OAuth callback
-    # @param redirect_uri [String] must match the URI registered in the Meta app
+    # @param redirect_uri [String]
     # @param ig_user_id [String, nil] when nil the first found account is used
     # @return [User] the updated user
     def exchange_code_for_token(code, redirect_uri:, ig_user_id: nil)
@@ -45,17 +45,17 @@ module Instagram
       short_lived = fetch_short_lived_token(code, redirect_uri)
 
       # Step 2 – exchange for a long-lived token (60-day expiry)
-      long_lived  = fetch_long_lived_token(short_lived)
+      long_lived = fetch_long_lived_token(short_lived)
 
       # Step 3 – discover the connected Instagram Business Account
       selected_ig_id, page_id = fetch_ig_user_id(long_lived[:token], ig_user_id: ig_user_id)
 
       # Step 4 – persist everything
       @user.update!(
-        instagram_access_token:    long_lived[:token],
+        instagram_access_token:     long_lived[:token],
         instagram_token_expires_at: Time.current + long_lived[:expires_in].to_i.seconds,
-        instagram_user_id:         selected_ig_id,
-        instagram_page_id:         page_id
+        instagram_user_id:          selected_ig_id,
+        instagram_page_id:          page_id
       )
 
       @user
@@ -99,14 +99,14 @@ module Instagram
       raise Instagram::TokenExpiredError, "No token to refresh for user #{@user.id}" if @user.instagram_access_token.blank?
 
       result = graph_get(TOKEN_URL,
-        grant_type:         "fb_exchange_token",
-        client_id:          @app_id,
-        client_secret:      @app_secret,
-        fb_exchange_token:  @user.instagram_access_token
+        grant_type:        "fb_exchange_token",
+        client_id:         @app_id,
+        client_secret:     @app_secret,
+        fb_exchange_token: @user.instagram_access_token
       )
 
       @user.update!(
-        instagram_access_token:    result["access_token"],
+        instagram_access_token:     result["access_token"],
         instagram_token_expires_at: Time.current + result["expires_in"].to_i.seconds
       )
 
@@ -183,20 +183,23 @@ module Instagram
 
       account = ig_user_id ? candidates.find { |a| a[:ig_user_id] == ig_user_id } : candidates.first
 
-      raise Instagram::ApiError, "Instagram account #{ig_user_id} not found among your connected Business Accounts." if ig_user_id && account.nil?
-
-      raise Instagram::ApiError, "Could not determine Instagram account." if account.nil?
+      if account.nil?
+        message = ig_user_id ?
+          "Instagram account #{ig_user_id} not found among your connected Business Accounts." :
+          "Could not determine Instagram account."
+        raise Instagram::ApiError, message
+      end
 
       [ account[:ig_user_id], account[:page_id] ]
     end
 
     def graph_get(url, params)
-      uri      = URI(url)
+      uri       = URI(url)
       uri.query = URI.encode_www_form(params)
 
-      http     = Net::HTTP.new(uri.host, uri.port)
+      http         = Net::HTTP.new(uri.host, uri.port)
       http.use_ssl = true
-      response = http.get(uri.request_uri)
+      response     = http.get(uri.request_uri)
 
       body = JSON.parse(response.body)
       raise Instagram::ApiError.new(body.dig("error", "message"), code: body.dig("error", "code")) if body["error"]
