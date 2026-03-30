@@ -11,7 +11,7 @@ module Instagram
   #   service = Instagram::AuthService.new(user)
   #   service.refresh_long_lived_token             # updates token + expiry in DB
   class AuthService
-    GRAPH_BASE   = "https://graph.facebook.com/v21.0/"
+    GRAPH_BASE   = "https://graph.facebook.com/v25.0/"
     TOKEN_URL    = "#{GRAPH_BASE}oauth/access_token"
 
     # @param user [User]
@@ -21,13 +21,26 @@ module Instagram
       @app_secret = Rails.application.credentials.dig(:meta, :app_secret)
     end
 
+    # Exchange a short-lived authorisation code for a long-lived token, but do
+    # NOT persist anything yet – used by the callback before the user selects
+    # which Instagram account to connect.
+    #
+    # @param code [String]
+    # @param redirect_uri [String]
+    # @return [Hash] { token: String, expires_in: Integer }
+    def exchange_code_for_long_lived_token(code, redirect_uri:)
+      short_lived = fetch_short_lived_token(code, redirect_uri)
+      fetch_long_lived_token(short_lived)
+    end
+
     # Exchange a short-lived authorisation code (from the OAuth redirect) for
     # a long-lived token and persist it + the IG account ID on the User record.
     #
     # @param code [String] the `code` query param from the OAuth callback
     # @param redirect_uri [String] must match the URI registered in the Meta app
+    # @param ig_user_id [String, nil] when nil the first found account is used
     # @return [User] the updated user
-    def exchange_code_for_token(code, redirect_uri:)
+    def exchange_code_for_token(code, redirect_uri:, ig_user_id: nil)
       # Step 1 – get a short-lived user access token
       short_lived = fetch_short_lived_token(code, redirect_uri)
 
@@ -35,14 +48,44 @@ module Instagram
       long_lived  = fetch_long_lived_token(short_lived)
 
       # Step 3 – discover the connected Instagram Business Account
-      ig_user_id, page_id = fetch_ig_user_id(long_lived[:token])
+      selected_ig_id, page_id = fetch_ig_user_id(long_lived[:token], ig_user_id: ig_user_id)
 
       # Step 4 – persist everything
       @user.update!(
         instagram_access_token:    long_lived[:token],
         instagram_token_expires_at: Time.current + long_lived[:expires_in].to_i.seconds,
-        instagram_user_id:         ig_user_id,
+        instagram_user_id:         selected_ig_id,
         instagram_page_id:         page_id
+      )
+
+      @user
+    end
+
+    # Fetch and return all Instagram Business/Creator Accounts reachable via
+    # the supplied short-lived or long-lived access token.  Useful for letting
+    # the user pick which account to connect.
+    #
+    # @param access_token [String]
+    # @return [Array<Hash>] array of { ig_user_id:, page_id:, username:, profile_picture_url: }
+    def list_ig_accounts(access_token)
+      fetch_all_ig_accounts(access_token)
+    end
+
+    # Finalise a connection using a long-lived token that was already obtained
+    # (e.g. during the callback step before the user selects an account).
+    #
+    # @param long_lived_token [String]
+    # @param expires_in [Integer] seconds until the token expires
+    # @param ig_user_id [String, nil] when nil the first found account is used
+    # @return [User] the updated user
+    def connect_with_token(long_lived_token, expires_in:, ig_user_id: nil)
+      selected_ig_id, page_id = fetch_ig_user_id(long_lived_token, ig_user_id: ig_user_id)
+
+      @user.update!(
+        instagram_access_token:     long_lived_token,
+        instagram_token_expires_at: Time.current + expires_in.to_i.seconds,
+        instagram_user_id:          selected_ig_id,
+        instagram_page_id:          page_id
       )
 
       @user
@@ -103,22 +146,48 @@ module Instagram
       { token: response["access_token"], expires_in: response["expires_in"] }
     end
 
-    # Walk /me/accounts to find a Facebook Page that has a connected
-    # Instagram Business Account.
+    # Walk /me/accounts to find all Facebook Pages that have a connected
+    # Instagram Business/Creator Account.
     #
-    # @return [Array<String, String>] [ig_user_id, page_id]
-    def fetch_ig_user_id(access_token)
+    # @return [Array<Hash>] array of { ig_user_id:, page_id:, username:, profile_picture_url: }
+    def fetch_all_ig_accounts(access_token)
       accounts = graph_get("#{GRAPH_BASE}me/accounts",
         access_token: access_token,
-        fields:       "id,name,instagram_business_account"
+        fields:       "id,name,instagram_business_account{id,username,profile_picture_url}"
       )
 
       pages = accounts["data"] || []
-      page  = pages.find { |p| p["instagram_business_account"].present? }
+      pages
+        .select { |p| p["instagram_business_account"].present? }
+        .map do |p|
+          iba = p["instagram_business_account"]
+          {
+            ig_user_id:          iba["id"],
+            page_id:             p["id"],
+            username:            iba["username"],
+            profile_picture_url: iba["profile_picture_url"]
+          }
+        end
+    end
 
-      raise Instagram::ApiError, "No Instagram Business Account found for this Facebook user." unless page
+    # Walk /me/accounts to find a Facebook Page that has a connected
+    # Instagram Business Account, optionally matching a specific IG user ID.
+    #
+    # @param access_token [String]
+    # @param ig_user_id [String, nil] when provided, selects that specific account
+    # @return [Array<String, String>] [ig_user_id, page_id]
+    def fetch_ig_user_id(access_token, ig_user_id: nil)
+      candidates = fetch_all_ig_accounts(access_token)
 
-      [ page["instagram_business_account"]["id"], page["id"] ]
+      raise Instagram::ApiError, "No Instagram Business Account found for this Facebook user." if candidates.empty?
+
+      account = ig_user_id ? candidates.find { |a| a[:ig_user_id] == ig_user_id } : candidates.first
+
+      raise Instagram::ApiError, "Instagram account #{ig_user_id} not found among your connected Business Accounts." if ig_user_id && account.nil?
+
+      raise Instagram::ApiError, "Could not determine Instagram account." if account.nil?
+
+      [ account[:ig_user_id], account[:page_id] ]
     end
 
     def graph_get(url, params)
