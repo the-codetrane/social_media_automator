@@ -1,0 +1,101 @@
+<% content_for :title, "Planned Posts" %>
+
+<%
+  status_colors = {
+    "draft"      => "bg-gray-100 text-gray-600",
+    "scheduled"  => "bg-blue-100 text-blue-800",
+    "published"  => "bg-green-100 text-green-800",
+    "failed"     => "bg-red-100 text-red-700",
+    "canceled"   => "bg-orange-100 text-orange-700"
+  }
+  platform_colors = {
+    "instagram" => "bg-pink-100 text-pink-800",
+    "youtube"   => "bg-red-100 text-red-700",
+    "facebook"  => "bg-blue-100 text-blue-700"
+  }
+%>
+
+<div class="flex items-center justify-between mb-6">
+  <div>
+    <h1 class="text-2xl font-bold text-gray-900">Planned Posts</h1>
+    <p class="text-sm text-gray-500 mt-1"><%= @planned_posts.size %> record<%= "s" if @planned_posts.size != 1 %></p>
+  </div>
+</div>
+
+<% if @planned_posts.empty? %>
+  <div class="text-center py-20 text-gray-400">No planned posts found.</div>
+<% else %>
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    <% @planned_posts.each do |post| %>
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 flex flex-col gap-4">
+
+        <%# Badges row %>
+        <div class="flex flex-wrap gap-2">
+          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium <%= platform_colors[post.platform] || 'bg-gray-100 text-gray-600' %> capitalize">
+            <%= post.platform %>
+          </span>
+          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium <%= status_colors[post.status] || 'bg-gray-100 text-gray-600' %> capitalize">
+            <%= post.status %>
+          </span>
+        </div>
+
+        <%# Caption %>
+        <% if post.caption.present? %>
+          <p class="text-sm text-gray-700 line-clamp-3 leading-relaxed">
+            <%= post.caption.truncate(160) %>
+          </p>
+        <% else %>
+          <p class="text-sm text-gray-400 italic">No caption</p>
+        <% end %>
+
+        <%# Hashtags %>
+        <% if post.hashtags.present? %>
+          <p class="text-xs text-indigo-600 truncate"><%= post.hashtags %></p>
+        <% end %>
+
+        <%# Metadata grid %>
+        <dl class="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
+          <% if post.scheduled_at.present? %>
+            <div class="col-span-2">
+              <dt class="text-gray-400 uppercase tracking-wide">Scheduled At</dt>
+              <dd class="text-gray-700 font-medium"><%= post.scheduled_at.strftime("%b %-d, %Y %H:%M") %></dd>
+            </div>
+          <% end %>
+          <% if post.published_at.present? %>
+            <div class="col-span-2">
+              <dt class="text-gray-400 uppercase tracking-wide">Published At</dt>
+              <dd class="text-green-700 font-medium"><%= post.published_at.strftime("%b %-d, %Y %H:%M") %></dd>
+            </div>
+          <% end %>
+          <div class="col-span-2">
+            <dt class="text-gray-400 uppercase tracking-wide">Media Asset</dt>
+            <dd class="text-gray-700 truncate">
+              <%= post.media_asset&.external_name.presence || post.media_asset&.external_id || "—" %>
+            </dd>
+          </div>
+          <div class="col-span-2">
+            <dt class="text-gray-400 uppercase tracking-wide">Owner</dt>
+            <dd class="text-gray-700"><%= post.user&.name || "—" %></dd>
+          </div>
+          <% if post.social_template.present? %>
+            <div class="col-span-2">
+              <dt class="text-gray-400 uppercase tracking-wide">Template</dt>
+              <dd class="text-gray-700 truncate"><%= post.social_template.name %></dd>
+            </div>
+          <% end %>
+          <% if post.external_post_id.present? %>
+            <div class="col-span-2">
+              <dt class="text-gray-400 uppercase tracking-wide">External Post ID</dt>
+              <dd class="text-gray-700 font-mono truncate"><%= post.external_post_id %></dd>
+            </div>
+          <% end %>
+        </dl>
+
+        <p class="text-xs text-gray-400 border-t border-gray-100 pt-3 mt-auto">
+          Created <%= post.created_at.strftime("%b %-d, %Y") %>
+        </p>
+      </div>
+    <% end %>
+  </div>
+<% end %>
+

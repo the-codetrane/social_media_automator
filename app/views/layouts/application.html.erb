@@ -23,7 +23,12 @@
     <%= javascript_importmap_tags %>
   </head>
 
-  <body class="bg-white text-gray-900 antialiased">
-    <%= yield %>
+  <body class="bg-gray-50 text-gray-900 antialiased">
+    <% if authenticated? %>
+      <%= render "shared/nav" %>
+    <% end %>
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+      <%= yield %>
+    </main>
   </body>
 </html>

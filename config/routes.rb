@@ -3,6 +3,14 @@ Rails.application.routes.draw do
   resource  :registration, only: %i[ new create ]
   resources :passwords, param: :token
 
+  # Model index pages
+  resources :users,            only: [ :index ]
+  resources :connected_drives, only: [ :index ]
+  resources :media_assets,     only: [ :index ]
+  resources :planned_posts,    only: [ :index ]
+  resources :social_templates, only: [ :index ]
+  resources :sessions,         only: [ :index ]
+
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
   # Can be used by load balancers and uptime monitors to verify that the app is live.
   get "up" => "rails/health#show", as: :rails_health_check
@@ -19,5 +27,5 @@ Rails.application.routes.draw do
   end
 
   # Defines the root path route ("/")
-  root to: redirect("/up")
+  root to: "users#index"
 end

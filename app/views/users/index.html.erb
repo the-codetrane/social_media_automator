@@ -1,0 +1,79 @@
+<% content_for :title, "Users" %>
+
+<div class="flex items-center justify-between mb-6">
+  <div>
+    <h1 class="text-2xl font-bold text-gray-900">Users</h1>
+    <p class="text-sm text-gray-500 mt-1"><%= @users.size %> record<%= "s" if @users.size != 1 %></p>
+  </div>
+</div>
+
+<% if @users.empty? %>
+  <div class="text-center py-20 text-gray-400">No users found.</div>
+<% else %>
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    <% @users.each do |user| %>
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 flex flex-col gap-4">
+
+        <%# Avatar + name row %>
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-indigo-100 text-indigo-700 font-bold text-sm flex items-center justify-center shrink-0">
+            <%= user.name.to_s.split.map(&:first).first(2).join.upcase.presence || "?" %>
+          </div>
+          <div class="min-w-0">
+            <p class="font-semibold text-gray-900 truncate"><%= user.name %></p>
+            <p class="text-xs text-gray-500 truncate"><%= user.email_address %></p>
+          </div>
+        </div>
+
+        <%# Instagram status %>
+        <div class="flex flex-wrap gap-2">
+          <% if user.instagram_connected? %>
+            <% if user.instagram_token_expiring? %>
+              <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                ⚠️ Token Expiring
+              </span>
+            <% else %>
+              <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                ✓ Instagram Connected
+              </span>
+            <% end %>
+          <% else %>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-500">
+              Instagram Not Connected
+            </span>
+          <% end %>
+        </div>
+
+        <%# Metadata grid %>
+        <dl class="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
+          <% if user.instagram_user_id.present? %>
+            <div class="col-span-2">
+              <dt class="text-gray-400 uppercase tracking-wide">Instagram ID</dt>
+              <dd class="text-gray-700 font-mono truncate"><%= user.instagram_user_id %></dd>
+            </div>
+          <% end %>
+          <% if user.instagram_token_expires_at.present? %>
+            <div class="col-span-2">
+              <dt class="text-gray-400 uppercase tracking-wide">Token Expires</dt>
+              <dd class="text-gray-700"><%= user.instagram_token_expires_at.strftime("%b %-d, %Y %H:%M") %></dd>
+            </div>
+          <% end %>
+          <div>
+            <dt class="text-gray-400 uppercase tracking-wide">Drives</dt>
+            <dd class="text-gray-700 font-semibold"><%= user.connected_drives.size %></dd>
+          </div>
+          <div>
+            <dt class="text-gray-400 uppercase tracking-wide">Posts</dt>
+            <dd class="text-gray-700 font-semibold"><%= user.planned_posts.size %></dd>
+          </div>
+        </dl>
+
+        <%# Footer %>
+        <p class="text-xs text-gray-400 border-t border-gray-100 pt-3 mt-auto">
+          Joined <%= user.created_at.strftime("%b %-d, %Y") %>
+        </p>
+      </div>
+    <% end %>
+  </div>
+<% end %>
+
