@@ -1,0 +1,68 @@
+<% content_for :title, "Sessions" %>
+
+<div class="flex items-center justify-between mb-6">
+  <div>
+    <h1 class="text-2xl font-bold text-gray-900">Sessions</h1>
+    <p class="text-sm text-gray-500 mt-1"><%= @sessions.size %> record<%= "s" if @sessions.size != 1 %></p>
+  </div>
+</div>
+
+<% if @sessions.empty? %>
+  <div class="text-center py-20 text-gray-400">No sessions found.</div>
+<% else %>
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    <% @sessions.each do |session| %>
+      <%
+        is_current = (session.id == Current.session&.id)
+      %>
+      <div class="bg-white rounded-xl shadow-sm border <%= is_current ? 'border-indigo-400 ring-2 ring-indigo-200' : 'border-gray-200' %> p-5 flex flex-col gap-4">
+
+        <%# Header %>
+        <div class="flex items-start justify-between gap-2">
+          <div class="min-w-0">
+            <p class="font-semibold text-gray-900 truncate"><%= session.user&.name || "Unknown User" %></p>
+            <p class="text-xs text-gray-500 truncate"><%= session.user&.email_address %></p>
+          </div>
+          <% if is_current %>
+            <span class="shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700">
+              Current
+            </span>
+          <% end %>
+        </div>
+
+        <%# Metadata %>
+        <dl class="grid grid-cols-1 gap-y-2 text-xs">
+          <% if session.ip_address.present? %>
+            <div>
+              <dt class="text-gray-400 uppercase tracking-wide">IP Address</dt>
+              <dd class="text-gray-700 font-mono"><%= session.ip_address %></dd>
+            </div>
+          <% end %>
+          <% if session.user_agent.present? %>
+            <div>
+              <dt class="text-gray-400 uppercase tracking-wide">User Agent</dt>
+              <dd class="text-gray-700 truncate" title="<%= session.user_agent %>">
+                <%= session.user_agent.truncate(80) %>
+              </dd>
+            </div>
+          <% end %>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <dt class="text-gray-400 uppercase tracking-wide">Created</dt>
+              <dd class="text-gray-700"><%= session.created_at.strftime("%b %-d, %Y %H:%M") %></dd>
+            </div>
+            <div>
+              <dt class="text-gray-400 uppercase tracking-wide">Last Active</dt>
+              <dd class="text-gray-700"><%= session.updated_at.strftime("%b %-d, %Y %H:%M") %></dd>
+            </div>
+          </div>
+        </dl>
+
+        <p class="text-xs text-gray-400 border-t border-gray-100 pt-3 mt-auto">
+          Session #<%= session.id %>
+        </p>
+      </div>
+    <% end %>
+  </div>
+<% end %>
+
