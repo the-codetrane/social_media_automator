@@ -16,6 +16,42 @@ sample_image:
   created_at: <%= Time.current %>
   updated_at: <%= Time.current %>
 
+sample_image_2:
+  id: <%= ActiveRecord::FixtureSet.identify(:sample_image_2) %>
+  connected_drive_id: <%= ActiveRecord::FixtureSet.identify(:personal_drive) %>
+  external_id: "gdrive_file_003"
+  external_name: "sunrise.jpg"
+  mime_type: "image/jpeg"
+  file_size: 1536000
+  media_type: 0
+  width: 1080
+  height: 1080
+  duration_seconds: ~
+  raw_metadata: '{"public_url": "https://cdn.example.com/sunrise.jpg"}'
+  status: 1
+  first_seen_at: <%= 1.day.ago %>
+  last_processed_at: <%= 1.hour.ago %>
+  created_at: <%= Time.current %>
+  updated_at: <%= Time.current %>
+
+sample_image_no_url:
+  id: <%= ActiveRecord::FixtureSet.identify(:sample_image_no_url) %>
+  connected_drive_id: <%= ActiveRecord::FixtureSet.identify(:personal_drive) %>
+  external_id: "gdrive_file_004"
+  external_name: "no_url.jpg"
+  mime_type: "image/jpeg"
+  file_size: 1024000
+  media_type: 0
+  width: 1080
+  height: 1080
+  duration_seconds: ~
+  raw_metadata: ~
+  status: 1
+  first_seen_at: <%= 1.day.ago %>
+  last_processed_at: ~
+  created_at: <%= Time.current %>
+  updated_at: <%= Time.current %>
+
 sample_video:
   id: <%= ActiveRecord::FixtureSet.identify(:sample_video) %>
   connected_drive_id: <%= ActiveRecord::FixtureSet.identify(:personal_drive) %>

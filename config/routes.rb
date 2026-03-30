@@ -13,8 +13,9 @@ Rails.application.routes.draw do
 
   # Instagram OAuth
   namespace :instagram do
-    get "connect",  to: "auth#connect",  as: :connect
-    get "callback", to: "auth#callback", as: :callback
+    get  "connect",        to: "auth#connect",        as: :connect
+    get  "callback",       to: "auth#callback",        as: :callback
+    post "select_account", to: "auth#select_account",  as: :select_account
   end
 
   # Defines the root path route ("/")
