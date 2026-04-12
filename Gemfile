@@ -44,6 +44,9 @@ gem "image_processing", "~> 1.2"
 gem "faraday", "~> 2.0"
 gem "faraday-retry", "~> 2.0"
 
+# LLM Gem
+gem "ruby_llm"
+
 # CSS Bundling tools
 gem "cssbundling-rails"
 
