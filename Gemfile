@@ -45,7 +45,7 @@ gem "faraday", "~> 2.0"
 gem "faraday-retry", "~> 2.0"
 
 # LLM Gem
-gem 'ruby_llm'
+gem "ruby_llm"
 
 # CSS Bundling tools
 gem "cssbundling-rails"
