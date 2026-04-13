@@ -4,10 +4,10 @@ Rails.application.routes.draw do
   resources :passwords, param: :token
 
   # Model index pages
-  resources :users,            only: [ :index ]
-  resources :media_assets,     only: [ :index ]
-  resources :planned_posts,    only: [ :index ]
-  resources :social_templates, only: [ :index ]
+  resources :users,            only: [ :index, :show, :edit, :update ]
+  resources :media_assets,     only: [ :index, :show, :edit, :update ]
+  resources :planned_posts,    only: [ :index, :show, :edit, :update ]
+  resources :social_templates, only: [ :index, :show, :edit, :update ]
   resources :sessions,         only: [ :index ]
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
