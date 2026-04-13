@@ -1,0 +1,138 @@
+<% content_for :title, @media_asset.external_name.presence || @media_asset.external_id %>
+
+<%
+  status_colors = {
+    "discovered" => "bg-yellow-100 text-yellow-800",
+    "processed"  => "bg-green-100 text-green-800",
+    "failed"     => "bg-red-100 text-red-800",
+    "archived"   => "bg-gray-100 text-gray-600"
+  }
+  type_colors = {
+    "image" => "bg-purple-100 text-purple-800",
+    "video" => "bg-pink-100 text-pink-800"
+  }
+%>
+
+<div class="max-w-3xl mx-auto">
+  <%# Header with back link and edit CTA %>
+  <div class="flex items-center justify-between mb-6">
+    <div class="flex items-center gap-4">
+      <%= link_to media_assets_path, class: "text-gray-400 hover:text-gray-600 transition-colors" do %>
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+        </svg>
+      <% end %>
+      <h1 class="text-2xl font-bold text-gray-900"><%= @media_asset.external_name.presence || @media_asset.external_id %></h1>
+    </div>
+    <%= link_to edit_media_asset_path(@media_asset), class: "inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors" do %>
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+      </svg>
+      Edit
+    <% end %>
+  </div>
+
+  <% if flash[:notice] %>
+    <div class="mb-6 px-4 py-3 rounded-lg bg-green-50 text-green-800 text-sm">
+      <%= flash[:notice] %>
+    </div>
+  <% end %>
+
+  <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+    <%# Main info section %>
+    <div class="p-6">
+      <%# Badges row %>
+      <div class="flex flex-wrap gap-2 mb-6">
+        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium <%= type_colors[@media_asset.media_type] || 'bg-gray-100 text-gray-600' %> capitalize">
+          <%= @media_asset.media_type %>
+        </span>
+        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium <%= status_colors[@media_asset.status] || 'bg-gray-100 text-gray-600' %> capitalize">
+          <%= @media_asset.status %>
+        </span>
+      </div>
+
+      <%# Main metadata %>
+      <dl class="grid grid-cols-2 gap-6 mb-6">
+        <% if @media_asset.width.present? && @media_asset.height.present? %>
+          <div>
+            <dt class="text-xs text-gray-400 uppercase tracking-wide mb-1">Dimensions</dt>
+            <dd class="text-lg text-gray-900"><%= @media_asset.width %> × <%= @media_asset.height %></dd>
+          </div>
+        <% end %>
+        <% if @media_asset.media_type == "video" && @media_asset.duration_seconds.present? %>
+          <div>
+            <dt class="text-xs text-gray-400 uppercase tracking-wide mb-1">Duration</dt>
+            <dd class="text-lg text-gray-900">
+              <%
+                mins = (@media_asset.duration_seconds / 60).floor
+                secs = (@media_asset.duration_seconds % 60).round
+              %>
+              <%= mins > 0 ? "#{mins}m #{secs}s" : "#{secs}s" %>
+            </dd>
+          </div>
+        <% end %>
+        <% if @media_asset.file_size.present? %>
+          <div>
+            <dt class="text-xs text-gray-400 uppercase tracking-wide mb-1">File Size</dt>
+            <dd class="text-lg text-gray-900"><%= number_to_human_size(@media_asset.file_size) %></dd>
+          </div>
+        <% end %>
+        <% if @media_asset.mime_type.present? %>
+          <div>
+            <dt class="text-xs text-gray-400 uppercase tracking-wide mb-1">MIME Type</dt>
+            <dd class="text-lg text-gray-900"><%= @media_asset.mime_type %></dd>
+          </div>
+        <% end %>
+        <div>
+          <dt class="text-xs text-gray-400 uppercase tracking-wide mb-1">First Seen</dt>
+          <dd class="text-lg text-gray-900"><%= @media_asset.first_seen_at.strftime("%B %-d, %Y") %></dd>
+        </div>
+        <% if @media_asset.last_processed_at.present? %>
+          <div>
+            <dt class="text-xs text-gray-400 uppercase tracking-wide mb-1">Last Processed</dt>
+            <dd class="text-lg text-gray-900"><%= @media_asset.last_processed_at.strftime("%B %-d, %Y") %></dd>
+          </div>
+        <% end %>
+        <div>
+          <dt class="text-xs text-gray-400 uppercase tracking-wide mb-1">Planned Posts</dt>
+          <dd class="text-2xl font-semibold text-gray-900"><%= @media_asset.planned_posts.size %></dd>
+        </div>
+        <div>
+          <dt class="text-xs text-gray-400 uppercase tracking-wide mb-1">Added</dt>
+          <dd class="text-lg text-gray-900"><%= @media_asset.created_at.strftime("%B %-d, %Y") %></dd>
+        </div>
+      </dl>
+    </div>
+
+    <%# Collapsible additional details %>
+    <div class="border-t border-gray-200" data-controller="collapse">
+      <button
+        type="button"
+        class="w-full flex items-center justify-between px-6 py-4 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+        data-action="click->collapse#toggle"
+      >
+        <span>Additional Details</span>
+        <svg class="w-5 h-5 text-gray-400 transition-transform duration-200" data-collapse-target="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+        </svg>
+      </button>
+      <div class="hidden px-6 pb-6" data-collapse-target="content">
+        <dl class="grid grid-cols-1 gap-4 text-sm">
+          <div>
+            <dt class="text-gray-400 uppercase tracking-wide text-xs mb-1">External ID</dt>
+            <dd class="text-gray-700 font-mono break-all"><%= @media_asset.external_id %></dd>
+          </div>
+          <% if @media_asset.raw_metadata.present? %>
+            <div>
+              <dt class="text-gray-400 uppercase tracking-wide text-xs mb-1">Raw Metadata</dt>
+              <dd class="text-gray-700 font-mono text-xs bg-gray-50 rounded-lg p-4 overflow-x-auto">
+                <pre><%= JSON.pretty_generate(@media_asset.raw_metadata) %></pre>
+              </dd>
+            </div>
+          <% end %>
+        </dl>
+      </div>
+    </div>
+  </div>
+</div>
+
