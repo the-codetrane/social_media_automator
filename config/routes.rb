@@ -5,7 +5,6 @@ Rails.application.routes.draw do
 
   # Model index pages
   resources :users,            only: [ :index ]
-  resources :connected_drives, only: [ :index ]
   resources :media_assets,     only: [ :index ]
   resources :planned_posts,    only: [ :index ]
   resources :social_templates, only: [ :index ]

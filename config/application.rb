@@ -6,6 +6,12 @@ require "rails/all"
 # you've limited to :test, :development, or :production.
 Bundler.require(*Rails.groups)
 
+# RubyLLM must be configured before Rails::Application is inherited so that
+# use_new_acts_as is set before ActiveRecord loads the models.
+RubyLLM.configure do |config|
+  config.use_new_acts_as = true
+end
+
 module SocialMediaAutomator
   class Application < Rails::Application
     # Initialize configuration defaults for originally generated Rails version.

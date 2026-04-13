@@ -1,8 +1,6 @@
 class CreateMediaAssets < ActiveRecord::Migration[8.1]
   def change
     create_table :media_assets do |t|
-      t.references :connected_drive, null: false, foreign_key: true
-
       t.string  :external_id, null: false      # Google Drive file ID
       t.string  :external_name
       t.string  :mime_type

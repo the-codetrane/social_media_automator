@@ -4,7 +4,6 @@ class User < ApplicationRecord
 
   normalizes :email_address, with: ->(e) { e.strip.downcase }
 
-  has_many :connected_drives, dependent: :destroy, class_name: "ConnectedDrive"
   has_many :planned_posts, dependent: :destroy
   has_many :social_templates, dependent: :nullify
 

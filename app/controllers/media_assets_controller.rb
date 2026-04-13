@@ -2,6 +2,6 @@
 
 class MediaAssetsController < ApplicationController
   def index
-    @media_assets = MediaAsset.includes(:connected_drive).order(created_at: :desc)
+    @media_assets = MediaAsset.order(created_at: :desc)
   end
 end

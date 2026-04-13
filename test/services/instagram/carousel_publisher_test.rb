@@ -166,9 +166,7 @@ module Instagram
     test "raises ArgumentError when more than 10 items" do
       # Create 11 image assets inline for this boundary test.
       assets = (1..11).map do |i|
-        connected_drive = connected_drives(:personal_drive)
         MediaAsset.create!(
-          connected_drive: connected_drive,
           external_id:     "extra_img_#{i}",
           external_name:   "extra_#{i}.jpg",
           media_type:      :image,
