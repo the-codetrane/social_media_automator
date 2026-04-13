@@ -23,7 +23,6 @@ class MediaAssetTest < ActiveSupport::TestCase
 
   test "enforces uniqueness of external_id" do
     duplicate = MediaAsset.new(
-      connected_drive: media_assets(:sample_image).connected_drive,
       external_id: media_assets(:sample_image).external_id,
       media_type: :image,
       status: :discovered,
@@ -109,10 +108,6 @@ class MediaAssetTest < ActiveSupport::TestCase
   # ---------------------------------------------------------------------------
   # Associations
   # ---------------------------------------------------------------------------
-  test "belongs to connected_drive" do
-    assert_respond_to media_assets(:sample_image), :connected_drive
-  end
-
   test "has many planned_posts" do
     assert_respond_to media_assets(:sample_image), :planned_posts
   end

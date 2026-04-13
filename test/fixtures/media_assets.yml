@@ -1,6 +1,5 @@
 sample_image:
   id: <%= ActiveRecord::FixtureSet.identify(:sample_image) %>
-  connected_drive_id: <%= ActiveRecord::FixtureSet.identify(:personal_drive) %>
   external_id: "gdrive_file_001"
   external_name: "sunset.jpg"
   mime_type: "image/jpeg"
@@ -18,7 +17,6 @@ sample_image:
 
 sample_image_2:
   id: <%= ActiveRecord::FixtureSet.identify(:sample_image_2) %>
-  connected_drive_id: <%= ActiveRecord::FixtureSet.identify(:personal_drive) %>
   external_id: "gdrive_file_003"
   external_name: "sunrise.jpg"
   mime_type: "image/jpeg"
@@ -36,7 +34,6 @@ sample_image_2:
 
 sample_image_no_url:
   id: <%= ActiveRecord::FixtureSet.identify(:sample_image_no_url) %>
-  connected_drive_id: <%= ActiveRecord::FixtureSet.identify(:personal_drive) %>
   external_id: "gdrive_file_004"
   external_name: "no_url.jpg"
   mime_type: "image/jpeg"
@@ -54,7 +51,6 @@ sample_image_no_url:
 
 sample_video:
   id: <%= ActiveRecord::FixtureSet.identify(:sample_video) %>
-  connected_drive_id: <%= ActiveRecord::FixtureSet.identify(:personal_drive) %>
   external_id: "gdrive_file_002"
   external_name: "reel.mp4"
   mime_type: "video/mp4"

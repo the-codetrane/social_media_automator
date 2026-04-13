@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
 class MediaAsset < ApplicationRecord
-  belongs_to :connected_drive
-
   enum :media_type, { image: 0, video: 1 }
   enum :status, { discovered: 0, processed: 1, failed: 2, archived: 3 }
 

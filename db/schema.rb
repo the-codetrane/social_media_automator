@@ -46,25 +46,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_12_132118) do
     t.index [ "model_id" ], name: "index_chats_on_model_id"
   end
 
-  create_table "connected_drives", force: :cascade do |t|
-    t.string "access_token"
-    t.string "account_email"
-    t.datetime "created_at", null: false
-    t.string "folder_id", null: false
-    t.datetime "last_synced_at"
-    t.string "name", null: false
-    t.string "provider", default: "google_drive", null: false
-    t.string "refresh_token"
-    t.integer "sync_interval_minutes", default: 60, null: false
-    t.datetime "token_expires_at"
-    t.datetime "updated_at", null: false
-    t.integer "user_id", null: false
-    t.index [ "provider", "folder_id" ], name: "index_connected_drives_on_provider_and_folder_id", unique: true
-    t.index [ "user_id" ], name: "index_connected_drives_on_user_id"
-  end
-
   create_table "media_assets", force: :cascade do |t|
-    t.integer "connected_drive_id", null: false
     t.datetime "created_at", null: false
     t.float "duration_seconds"
     t.string "external_id", null: false
@@ -79,7 +61,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_12_132118) do
     t.integer "status", default: 0, null: false
     t.datetime "updated_at", null: false
     t.integer "width"
-    t.index [ "connected_drive_id" ], name: "index_media_assets_on_connected_drive_id"
     t.index [ "external_id" ], name: "index_media_assets_on_external_id", unique: true
     t.index [ "media_type" ], name: "index_media_assets_on_media_type"
     t.index [ "status" ], name: "index_media_assets_on_status"
@@ -201,8 +182,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_12_132118) do
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "chats", "models"
-  add_foreign_key "connected_drives", "users"
-  add_foreign_key "media_assets", "connected_drives", column: "connected_drive_id"
   add_foreign_key "messages", "chats"
   add_foreign_key "messages", "models"
   add_foreign_key "messages", "tool_calls"

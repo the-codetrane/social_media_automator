@@ -3,7 +3,6 @@
     <div class="flex items-center justify-between h-16">
       <div class="flex items-center gap-1 flex-wrap">
         <%= link_to "Users",            users_path,            class: "px-3 py-2 rounded-md text-sm font-medium #{controller_name == 'users' ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-100'}" %>
-        <%= link_to "Connected Drives", connected_drives_path, class: "px-3 py-2 rounded-md text-sm font-medium #{controller_name == 'connected_drives' ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-100'}" %>
         <%= link_to "Media Assets",     media_assets_path,     class: "px-3 py-2 rounded-md text-sm font-medium #{controller_name == 'media_assets' ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-100'}" %>
         <%= link_to "Planned Posts",    planned_posts_path,    class: "px-3 py-2 rounded-md text-sm font-medium #{controller_name == 'planned_posts' ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-100'}" %>
         <%= link_to "Templates",        social_templates_path, class: "px-3 py-2 rounded-md text-sm font-medium #{controller_name == 'social_templates' ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-100'}" %>
