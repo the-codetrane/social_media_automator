@@ -1,0 +1,120 @@
+<% content_for :title, @social_template.name %>
+
+<%
+  platform_colors = {
+    "instagram" => "bg-pink-100 text-pink-800",
+    "youtube"   => "bg-red-100 text-red-700",
+    "facebook"  => "bg-blue-100 text-blue-700"
+  }
+%>
+
+<div class="max-w-3xl mx-auto">
+  <%# Header with back link and edit CTA %>
+  <div class="flex items-center justify-between mb-6">
+    <div class="flex items-center gap-4">
+      <%= link_to social_templates_path, class: "text-gray-400 hover:text-gray-600 transition-colors" do %>
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+        </svg>
+      <% end %>
+      <h1 class="text-2xl font-bold text-gray-900"><%= @social_template.name %></h1>
+    </div>
+    <%= link_to edit_social_template_path(@social_template), class: "inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors" do %>
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+      </svg>
+      Edit
+    <% end %>
+  </div>
+
+  <% if flash[:notice] %>
+    <div class="mb-6 px-4 py-3 rounded-lg bg-green-50 text-green-800 text-sm">
+      <%= flash[:notice] %>
+    </div>
+  <% end %>
+
+  <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+    <%# Main info section %>
+    <div class="p-6">
+      <%# Badges row %>
+      <div class="flex flex-wrap gap-2 mb-6">
+        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium <%= platform_colors[@social_template.platform] || 'bg-gray-100 text-gray-600' %> capitalize">
+          <%= @social_template.platform %>
+        </span>
+        <% if @social_template.user.present? %>
+          <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-indigo-50 text-indigo-700">
+            👤 <%= @social_template.user.name %>
+          </span>
+        <% else %>
+          <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-600">
+            🌐 Global Template
+          </span>
+        <% end %>
+      </div>
+
+      <%# Default caption %>
+      <% if @social_template.default_caption.present? %>
+        <div class="mb-6">
+          <p class="text-xs text-gray-400 uppercase tracking-wide mb-2">Default Caption</p>
+          <p class="text-gray-900 leading-relaxed whitespace-pre-wrap"><%= @social_template.default_caption %></p>
+        </div>
+      <% else %>
+        <div class="mb-6">
+          <p class="text-xs text-gray-400 uppercase tracking-wide mb-2">Default Caption</p>
+          <p class="text-gray-400 italic">No default caption</p>
+        </div>
+      <% end %>
+
+      <%# Main metadata %>
+      <dl class="grid grid-cols-2 gap-6">
+        <% if @social_template.max_caption_length.present? %>
+          <div>
+            <dt class="text-xs text-gray-400 uppercase tracking-wide mb-1">Max Caption Length</dt>
+            <dd class="text-lg text-gray-900"><%= @social_template.max_caption_length %> characters</dd>
+          </div>
+        <% end %>
+        <% if @social_template.recommended_aspect_ratio.present? %>
+          <div>
+            <dt class="text-xs text-gray-400 uppercase tracking-wide mb-1">Recommended Aspect Ratio</dt>
+            <dd class="text-lg text-gray-900"><%= @social_template.recommended_aspect_ratio %></dd>
+          </div>
+        <% end %>
+        <div>
+          <dt class="text-xs text-gray-400 uppercase tracking-wide mb-1">Posts Using Template</dt>
+          <dd class="text-2xl font-semibold text-gray-900"><%= @social_template.planned_posts.size %></dd>
+        </div>
+        <div>
+          <dt class="text-xs text-gray-400 uppercase tracking-wide mb-1">Created</dt>
+          <dd class="text-lg text-gray-900"><%= @social_template.created_at.strftime("%B %-d, %Y") %></dd>
+        </div>
+      </dl>
+    </div>
+
+    <%# Collapsible additional details %>
+    <% if @social_template.settings.present? %>
+      <div class="border-t border-gray-200" data-controller="collapse">
+        <button
+          type="button"
+          class="w-full flex items-center justify-between px-6 py-4 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+          data-action="click->collapse#toggle"
+        >
+          <span>Additional Details</span>
+          <svg class="w-5 h-5 text-gray-400 transition-transform duration-200" data-collapse-target="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+          </svg>
+        </button>
+        <div class="hidden px-6 pb-6" data-collapse-target="content">
+          <dl class="grid grid-cols-1 gap-4 text-sm">
+            <div>
+              <dt class="text-gray-400 uppercase tracking-wide text-xs mb-1">Settings</dt>
+              <dd class="text-gray-700 font-mono text-xs bg-gray-50 rounded-lg p-4 overflow-x-auto">
+                <pre><%= JSON.pretty_generate(@social_template.settings) %></pre>
+              </dd>
+            </div>
+          </dl>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>
+

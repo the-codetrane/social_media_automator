@@ -25,7 +25,7 @@
 <% else %>
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
     <% @media_assets.each do |asset| %>
-      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 flex flex-col gap-4">
+      <%= link_to media_asset_path(asset), class: "bg-white rounded-xl shadow-sm border border-gray-200 p-5 flex flex-col gap-4 hover:shadow-md hover:border-gray-300 transition-all duration-200 cursor-pointer" do %>
 
         <%# Header %>
         <div class="flex items-start justify-between gap-2">
@@ -97,7 +97,7 @@
         <p class="text-xs text-gray-400 border-t border-gray-100 pt-3 mt-auto">
           Added <%= asset.created_at.strftime("%b %-d, %Y") %>
         </p>
-      </div>
+      <% end %>
     <% end %>
   </div>
 <% end %>

@@ -1,0 +1,140 @@
+<% content_for :title, "Planned Post" %>
+
+
+<div class="max-w-3xl mx-auto">
+  <%# Header with back link and edit CTA %>
+  <div class="flex items-center justify-between mb-6">
+    <div class="flex items-center gap-4">
+      <%= link_to planned_posts_path, class: "text-gray-400 hover:text-gray-600 transition-colors" do %>
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+        </svg>
+      <% end %>
+      <h1 class="text-2xl font-bold text-gray-900">Planned Post</h1>
+    </div>
+    <%= link_to edit_planned_post_path(@planned_post), class: "inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors" do %>
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+      </svg>
+      Edit
+    <% end %>
+  </div>
+
+  <% if flash[:notice] %>
+    <div class="mb-6 px-4 py-3 rounded-lg bg-green-50 text-green-800 text-sm">
+      <%= flash[:notice] %>
+    </div>
+  <% end %>
+
+  <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+    <%# Main info section %>
+    <div class="p-6">
+      <%# Badges row %>
+      <div class="flex flex-wrap gap-2 mb-6">
+        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium <%= platform_color_classes(@planned_post.platform) %> capitalize">
+          <%= @planned_post.platform %>
+        </span>
+        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium <%= status_color_classes(@planned_post.status) %> capitalize">
+          <%= @planned_post.status %>
+        </span>
+      </div>
+
+      <%# Caption %>
+      <% if @planned_post.caption.present? %>
+        <div class="mb-6">
+          <p class="text-xs text-gray-400 uppercase tracking-wide mb-2">Caption</p>
+          <p class="text-gray-900 leading-relaxed whitespace-pre-wrap"><%= @planned_post.caption %></p>
+        </div>
+      <% end %>
+
+      <%# Hashtags %>
+      <% if @planned_post.hashtags.present? %>
+        <div class="mb-6">
+          <p class="text-xs text-gray-400 uppercase tracking-wide mb-2">Hashtags</p>
+          <p class="text-indigo-600"><%= @planned_post.hashtags %></p>
+        </div>
+      <% end %>
+
+      <%# Main metadata %>
+      <dl class="grid grid-cols-2 gap-6">
+        <% if @planned_post.scheduled_at.present? %>
+          <div>
+            <dt class="text-xs text-gray-400 uppercase tracking-wide mb-1">Scheduled At</dt>
+            <dd class="text-lg text-gray-900"><%= @planned_post.scheduled_at.strftime("%B %-d, %Y at %H:%M") %></dd>
+          </div>
+        <% end %>
+        <% if @planned_post.published_at.present? %>
+          <div>
+            <dt class="text-xs text-gray-400 uppercase tracking-wide mb-1">Published At</dt>
+            <dd class="text-lg text-green-700"><%= @planned_post.published_at.strftime("%B %-d, %Y at %H:%M") %></dd>
+          </div>
+        <% end %>
+        <div>
+          <dt class="text-xs text-gray-400 uppercase tracking-wide mb-1">Media Asset</dt>
+          <dd class="text-lg text-gray-900">
+            <%= link_to @planned_post.media_asset.external_name.presence || @planned_post.media_asset.external_id,
+                media_asset_path(@planned_post.media_asset),
+                class: "text-indigo-600 hover:text-indigo-800 hover:underline" %>
+          </dd>
+        </div>
+        <div>
+          <dt class="text-xs text-gray-400 uppercase tracking-wide mb-1">Owner</dt>
+          <dd class="text-lg text-gray-900">
+            <%= link_to @planned_post.user.name,
+                user_path(@planned_post.user),
+                class: "text-indigo-600 hover:text-indigo-800 hover:underline" %>
+          </dd>
+        </div>
+        <% if @planned_post.social_template.present? %>
+          <div>
+            <dt class="text-xs text-gray-400 uppercase tracking-wide mb-1">Template</dt>
+            <dd class="text-lg text-gray-900">
+              <%= link_to @planned_post.social_template.name,
+                  social_template_path(@planned_post.social_template),
+                  class: "text-indigo-600 hover:text-indigo-800 hover:underline" %>
+            </dd>
+          </div>
+        <% end %>
+        <div>
+          <dt class="text-xs text-gray-400 uppercase tracking-wide mb-1">Created</dt>
+          <dd class="text-lg text-gray-900"><%= @planned_post.created_at.strftime("%B %-d, %Y") %></dd>
+        </div>
+      </dl>
+    </div>
+
+    <%# Collapsible additional details %>
+    <% if @planned_post.external_post_id.present? || @planned_post.platform_payload.present? %>
+      <div class="border-t border-gray-200" data-controller="collapse">
+        <button
+          type="button"
+          class="w-full flex items-center justify-between px-6 py-4 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+          data-action="click->collapse#toggle"
+        >
+          <span>Additional Details</span>
+          <svg class="w-5 h-5 text-gray-400 transition-transform duration-200" data-collapse-target="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+          </svg>
+        </button>
+        <div class="hidden px-6 pb-6" data-collapse-target="content">
+          <dl class="grid grid-cols-1 gap-4 text-sm">
+            <% if @planned_post.external_post_id.present? %>
+              <div>
+                <dt class="text-gray-400 uppercase tracking-wide text-xs mb-1">External Post ID</dt>
+                <dd class="text-gray-700 font-mono break-all"><%= @planned_post.external_post_id %></dd>
+              </div>
+            <% end %>
+            <% if @planned_post.platform_payload.present? %>
+              <div>
+                <dt class="text-gray-400 uppercase tracking-wide text-xs mb-1">Platform Payload</dt>
+                <dd class="text-gray-700 font-mono text-xs bg-gray-50 rounded-lg p-4 overflow-x-auto">
+                  <pre><%= JSON.pretty_generate(@planned_post.platform_payload) %></pre>
+                </dd>
+              </div>
+            <% end %>
+          </dl>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>
+

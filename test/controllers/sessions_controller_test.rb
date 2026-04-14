@@ -3,6 +3,8 @@ require "test_helper"
 class SessionsControllerTest < ActionDispatch::IntegrationTest
   setup { @user = User.take }
 
+  # Singular resource :session routes
+
   test "new" do
     get new_session_path
     assert_response :success
@@ -31,6 +33,9 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
     assert_empty cookies[:session_id]
   end
 
+
+  # Plural resources :sessions routes
+
   test "index redirects when not signed in" do
     get sessions_path
     assert_redirected_to new_session_path
@@ -53,5 +58,18 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(@user)
     get sessions_path
     assert_match "Current", response.body
+  end
+
+  # Root path
+
+  test "root redirects when not signed in" do
+    get root_path
+    assert_redirected_to new_session_path
+  end
+
+  test "root returns success when signed in" do
+    sign_in_as(@user)
+    get root_path
+    assert_response :success
   end
 end
