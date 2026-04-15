@@ -20,7 +20,7 @@ class Instagram::AuthControllerTest < ActionDispatch::IntegrationTest
   test "connect: assigns @auth_url containing the Meta OAuth endpoint" do
     sign_in_as users(:one)
     get instagram_connect_path
-    assert_match %r{https://www\.instagram\.com/oauth/authorize},
+    assert_match %r{https://www\.facebook\.com/v25\.0/dialog/oauth},
                  @controller.view_assigns["auth_url"]
   end
 
@@ -35,9 +35,9 @@ class Instagram::AuthControllerTest < ActionDispatch::IntegrationTest
     sign_in_as users(:one)
     get instagram_connect_path
     auth_url = @controller.view_assigns["auth_url"]
-    assert_match "instagram_business_basic",          auth_url
-    assert_match "instagram_manage_comments",         auth_url
-    assert_match "instagram_business_manage_messages", auth_url
+    assert_match "instagram_basic",          auth_url
+    assert_match "instagram_manage_comments", auth_url
+    assert_match "pages_show_list",           auth_url
   end
 
   test "connect: unauthenticated request redirects to sign-in" do

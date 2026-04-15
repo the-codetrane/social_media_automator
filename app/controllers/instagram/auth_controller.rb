@@ -2,12 +2,14 @@
 
 module Instagram
   class AuthController < ApplicationController
-    OAUTH_URL    = "https://www.instagram.com/oauth/authorize"
+    OAUTH_URL    = "https://www.facebook.com/v25.0/dialog/oauth"
     OAUTH_SCOPES = %w[
-      instagram_business_basic
+      instagram_basic
       instagram_content_publish
       instagram_manage_comments
-      instagram_business_manage_messages
+      pages_show_list
+      pages_read_engagement
+      business_management
     ].freeze
 
     # GET /instagram/connect
