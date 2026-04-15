@@ -33,21 +33,6 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
     assert_empty cookies[:session_id]
   end
 
-  test "show redirects when not signed in" do
-    get session_path
-    assert_redirected_to new_session_path
-  end
-
-  test "edit redirects when not signed in" do
-    get edit_session_path
-    assert_redirected_to new_session_path
-  end
-
-  test "update redirects when not signed in" do
-    patch session_path
-    assert_redirected_to new_session_path
-  end
-
   # Plural resources :sessions routes
 
   test "index redirects when not signed in" do

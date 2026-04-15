@@ -62,4 +62,3 @@ namespace :spaces do
     puts "✗ Connection failed: #{e.message}"
   end
 end# frozen_string_literal: true
-
