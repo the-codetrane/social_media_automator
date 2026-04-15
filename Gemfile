@@ -40,6 +40,9 @@ gem "thruster", require: false
 # Use Active Storage variants [https://guides.rubyonrails.org/active_storage_overview.html#transforming-images]
 gem "image_processing", "~> 1.2"
 
+# AWS S3 SDK for DigitalOcean Spaces (S3-compatible)
+gem "aws-sdk-s3", require: false
+
 # HTTP client used for Meta/Instagram API calls
 gem "faraday", "~> 2.0"
 gem "faraday-retry", "~> 2.0"

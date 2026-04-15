@@ -111,4 +111,37 @@ class MediaAssetTest < ActiveSupport::TestCase
   test "has many planned_posts" do
     assert_respond_to media_assets(:sample_image), :planned_posts
   end
+
+  # ---------------------------------------------------------------------------
+  # #public_url
+  # ---------------------------------------------------------------------------
+  test "public_url returns URL from raw_metadata when file not attached" do
+    asset = media_assets(:sample_image)
+    assert_equal "https://cdn.example.com/sunset.jpg", asset.public_url
+  end
+
+  test "public_url returns nil when raw_metadata is empty and file not attached" do
+    asset = media_assets(:sample_image_no_url)
+    assert_nil asset.public_url
+  end
+
+  test "public_url? returns true when URL is present" do
+    asset = media_assets(:sample_image)
+    assert asset.public_url?
+  end
+
+  test "public_url? returns false when URL is nil" do
+    asset = media_assets(:sample_image_no_url)
+    assert_not asset.public_url?
+  end
+
+  test "public_url parses raw_metadata string if needed" do
+    asset = media_assets(:sample_image)
+    asset.raw_metadata = '{"public_url": "https://example.com/test.jpg"}'
+    assert_equal "https://example.com/test.jpg", asset.public_url
+  end
+
+  test "has_one_attached :file" do
+    assert_respond_to media_assets(:sample_image), :file
+  end
 end

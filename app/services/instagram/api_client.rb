@@ -12,7 +12,7 @@ module Instagram
   #   client.get("me/accounts")
   #   client.post("#{ig_id}/media", image_url: "...", caption: "...")
   class ApiClient
-    BASE_URL     = "https://graph.facebook.com/v21.0/"
+    BASE_URL     = "https://graph.facebook.com/v25.0/"
     MAX_RETRIES  = 3
 
     # @param user [User] must have instagram_access_token present
