@@ -25,6 +25,15 @@ Rails.application.routes.draw do
     post "select_account", to: "auth#select_account",  as: :select_account
   end
 
+  # API endpoints
+  namespace :api do
+    resources :planned_posts, only: [ :create ] do
+      collection do
+        post :bulk_create
+      end
+    end
+  end
+
   # Defines the root path route ("/")
   root to: "users#index"
 end
