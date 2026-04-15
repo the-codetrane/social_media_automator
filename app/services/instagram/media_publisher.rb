@@ -35,7 +35,9 @@ module Instagram
       validate_carousel_asset_count!(planned_post)
 
       ig_media_id =
-        if carousel_post?(planned_post)
+        if story_post?(planned_post)
+          publish_story(planned_post)
+        elsif carousel_post?(planned_post)
           publish_carousel(planned_post)
         elsif planned_post.media_asset.video?
           publish_video(planned_post)
@@ -58,6 +60,26 @@ module Instagram
     # ------------------------------------------------------------------
     # Content-type-specific publish methods (also callable directly)
     # ------------------------------------------------------------------
+
+    # Publish a single image or video as an Instagram Story.
+    # Stories do not support captions via the API.
+    #
+    # @param planned_post [PlannedPost]
+    # @return [String] ig_media_id
+    def publish_story(planned_post)
+      asset = planned_post.media_asset
+
+      params = { media_type: "STORIES" }
+      if asset.video?
+        params[:video_url] = resolve_public_url!(asset)
+      else
+        params[:image_url] = resolve_public_url!(asset)
+      end
+
+      creation_id = create_container(params)
+      wait_until_finished!(creation_id)
+      publish_container(creation_id)
+    end
 
     # Publish a single photo.
     # Requires planned_post.media_asset to be an image with a public_url.
@@ -195,6 +217,10 @@ module Instagram
       parts.join("\n\n")
     end
 
+    def story_post?(planned_post)
+      planned_post.platform_payload&.dig("post_type") == "story"
+    end
+
     def carousel_post?(planned_post)
       ids = carousel_asset_ids(planned_post)
       ids.size > 1
@@ -212,14 +238,15 @@ module Instagram
     end
 
     # Return the public HTTPS URL for a MediaAsset.
-    # Override / extend this method when you add Active Storage + CDN support.
+    # Uses ActiveStorage (DigitalOcean Spaces) or falls back to raw_metadata["public_url"].
     def resolve_public_url!(asset)
-      # Prefer an explicit public_url stored in raw_metadata (e.g. from a CDN
-      # upload step performed before scheduling the post).
-      metadata = asset.raw_metadata
-      metadata = JSON.parse(metadata) if metadata.is_a?(String)
-      url = metadata&.dig("public_url")
-      raise Instagram::ApiError, "MediaAsset #{asset.id} has no public URL. Upload the file to a public CDN before publishing." if url.blank?
+      url = asset.public_url
+
+      if url.blank?
+        raise Instagram::ApiError,
+              "MediaAsset #{asset.id} has no public URL. " \
+              "Attach a file via ActiveStorage or set raw_metadata[\"public_url\"]."
+      end
 
       url
     end

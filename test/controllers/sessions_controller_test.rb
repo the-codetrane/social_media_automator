@@ -33,7 +33,6 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
     assert_empty cookies[:session_id]
   end
 
-
   # Plural resources :sessions routes
 
   test "index redirects when not signed in" do

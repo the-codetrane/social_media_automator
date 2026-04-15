@@ -244,16 +244,15 @@ module Instagram
       parts.join("\n\n")
     end
 
-    # Return the public HTTPS URL stored in the asset's raw_metadata["public_url"].
+    # Return the public HTTPS URL for a MediaAsset.
+    # Uses ActiveStorage (DigitalOcean Spaces) or falls back to raw_metadata["public_url"].
     def resolve_public_url!(asset)
-      metadata = asset.raw_metadata
-      metadata = JSON.parse(metadata) if metadata.is_a?(String)
-      url = metadata&.dig("public_url")
+      url = asset.public_url
 
       if url.blank?
         raise Instagram::ApiError,
               "MediaAsset #{asset.id} has no public URL. " \
-              "Upload the file to a public CDN before publishing."
+              "Attach a file via ActiveStorage or set raw_metadata[\"public_url\"]."
       end
 
       url

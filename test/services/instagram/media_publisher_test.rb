@@ -253,6 +253,44 @@ module Instagram
     end
 
     # -------------------------------------------------------------------------
+    # Story publishing via publish()
+    # -------------------------------------------------------------------------
+
+    test "publish dispatches to publish_story when platform_payload contains post_type story" do
+      post  = planned_posts(:draft_post)
+      post.update!(platform_payload: { "post_type" => "story" })
+
+      ig_id = @user.instagram_user_id
+      container_id = "cont_story_001"
+      media_id     = "ig_story_001"
+
+      captured_params = nil
+      mock_client = Object.new
+      mock_client.define_singleton_method(:publishing_limit) { |_| { "data" => [ { "quota_usage" => 0, "config" => { "quota_total" => 25 } } ] } }
+      mock_client.define_singleton_method(:get) { |*_| { "status_code" => "FINISHED" } }
+      mock_client.define_singleton_method(:post) do |path, body = {}|
+        if path.end_with?("/media_publish")
+          { "id" => media_id }
+        else
+          captured_params = body
+          { "id" => container_id }
+        end
+      end
+
+      @publisher.instance_variable_set(:@client, mock_client)
+
+      result = @publisher.publish(post)
+
+      assert_equal media_id, result
+      # Verify STORIES media_type was used
+      assert_equal "STORIES", captured_params[:media_type]
+      # Stories should use image_url (since the fixture is an image)
+      assert_not_nil captured_params[:image_url]
+      # Stories should NOT have a caption
+      assert_nil captured_params[:caption]
+    end
+
+    # -------------------------------------------------------------------------
     # Skipping non-instagram / already-published posts (via the job)
     # -------------------------------------------------------------------------
 
