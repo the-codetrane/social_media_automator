@@ -20,7 +20,10 @@ servers:
 # Using an SSL proxy like this requires turning on config.assume_ssl and config.force_ssl in production.rb!
 proxy:
   ssl: true
-  host: socialmediautomator.cainandco.band
+  # Accept requests to both the domain and direct IP address
+  hosts:
+    - socialmediautomator.cainandco.band
+    - 143.198.143.65
   # Forward health check requests to the app
   healthcheck:
     path: /up
