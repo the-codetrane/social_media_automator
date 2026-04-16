@@ -97,6 +97,37 @@ class PlannedPostsControllerTest < ActionDispatch::IntegrationTest
     assert_select "a[href=?]", media_asset_path(@planned_post.media_asset)
   end
 
+  test "show displays image media preview" do
+    sign_in_as(@user)
+    get planned_post_path(@planned_post)
+    assert_select "img[src=?]", @planned_post.media_asset.public_url
+  end
+
+  test "show displays video media preview" do
+    sign_in_as(@user)
+    video_post = planned_posts(:scheduled_post)
+    get planned_post_path(video_post)
+    assert_select "video" do
+      assert_select "source[src=?]", video_post.media_asset.public_url
+    end
+  end
+
+  test "show does not display media preview when no public url" do
+    sign_in_as(@user)
+    # Create a post with media asset that has no public URL
+    post_no_url = PlannedPost.create!(
+      user: @user,
+      media_asset: media_assets(:sample_image_no_url),
+      platform: :instagram,
+      status: :draft,
+      caption: "Test post"
+    )
+    get planned_post_path(post_no_url)
+    assert_response :success
+    assert_select "img", count: 0
+    assert_select "video", count: 0
+  end
+
   # Edit action tests
   test "edit redirects when not signed in" do
     get edit_planned_post_path(@planned_post)
