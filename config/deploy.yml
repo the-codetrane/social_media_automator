@@ -22,8 +22,7 @@ proxy:
   ssl: true
   # Accept requests to both the domain and direct IP address
   hosts:
-    - socialmediautomator.cainandco.band
-    - 143.198.143.65
+    - socialmediaautomator.cainandco.band
   # Forward health check requests to the app
   healthcheck:
     path: /up
