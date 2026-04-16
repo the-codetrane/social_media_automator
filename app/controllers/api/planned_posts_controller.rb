@@ -1,6 +1,39 @@
-            params: post_params.except(:user_id, :media_url),
-            errors: [ "Media asset error: #{service.error}" ]
-      # If media_asset_id is provided, use it directly
+# frozen_string_literal: true
+
+module Api
+  class PlannedPostsController < BaseController
+    def create
+      resolved = resolve_media_assets(params[:planned_post])
+      return if performed?
+
+      post_attrs = planned_post_params.merge(media_asset_id: resolved[:primary_id])
+      post_attrs = merge_carousel_payload(post_attrs, resolved[:all_ids]) if resolved[:all_ids].size > 1
+
+      planned_post = PlannedPost.new(post_attrs)
+
+      if planned_post.save
+        render json: planned_post_response(planned_post), status: :created
+      else
+        render json: { errors: planned_post.errors.full_messages }, status: :unprocessable_entity
+      end
+    end
+
+    def bulk_create
+      results = { created: [], errors: [] }
+
+      planned_posts_params.each_with_index do |post_params, index|
+        resolved = resolve_media_assets_for_bulk(post_params, results, index)
+        next if resolved.nil?
+
+        post_attrs = post_params.except(:media_url, :media_urls).merge(media_asset_id: resolved[:primary_id])
+        post_attrs = merge_carousel_payload(post_attrs, resolved[:all_ids]) if resolved[:all_ids].size > 1
+
+        planned_post = PlannedPost.new(post_attrs)
+
+        if planned_post.save
+          results[:created] << planned_post_response(planned_post)
+        else
+          results[:errors] << {
             index: index,
             params: post_params.except(:user_id, :media_url, :media_urls),
             errors: planned_post.errors.full_messages
@@ -9,7 +42,7 @@
       end
 
       status = results[:errors].any? ? :multi_status : :created
-            params: post_params.except(:user_id, :media_url),
+      render json: results, status: status
     end
 
     private
@@ -17,8 +50,34 @@
     # Resolves media assets from various input formats.
     # Supports: media_asset_id, media_url (single), media_urls (array for carousels)
     #
-    def resolve_media_asset_id(post_params)
-      # If media_asset_id is provided, use it directly
+    # @param post_params [ActionController::Parameters]
+    # @return [Hash] { primary_id: Integer, all_ids: Array<Integer> } or renders error
+    def resolve_media_assets(post_params)
+      # Priority 1: Array of URLs for carousel posts
+      if post_params[:media_urls].present?
+        urls = Array(post_params[:media_urls])
+        asset_ids = []
+
+        urls.each_with_index do |url, idx|
+          service = MediaAssetFromUrlService.new(url)
+          if service.call
+            asset_ids << service.media_asset.id
+          else
+            render json: { errors: [ "Media asset error at index #{idx}: #{service.error}" ] }, status: :unprocessable_entity
+            return nil
+          end
+        end
+
+        return { primary_id: asset_ids.first, all_ids: asset_ids }
+      end
+
+      # Priority 2: Single media_asset_id
+      if post_params[:media_asset_id].present?
+        id = post_params[:media_asset_id]
+        return { primary_id: id, all_ids: [ id ] }
+      end
+
+      # Priority 3: Single media_url
       if post_params[:media_url].present?
         service = MediaAssetFromUrlService.new(post_params[:media_url])
         if service.call
@@ -86,7 +145,6 @@
       end
 
       # Neither provided - will fail validation later
-      nil
       { primary_id: nil, all_ids: [] }
     end
 
@@ -113,8 +171,6 @@
         :caption,
         :hashtags,
         :scheduled_at,
-        platform_payload: {}
-      ).except(:media_url)
         platform_payload: {},
         media_urls: []
       ).except(:media_url, :media_urls)
@@ -132,7 +188,6 @@
           :caption,
           :hashtags,
           :scheduled_at,
-          platform_payload: {}
           platform_payload: {},
           media_urls: []
         )
