@@ -178,4 +178,29 @@ class MediaAssetsControllerTest < ActionDispatch::IntegrationTest
     follow_redirect!
     assert_match "successfully updated", response.body
   end
+
+  # URL decoding tests
+  test "index decodes URL-encoded names" do
+    sign_in_as(@user)
+    get media_assets_path
+    # Should show decoded name, not URL-encoded
+    assert_match "Big Guys BBQ", response.body
+    assert_no_match(/%20/, response.body.scan(/Big.*BBQ/).first || "")
+  end
+
+  test "show decodes URL-encoded name in heading" do
+    sign_in_as(@user)
+    url_encoded_asset = media_assets(:url_encoded_name)
+    get media_asset_path(url_encoded_asset)
+    assert_match "Big Guys BBQ", response.body
+    # The h1 should contain decoded name
+    assert_select "h1", text: /Big Guys BBQ/
+  end
+
+  test "show decodes URL-encoded name in title" do
+    sign_in_as(@user)
+    url_encoded_asset = media_assets(:url_encoded_name)
+    get media_asset_path(url_encoded_asset)
+    assert_select "title", text: /Big Guys BBQ/
+  end
 end

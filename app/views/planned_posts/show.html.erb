@@ -47,7 +47,7 @@
             <% if @planned_post.media_asset.image? %>
               <%= image_tag @planned_post.media_asset.public_url,
                   class: "w-full h-auto object-contain",
-                  alt: @planned_post.media_asset.external_name.presence || "Media asset" %>
+                  alt: decode_name(@planned_post.media_asset.external_name.presence || "Media asset") %>
             <% elsif @planned_post.media_asset.video? %>
               <video
                 controls
@@ -95,7 +95,7 @@
         <div>
           <dt class="text-xs text-gray-400 uppercase tracking-wide mb-1">Media Asset</dt>
           <dd class="text-lg text-gray-900">
-            <%= link_to @planned_post.media_asset.external_name.presence || @planned_post.media_asset.external_id,
+            <%= link_to decode_name(@planned_post.media_asset.external_name.presence || @planned_post.media_asset.external_id),
                 media_asset_path(@planned_post.media_asset),
                 class: "text-indigo-600 hover:text-indigo-800 hover:underline" %>
           </dd>

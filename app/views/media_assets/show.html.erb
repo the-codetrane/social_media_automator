@@ -1,4 +1,4 @@
-<% content_for :title, @media_asset.external_name.presence || @media_asset.external_id %>
+<% content_for :title, decode_name(@media_asset.external_name.presence || @media_asset.external_id) %>
 
 <%
   status_colors = {
@@ -22,7 +22,7 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
         </svg>
       <% end %>
-      <h1 class="text-2xl font-bold text-gray-900"><%= @media_asset.external_name.presence || @media_asset.external_id %></h1>
+      <h1 class="text-2xl font-bold text-gray-900"><%= decode_name(@media_asset.external_name.presence || @media_asset.external_id) %></h1>
     </div>
     <%= link_to edit_media_asset_path(@media_asset), class: "inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors" do %>
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -59,7 +59,7 @@
             <% if @media_asset.image? %>
               <%= image_tag @media_asset.public_url,
                   class: "w-full h-auto object-contain",
-                  alt: @media_asset.external_name.presence || "Media asset" %>
+                  alt: decode_name(@media_asset.external_name.presence || "Media asset") %>
             <% elsif @media_asset.video? %>
               <video
                 controls

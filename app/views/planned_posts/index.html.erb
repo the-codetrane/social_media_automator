@@ -56,7 +56,7 @@
           <div class="col-span-2">
             <dt class="text-gray-400 uppercase tracking-wide">Media Asset</dt>
             <dd class="text-gray-700 truncate">
-              <%= post.media_asset&.external_name.presence || post.media_asset&.external_id || "—" %>
+              <%= decode_name(post.media_asset&.external_name.presence || post.media_asset&.external_id) || "—" %>
             </dd>
           </div>
           <div class="col-span-2">
