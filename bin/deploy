@@ -1,0 +1,152 @@
+#!/bin/bash
+set -e
+
+# Social Media Automator - Deployment Script
+# Usage: bin/deploy [setup|deploy|logs|console|rollback]
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+print_status() {
+  echo -e "${GREEN}==>${NC} $1"
+}
+
+print_warning() {
+  echo -e "${YELLOW}Warning:${NC} $1"
+}
+
+print_error() {
+  echo -e "${RED}Error:${NC} $1"
+}
+
+check_prerequisites() {
+  print_status "Checking prerequisites..."
+
+  # Check for Docker
+  if ! command -v docker &> /dev/null; then
+    print_error "Docker is not installed. Please install Docker first."
+    exit 1
+  fi
+
+  # Check for Kamal
+  if ! command -v kamal &> /dev/null; then
+    print_warning "Kamal not found in PATH. Installing via bundler..."
+    bundle install
+  fi
+
+  # Check for master.key
+  if [ ! -f config/master.key ]; then
+    print_error "config/master.key not found. This file is required for deployment."
+    exit 1
+  fi
+
+  # Check for KAMAL_REGISTRY_PASSWORD
+  if [ -z "$KAMAL_REGISTRY_PASSWORD" ]; then
+    print_error "KAMAL_REGISTRY_PASSWORD environment variable is not set."
+    echo "Set it with: export KAMAL_REGISTRY_PASSWORD=your_github_or_docker_token"
+    exit 1
+  fi
+
+  print_status "All prerequisites satisfied!"
+}
+
+setup() {
+  print_status "Setting up deployment environment..."
+  check_prerequisites
+
+  print_status "Bootstrapping server with Kamal..."
+  bin/kamal setup
+
+  print_status "Setup complete! Your application should now be running."
+}
+
+deploy() {
+  print_status "Deploying application..."
+  check_prerequisites
+
+  print_status "Running deployment with Kamal..."
+  bin/kamal deploy
+
+  print_status "Deployment complete!"
+}
+
+deploy_with_migrations() {
+  print_status "Deploying application with database migrations..."
+  check_prerequisites
+
+  print_status "Running deployment with migrations..."
+  bin/kamal deploy
+
+  print_status "Deployment with migrations complete!"
+}
+
+rollback() {
+  print_status "Rolling back to previous version..."
+  bin/kamal rollback
+  print_status "Rollback complete!"
+}
+
+logs() {
+  print_status "Tailing application logs..."
+  bin/kamal logs -f
+}
+
+console() {
+  print_status "Opening Rails console..."
+  bin/kamal console
+}
+
+shell() {
+  print_status "Opening shell on server..."
+  bin/kamal shell
+}
+
+status() {
+  print_status "Checking application status..."
+  bin/kamal app details
+}
+
+# Parse command
+case "${1:-deploy}" in
+  setup)
+    setup
+    ;;
+  deploy)
+    deploy
+    ;;
+  deploy:migrations)
+    deploy_with_migrations
+    ;;
+  rollback)
+    rollback
+    ;;
+  logs)
+    logs
+    ;;
+  console)
+    console
+    ;;
+  shell)
+    shell
+    ;;
+  status)
+    status
+    ;;
+  *)
+    echo "Usage: bin/deploy [setup|deploy|deploy:migrations|rollback|logs|console|shell|status]"
+    echo ""
+    echo "Commands:"
+    echo "  setup              - Initial server setup (run once for new servers)"
+    echo "  deploy             - Deploy the application"
+    echo "  deploy:migrations  - Deploy with database migrations"
+    echo "  rollback           - Rollback to previous version"
+    echo "  logs               - Tail application logs"
+    echo "  console            - Open Rails console on server"
+    echo "  shell              - Open shell on server"
+    echo "  status             - Check application status"
+    exit 1
+    ;;
+esac
+
