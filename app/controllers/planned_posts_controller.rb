@@ -1,13 +1,18 @@
 # frozen_string_literal: true
 
 class PlannedPostsController < ApplicationController
-  before_action :set_planned_post, only: %i[show edit update]
+  before_action :set_planned_post, only: %i[show edit update publish]
 
   def index
     @planned_posts = PlannedPost.includes(:user, :media_asset, :social_template).order(created_at: :desc)
   end
 
   def show
+  end
+
+  def publish
+    PublishInstagramPostJob.perform_later(@planned_post.id)
+    redirect_to @planned_post, notice: "Publishing to Instagram has been queued."
   end
 
   def edit
