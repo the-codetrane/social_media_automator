@@ -51,6 +51,29 @@
         </span>
       </div>
 
+      <%# Media Preview %>
+      <% if @media_asset.public_url? %>
+        <div class="mb-6">
+          <p class="text-xs text-gray-400 uppercase tracking-wide mb-2">Preview</p>
+          <div class="rounded-lg overflow-hidden bg-gray-100 max-w-md">
+            <% if @media_asset.image? %>
+              <%= image_tag @media_asset.public_url,
+                  class: "w-full h-auto object-contain",
+                  alt: @media_asset.external_name.presence || "Media asset" %>
+            <% elsif @media_asset.video? %>
+              <video
+                controls
+                class="w-full h-auto"
+                preload="metadata"
+              >
+                <source src="<%= @media_asset.public_url %>" type="<%= @media_asset.mime_type || 'video/mp4' %>">
+                Your browser does not support the video tag.
+              </video>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+
       <%# Main metadata %>
       <dl class="grid grid-cols-2 gap-6 mb-6">
         <% if @media_asset.width.present? && @media_asset.height.present? %>

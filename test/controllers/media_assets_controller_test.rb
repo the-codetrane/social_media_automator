@@ -49,6 +49,26 @@ class MediaAssetsControllerTest < ActionDispatch::IntegrationTest
     assert_match "31s", response.body
   end
 
+  test "index displays image thumbnail preview" do
+    sign_in_as(@user)
+    get media_assets_path
+    assert_select "img[src=?]", @media_asset.public_url
+  end
+
+  test "index displays video thumbnail preview" do
+    sign_in_as(@user)
+    get media_assets_path
+    video_asset = media_assets(:sample_video)
+    assert_select "video source[src=?]", video_asset.public_url
+  end
+
+  test "index displays placeholder when no public url" do
+    sign_in_as(@user)
+    get media_assets_path
+    # Should have placeholder SVG for assets without public URL
+    assert_select "svg"
+  end
+
   # Show action tests
   test "show redirects when not signed in" do
     get media_asset_path(@media_asset)
@@ -85,6 +105,30 @@ class MediaAssetsControllerTest < ActionDispatch::IntegrationTest
     get media_asset_path(@media_asset)
     assert_match "#{@media_asset.width}", response.body
     assert_match "#{@media_asset.height}", response.body
+  end
+
+  test "show displays image media preview" do
+    sign_in_as(@user)
+    get media_asset_path(@media_asset)
+    assert_select "img[src=?]", @media_asset.public_url
+  end
+
+  test "show displays video media preview" do
+    sign_in_as(@user)
+    video_asset = media_assets(:sample_video)
+    get media_asset_path(video_asset)
+    assert_select "video" do
+      assert_select "source[src=?]", video_asset.public_url
+    end
+  end
+
+  test "show does not display media preview when no public url" do
+    sign_in_as(@user)
+    asset_no_url = media_assets(:sample_image_no_url)
+    get media_asset_path(asset_no_url)
+    assert_response :success
+    assert_select "img", count: 0
+    assert_select "video", count: 0
   end
 
   # Edit action tests
