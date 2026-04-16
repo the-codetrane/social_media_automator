@@ -197,4 +197,28 @@ class PlannedPostsControllerTest < ActionDispatch::IntegrationTest
     follow_redirect!
     assert_match "successfully updated", response.body
   end
+
+  # URL decoding tests
+  test "index decodes URL-encoded media asset names" do
+    sign_in_as(@user)
+    get planned_posts_path
+    # Should show decoded name, not URL-encoded
+    assert_match "Big Guys BBQ", response.body
+  end
+
+  test "show decodes URL-encoded media asset name in link" do
+    sign_in_as(@user)
+    url_encoded_post = planned_posts(:url_encoded_asset_post)
+    get planned_post_path(url_encoded_post)
+    # The media asset link text should be decoded
+    assert_match "Big Guys BBQ", response.body
+    assert_select "a[href=?]", media_asset_path(url_encoded_post.media_asset), text: /Big Guys BBQ/
+  end
+
+  test "edit decodes URL-encoded media asset names in dropdown" do
+    sign_in_as(@user)
+    get edit_planned_post_path(@planned_post)
+    # The select dropdown should show decoded names
+    assert_match "Big Guys BBQ", response.body
+  end
 end

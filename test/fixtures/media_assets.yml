@@ -65,3 +65,21 @@ sample_video:
   last_processed_at: <%= 1.day.ago %>
   created_at: <%= Time.current %>
   updated_at: <%= Time.current %>
+
+url_encoded_name:
+  id: <%= ActiveRecord::FixtureSet.identify(:url_encoded_name) %>
+  external_id: "gdrive_file_005"
+  external_name: "092025-Big%20Guys%20BBQ-Web-18.jpg"
+  mime_type: "image/jpeg"
+  file_size: 2048000
+  media_type: 0
+  width: 1080
+  height: 1080
+  duration_seconds: ~
+  raw_metadata: '{"public_url": "https://cdn.example.com/bbq.jpg"}'
+  status: 1
+  first_seen_at: <%= 1.day.ago %>
+  last_processed_at: <%= 1.hour.ago %>
+  created_at: <%= Time.current %>
+  updated_at: <%= Time.current %>
+

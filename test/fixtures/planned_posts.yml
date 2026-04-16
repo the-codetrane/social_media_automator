@@ -45,3 +45,20 @@ published_post:
   user_id: <%= ActiveRecord::FixtureSet.identify(:one) %>
   created_at: <%= Time.current %>
   updated_at: <%= Time.current %>
+
+url_encoded_asset_post:
+  id: <%= ActiveRecord::FixtureSet.identify(:url_encoded_asset_post) %>
+  media_asset_id: <%= ActiveRecord::FixtureSet.identify(:url_encoded_name) %>
+  social_template_id: ~
+  platform: 0
+  caption: "BBQ time! 🍖"
+  hashtags: "#bbq #food"
+  platform_payload: ~
+  status: 0
+  scheduled_at: ~
+  published_at: ~
+  external_post_id: ~
+  user_id: <%= ActiveRecord::FixtureSet.identify(:one) %>
+  created_at: <%= Time.current %>
+  updated_at: <%= Time.current %>
+
