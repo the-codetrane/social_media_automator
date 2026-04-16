@@ -6,7 +6,11 @@ Rails.application.routes.draw do
   # Model index pages
   resources :users,            only: [ :index, :show, :edit, :update ]
   resources :media_assets,     only: [ :index, :show, :edit, :update ]
-  resources :planned_posts,    only: [ :index, :show, :edit, :update ]
+  resources :planned_posts,    only: [ :index, :show, :edit, :update ] do
+    member do
+      post :publish
+    end
+  end
   resources :social_templates, only: [ :index, :show, :edit, :update ]
   resources :sessions,         only: [ :index ]
 
