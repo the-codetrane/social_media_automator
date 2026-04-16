@@ -140,7 +140,7 @@ module Api
              headers: api_headers
 
         json = response.parsed_body
-        expected_keys = %w[id user_id media_asset_id social_template_id platform status caption hashtags scheduled_at created_at updated_at]
+        expected_keys = %w[id user_id media_asset_id social_template_id platform status caption hashtags scheduled_at platform_payload created_at updated_at]
         assert_equal expected_keys.sort, json.keys.sort
       end
     end
@@ -229,6 +229,158 @@ module Api
 
         assert_response :unprocessable_entity
         assert_includes response.parsed_body["errors"], "Media asset must exist"
+      end
+    end
+
+    # ===========================================
+    # Create Action Tests (with media_urls array for carousels)
+    # ===========================================
+
+    test "create with media_urls array creates carousel post" do
+      stub_api_key do
+        media_urls = [
+          "https://spaces.digitalocean.com/bucket/image1.jpg",
+          "https://spaces.digitalocean.com/bucket/image2.jpg",
+          "https://spaces.digitalocean.com/bucket/image3.jpg"
+        ]
+
+        assert_difference("PlannedPost.count", 1) do
+          assert_difference("MediaAsset.count", 3) do
+            post api_planned_posts_path,
+                 params: { planned_post: valid_params_with_urls(media_urls) },
+                 headers: api_headers
+          end
+        end
+
+        assert_response :created
+        json = response.parsed_body
+        assert_not_nil json["media_asset_id"]
+        assert_not_nil json["platform_payload"]
+        assert_equal 3, json["platform_payload"]["carousel_asset_ids"].length
+      end
+    end
+
+    test "create with media_urls sets first asset as primary media_asset_id" do
+      stub_api_key do
+        media_urls = [
+          "https://spaces.digitalocean.com/bucket/first.jpg",
+          "https://spaces.digitalocean.com/bucket/second.jpg"
+        ]
+
+        post api_planned_posts_path,
+             params: { planned_post: valid_params_with_urls(media_urls) },
+             headers: api_headers
+
+        assert_response :created
+        json = response.parsed_body
+        carousel_ids = json["platform_payload"]["carousel_asset_ids"]
+        assert_equal json["media_asset_id"], carousel_ids.first
+      end
+    end
+
+    test "create with media_urls preserves order in carousel_asset_ids" do
+      stub_api_key do
+        media_urls = [
+          "https://spaces.digitalocean.com/bucket/a.jpg",
+          "https://spaces.digitalocean.com/bucket/b.jpg",
+          "https://spaces.digitalocean.com/bucket/c.jpg"
+        ]
+
+        post api_planned_posts_path,
+             params: { planned_post: valid_params_with_urls(media_urls) },
+             headers: api_headers
+
+        assert_response :created
+        json = response.parsed_body
+        carousel_ids = json["platform_payload"]["carousel_asset_ids"]
+
+        # Verify each asset matches the expected URL order
+        carousel_ids.each_with_index do |asset_id, idx|
+          asset = MediaAsset.find(asset_id)
+          expected_filename = File.basename(media_urls[idx])
+          assert_equal expected_filename, asset.external_name
+        end
+      end
+    end
+
+    test "create with single media_url does not set carousel_asset_ids" do
+      stub_api_key do
+        media_url = "https://spaces.digitalocean.com/bucket/single.jpg"
+
+        post api_planned_posts_path,
+             params: { planned_post: valid_params_with_url(media_url) },
+             headers: api_headers
+
+        assert_response :created
+        json = response.parsed_body
+        assert_nil json.dig("platform_payload", "carousel_asset_ids")
+      end
+    end
+
+    test "create with media_urls reuses existing media assets" do
+      stub_api_key do
+        media_urls = [
+          "https://spaces.digitalocean.com/bucket/reuse1.jpg",
+          "https://spaces.digitalocean.com/bucket/reuse2.jpg"
+        ]
+
+        # First request creates the media assets
+        post api_planned_posts_path,
+             params: { planned_post: valid_params_with_urls(media_urls) },
+             headers: api_headers
+        first_carousel_ids = response.parsed_body["platform_payload"]["carousel_asset_ids"]
+
+        # Second request should reuse the same media assets
+        assert_difference("PlannedPost.count", 1) do
+          assert_no_difference("MediaAsset.count") do
+            post api_planned_posts_path,
+                 params: { planned_post: valid_params_with_urls(media_urls) },
+                 headers: api_headers
+          end
+        end
+
+        second_carousel_ids = response.parsed_body["platform_payload"]["carousel_asset_ids"]
+        assert_equal first_carousel_ids, second_carousel_ids
+      end
+    end
+
+    test "create with invalid url in media_urls returns error with index" do
+      stub_api_key do
+        media_urls = [
+          "https://spaces.digitalocean.com/bucket/valid.jpg",
+          "not-a-valid-url",
+          "https://spaces.digitalocean.com/bucket/also-valid.jpg"
+        ]
+
+        assert_no_difference("PlannedPost.count") do
+          post api_planned_posts_path,
+               params: { planned_post: valid_params_with_urls(media_urls) },
+               headers: api_headers
+        end
+
+        assert_response :unprocessable_entity
+        assert_includes response.parsed_body["errors"].first, "index 1"
+      end
+    end
+
+    test "create with media_urls merges with existing platform_payload" do
+      stub_api_key do
+        media_urls = [
+          "https://spaces.digitalocean.com/bucket/img1.jpg",
+          "https://spaces.digitalocean.com/bucket/img2.jpg"
+        ]
+        params = valid_params_with_urls(media_urls).merge(
+          platform_payload: { "custom_field" => "custom_value" }
+        )
+
+        post api_planned_posts_path,
+             params: { planned_post: params },
+             headers: api_headers
+
+        assert_response :created
+        json = response.parsed_body
+        assert_equal "custom_value", json["platform_payload"]["custom_field"]
+        assert_equal 2, json["platform_payload"]["carousel_asset_ids"].length
       end
     end
 
@@ -354,6 +506,94 @@ module Api
         json = response.parsed_body
         assert_not_includes json["errors"].first["params"].keys, "user_id"
         assert_not_includes json["errors"].first["params"].keys, "media_url"
+        assert_not_includes json["errors"].first["params"].keys, "media_urls"
+      end
+    end
+
+    test "bulk_create with media_urls creates carousel posts" do
+      stub_api_key do
+        params = [
+          valid_params_with_urls([
+            "https://spaces.digitalocean.com/bucket/carousel1a.jpg",
+            "https://spaces.digitalocean.com/bucket/carousel1b.jpg"
+          ]),
+          valid_params_with_urls([
+            "https://spaces.digitalocean.com/bucket/carousel2a.jpg",
+            "https://spaces.digitalocean.com/bucket/carousel2b.jpg",
+            "https://spaces.digitalocean.com/bucket/carousel2c.jpg"
+          ])
+        ]
+
+        assert_difference("PlannedPost.count", 2) do
+          assert_difference("MediaAsset.count", 5) do
+            post bulk_create_api_planned_posts_path,
+                 params: { planned_posts: params },
+                 headers: api_headers
+          end
+        end
+
+        assert_response :created
+        json = response.parsed_body
+        assert_equal 2, json["created"].length
+
+        # First post should have 2 carousel items
+        assert_equal 2, json["created"][0]["platform_payload"]["carousel_asset_ids"].length
+        # Second post should have 3 carousel items
+        assert_equal 3, json["created"][1]["platform_payload"]["carousel_asset_ids"].length
+      end
+    end
+
+    test "bulk_create with invalid url in media_urls includes error with indices" do
+      stub_api_key do
+        params = [
+          valid_params_with_urls([
+            "https://spaces.digitalocean.com/bucket/valid1.jpg",
+            "https://spaces.digitalocean.com/bucket/valid2.jpg"
+          ]),
+          valid_params_with_urls([
+            "https://spaces.digitalocean.com/bucket/valid3.jpg",
+            "invalid-url"
+          ])
+        ]
+
+        post bulk_create_api_planned_posts_path,
+             params: { planned_posts: params },
+             headers: api_headers
+
+        assert_response :multi_status
+        json = response.parsed_body
+        assert_equal 1, json["created"].length
+        assert_equal 1, json["errors"].length
+        assert_equal 1, json["errors"].first["index"]
+        assert_includes json["errors"].first["errors"].first, "URL index 1"
+      end
+    end
+
+    test "bulk_create with mixed media_url and media_urls" do
+      stub_api_key do
+        params = [
+          valid_params_with_url("https://spaces.digitalocean.com/bucket/single.jpg"),
+          valid_params_with_urls([
+            "https://spaces.digitalocean.com/bucket/multi1.jpg",
+            "https://spaces.digitalocean.com/bucket/multi2.jpg"
+          ])
+        ]
+
+        assert_difference("PlannedPost.count", 2) do
+          assert_difference("MediaAsset.count", 3) do
+            post bulk_create_api_planned_posts_path,
+                 params: { planned_posts: params },
+                 headers: api_headers
+          end
+        end
+
+        assert_response :created
+        json = response.parsed_body
+
+        # First post (single URL) should not have carousel_asset_ids
+        assert_nil json["created"][0].dig("platform_payload", "carousel_asset_ids")
+        # Second post (multiple URLs) should have carousel_asset_ids
+        assert_equal 2, json["created"][1]["platform_payload"]["carousel_asset_ids"].length
       end
     end
 
@@ -382,6 +622,17 @@ module Api
         status: "draft",
         caption: "Test caption from URL",
         hashtags: "#test #api"
+      }
+    end
+
+    def valid_params_with_urls(urls)
+      {
+        user_id: @user.id,
+        media_urls: urls,
+        platform: "instagram",
+        status: "draft",
+        caption: "Test carousel caption",
+        hashtags: "#test #carousel"
       }
     end
 
