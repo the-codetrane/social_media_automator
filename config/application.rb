@@ -25,6 +25,9 @@ module SocialMediaAutomator
     # Add compiled CSS/JS from cssbundling-rails to Propshaft's load path
     config.assets.paths << Rails.root.join("app/assets/builds")
 
+    # Mission Control config
+    config.mission_control.jobs.base_controller_class = "ApplicationController"
+
     # Configuration for the application, engines, and railties goes here.
     #
     # These settings can be overridden in specific environments using the files
