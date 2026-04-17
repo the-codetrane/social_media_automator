@@ -198,6 +198,58 @@ class PlannedPostsControllerTest < ActionDispatch::IntegrationTest
     assert_match "successfully updated", response.body
   end
 
+  # Publish action tests
+  test "publish redirects when not signed in" do
+    post publish_planned_post_path(@planned_post)
+    assert_redirected_to new_session_path
+  end
+
+  test "publish enqueues PublishInstagramPostJob for instagram post" do
+    sign_in_as(@user)
+    assert_enqueued_with(job: PublishInstagramPostJob) do
+      post publish_planned_post_path(@planned_post)
+    end
+    assert_redirected_to planned_post_path(@planned_post)
+    assert_match "Instagram", flash[:notice]
+  end
+
+  test "publish enqueues PublishFacebookPostJob for facebook post" do
+    sign_in_as(@user)
+    fb_post = planned_posts(:facebook_draft_post)
+    assert_enqueued_with(job: PublishFacebookPostJob) do
+      post publish_planned_post_path(fb_post)
+    end
+    assert_redirected_to planned_post_path(fb_post)
+    assert_match "Facebook", flash[:notice]
+  end
+
+  test "publish shows alert for unsupported platform" do
+    sign_in_as(@user)
+    youtube_post = planned_posts(:scheduled_post)
+    assert youtube_post.youtube?
+    post publish_planned_post_path(youtube_post)
+    assert_redirected_to planned_post_path(youtube_post)
+    assert flash[:alert].present?
+  end
+
+  test "show has publish button for instagram draft post" do
+    sign_in_as(@user)
+    get planned_post_path(@planned_post)
+    assert_select "form[action=?]", publish_planned_post_path(@planned_post)
+  end
+
+  test "show has publish button for facebook draft post" do
+    sign_in_as(@user)
+    get planned_post_path(planned_posts(:facebook_draft_post))
+    assert_select "form[action=?]", publish_planned_post_path(planned_posts(:facebook_draft_post))
+  end
+
+  test "show does not have publish button for published post" do
+    sign_in_as(@user)
+    get planned_post_path(planned_posts(:published_post))
+    assert_select "form[action=?]", publish_planned_post_path(planned_posts(:published_post)), count: 0
+  end
+
   # URL decoding tests
   test "index decodes URL-encoded media asset names" do
     sign_in_as(@user)

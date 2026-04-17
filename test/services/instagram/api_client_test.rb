@@ -44,6 +44,28 @@ module Instagram
       assert_raises(Instagram::TokenExpiredError) { @client.get("me") }
     end
 
+    test "uses override access_token instead of user token when provided" do
+      client = Instagram::ApiClient.new(@user, access_token: "OVERRIDE_TOKEN")
+
+      client.stub(:connection, Faraday.new { |f|
+        f.response :json, content_type: /\bjson$/
+        f.adapter :test, Faraday::Adapter::Test::Stubs.new { |stub|
+          stub.get("me") { [ 200, { "Content-Type" => "application/json" }, { "id" => "ok" }.to_json ] }
+        }
+      }) do
+        # Should not raise even though we don't check the token value here;
+        # the key assertion is that a blank user token doesn't block the call.
+        @user.instagram_access_token = nil
+        assert_nothing_raised { client.get("me") }
+      end
+    end
+
+    test "raises TokenExpiredError when override token is blank and user has no token" do
+      @user.instagram_access_token = nil
+      client = Instagram::ApiClient.new(@user, access_token: "")
+      assert_raises(Instagram::TokenExpiredError) { client.get("me") }
+    end
+
     # -------------------------------------------------------------------------
     # #post
     # -------------------------------------------------------------------------

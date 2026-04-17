@@ -11,8 +11,16 @@ class PlannedPostsController < ApplicationController
   end
 
   def publish
-    PublishInstagramPostJob.perform_later(@planned_post.id)
-    redirect_to @planned_post, notice: "Publishing to Instagram has been queued."
+    case @planned_post.platform
+    when "instagram"
+      PublishInstagramPostJob.perform_later(@planned_post.id)
+      redirect_to @planned_post, notice: "Publishing to Instagram has been queued."
+    when "facebook"
+      PublishFacebookPostJob.perform_later(@planned_post.id)
+      redirect_to @planned_post, notice: "Publishing to Facebook has been queued."
+    else
+      redirect_to @planned_post, alert: "Publishing is not supported for #{@planned_post.platform} yet."
+    end
   end
 
   def edit

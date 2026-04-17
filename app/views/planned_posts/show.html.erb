@@ -13,13 +13,13 @@
       <h1 class="text-2xl font-bold text-gray-900">Planned Post</h1>
     </div>
     <div class="flex items-center gap-2">
-      <% if @planned_post.instagram? && !@planned_post.published? && !@planned_post.canceled? %>
+      <% if (@planned_post.instagram? || @planned_post.facebook?) && !@planned_post.published? && !@planned_post.canceled? %>
         <%= button_to publish_planned_post_path(@planned_post), method: :post,
             class: "inline-flex items-center gap-2 px-4 py-2 bg-pink-600 text-white text-sm font-medium rounded-lg hover:bg-pink-700 transition-colors" do %>
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
           </svg>
-          Publish to Instagram
+          Publish to <%= @planned_post.platform.capitalize %>
         <% end %>
       <% end %>
       <%= link_to edit_planned_post_path(@planned_post), class: "inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors" do %>
