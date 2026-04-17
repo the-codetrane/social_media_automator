@@ -28,6 +28,7 @@ Rails.application.routes.draw do
     get  "connect",        to: "auth#connect",        as: :connect
     get  "callback",       to: "auth#callback",        as: :callback
     post "select_account", to: "auth#select_account",  as: :select_account
+    post "refresh_token",  to: "auth#refresh_token",   as: :refresh_token
   end
 
   # API endpoints
