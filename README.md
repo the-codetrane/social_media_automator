@@ -5,7 +5,7 @@ A Rails application for automating social media content planning and publishing.
 ## Requirements
 
 - Ruby 3.2.2
-- Node.js 20+
+- Node.js 24+
 - Yarn
 - SQLite 3
 
