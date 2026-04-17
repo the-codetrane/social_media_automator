@@ -9,9 +9,14 @@
 
   <% if Current.user&.instagram_connected? %>
     <p class="text-green-600 font-medium mb-4">
-      ✓ Instagram account already connected (ID: <%= Current.user.instagram_user_id %>)
+      ✓ Connected as
+      <% if Current.user.instagram_username.present? %>
+        <span class="font-semibold">@<%= Current.user.instagram_username %></span>
+      <% else %>
+        ID <%= Current.user.instagram_user_id %>
+      <% end %>
     </p>
-    <%= link_to "Reconnect", @auth_url,
+    <%= link_to "Switch account", @auth_url,
           class: "inline-block px-5 py-2 rounded-lg border border-gray-300 text-sm hover:bg-gray-50" %>
   <% else %>
     <%= link_to "Connect Instagram Account", @auth_url,
