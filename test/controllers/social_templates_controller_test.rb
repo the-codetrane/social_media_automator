@@ -156,4 +156,114 @@ class SocialTemplatesControllerTest < ActionDispatch::IntegrationTest
     follow_redirect!
     assert_match "successfully updated", response.body
   end
+
+  # New action tests
+  test "new redirects when not signed in" do
+    get new_social_template_path
+    assert_redirected_to new_session_path
+  end
+
+  test "new returns success when signed in" do
+    sign_in_as(@user)
+    get new_social_template_path
+    assert_response :success
+  end
+
+  test "new displays blank form" do
+    sign_in_as(@user)
+    get new_social_template_path
+    assert_select "input[name='social_template[name]']"
+    assert_select "select[name='social_template[platform]']"
+    assert_select "textarea[name='social_template[default_caption]']"
+  end
+
+  test "new has cancel link to index" do
+    sign_in_as(@user)
+    get new_social_template_path
+    assert_select "a[href=?]", social_templates_path
+  end
+
+  # Create action tests
+  test "create redirects when not signed in" do
+    post social_templates_path, params: { social_template: { name: "Test", platform: "instagram" } }
+    assert_redirected_to new_session_path
+  end
+
+  test "create saves template and redirects to show" do
+    sign_in_as(@user)
+    assert_difference("SocialTemplate.count", 1) do
+      post social_templates_path, params: {
+        social_template: { name: "My New Template", platform: "facebook", default_caption: "Hello!" }
+      }
+    end
+    assert_redirected_to social_template_path(SocialTemplate.last)
+  end
+
+  test "create assigns current user as owner" do
+    sign_in_as(@user)
+    post social_templates_path, params: {
+      social_template: { name: "Owned Template", platform: "instagram" }
+    }
+    assert_equal @user, SocialTemplate.last.user
+  end
+
+  test "create shows success notice" do
+    sign_in_as(@user)
+    post social_templates_path, params: {
+      social_template: { name: "Notice Template", platform: "instagram" }
+    }
+    follow_redirect!
+    assert_match "successfully created", response.body
+  end
+
+  test "create with invalid data renders new" do
+    sign_in_as(@user)
+    assert_no_difference("SocialTemplate.count") do
+      post social_templates_path, params: { social_template: { name: "", platform: "instagram" } }
+    end
+    assert_response :unprocessable_entity
+  end
+
+  test "create with duplicate name and platform renders new with error" do
+    sign_in_as(@user)
+    post social_templates_path, params: {
+      social_template: { name: @social_template.name, platform: @social_template.platform }
+    }
+    assert_response :unprocessable_entity
+    assert_select ".bg-red-50"
+  end
+
+  # Destroy action tests
+  test "destroy redirects when not signed in" do
+    delete social_template_path(@social_template)
+    assert_redirected_to new_session_path
+  end
+
+  test "destroy deletes the template and redirects to index" do
+    sign_in_as(@user)
+    assert_difference("SocialTemplate.count", -1) do
+      delete social_template_path(@social_template)
+    end
+    assert_redirected_to social_templates_path
+  end
+
+  test "destroy shows success notice" do
+    sign_in_as(@user)
+    delete social_template_path(@social_template)
+    follow_redirect!
+    assert_match "successfully deleted", response.body
+  end
+
+  # Show page additions
+  test "show has delete button" do
+    sign_in_as(@user)
+    get social_template_path(@social_template)
+    assert_select "form[action=?][method=post]", social_template_path(@social_template)
+  end
+
+  test "index has new template link" do
+    sign_in_as(@user)
+    get social_templates_path
+    assert_select "a[href=?]", new_social_template_path
+  end
 end

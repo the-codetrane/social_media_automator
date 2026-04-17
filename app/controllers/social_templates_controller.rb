@@ -1,13 +1,28 @@
 # frozen_string_literal: true
 
 class SocialTemplatesController < ApplicationController
-  before_action :set_social_template, only: %i[show edit update]
+  before_action :set_social_template, only: %i[show edit update destroy]
 
   def index
     @social_templates = SocialTemplate.includes(:user).order(created_at: :desc)
   end
 
   def show
+  end
+
+  def new
+    @social_template = SocialTemplate.new
+  end
+
+  def create
+    @social_template = SocialTemplate.new(social_template_params)
+    @social_template.user = Current.user
+
+    if @social_template.save
+      redirect_to @social_template, notice: "Social template was successfully created."
+    else
+      render :new, status: :unprocessable_entity
+    end
   end
 
   def edit
@@ -19,6 +34,11 @@ class SocialTemplatesController < ApplicationController
     else
       render :edit, status: :unprocessable_entity
     end
+  end
+
+  def destroy
+    @social_template.destroy
+    redirect_to social_templates_path, notice: "Social template was successfully deleted."
   end
 
   private

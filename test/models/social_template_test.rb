@@ -74,6 +74,19 @@ class SocialTemplateTest < ActiveSupport::TestCase
     assert social_templates(:youtube_shorts).youtube?
   end
 
+  test "can be created with facebook platform" do
+    template = SocialTemplate.new(name: "FB Default", platform: :facebook)
+    assert template.facebook?
+    assert template.valid?
+  end
+
+  test "is invalid with a negative max_caption_length" do
+    template = social_templates(:instagram_default)
+    template.max_caption_length = -1
+    assert_not template.valid?
+    assert template.errors[:max_caption_length].any?
+  end
+
   # ---------------------------------------------------------------------------
   # Scopes
   # ---------------------------------------------------------------------------
@@ -97,5 +110,15 @@ class SocialTemplateTest < ActiveSupport::TestCase
 
   test "has many planned_posts" do
     assert_respond_to social_templates(:instagram_default), :planned_posts
+  end
+
+  test "destroying a template nullifies social_template_id on associated planned posts" do
+    template = social_templates(:youtube_shorts)
+    post = planned_posts(:scheduled_post)
+    assert_equal template.id, post.social_template_id
+
+    template.destroy
+
+    assert_nil post.reload.social_template_id
   end
 end
