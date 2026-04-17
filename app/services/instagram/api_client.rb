@@ -16,8 +16,10 @@ module Instagram
     MAX_RETRIES  = 3
 
     # @param user [User] must have instagram_access_token present
-    def initialize(user)
-      @user = user
+    # @param access_token [String, nil] override the user's stored token (e.g. a Page access token)
+    def initialize(user, access_token: nil)
+      @user             = user
+      @token_override   = access_token
     end
 
     # Perform a GET request.
@@ -69,8 +71,9 @@ module Instagram
     end
 
     def access_token
-      raise Instagram::TokenExpiredError, "User #{@user.id} has no Instagram access token" if @user.instagram_access_token.blank?
-      @user.instagram_access_token
+      token = @token_override.presence || @user.instagram_access_token
+      raise Instagram::TokenExpiredError, "User #{@user.id} has no Instagram access token" if token.blank?
+      token
     end
 
     def handle_response(response)
