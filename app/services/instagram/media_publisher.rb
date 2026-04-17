@@ -52,9 +52,6 @@ module Instagram
       )
 
       ig_media_id
-    rescue Instagram::Error
-      planned_post.update!(status: :failed)
-      raise
     end
 
     # ------------------------------------------------------------------
