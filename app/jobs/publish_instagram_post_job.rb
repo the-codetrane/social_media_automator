@@ -45,6 +45,7 @@ class PublishInstagramPostJob < ApplicationJob
     publisher = Instagram::MediaPublisher.new(planned_post.user)
     ig_media_id = publisher.publish(planned_post)
 
+    VerifyPublishedPostJob.set(wait: 2.minutes).perform_later(planned_post_id)
     Rails.logger.info("[PublishInstagramPostJob] Published PlannedPost##{planned_post_id} → ig_media_id=#{ig_media_id}")
   end
 end

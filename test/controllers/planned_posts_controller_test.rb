@@ -250,6 +250,55 @@ class PlannedPostsControllerTest < ActionDispatch::IntegrationTest
     assert_select "form[action=?]", publish_planned_post_path(planned_posts(:published_post)), count: 0
   end
 
+  # Verify action tests
+  test "verify redirects when not signed in" do
+    post verify_planned_post_path(planned_posts(:published_post))
+    assert_redirected_to new_session_path
+  end
+
+  test "verify enqueues VerifyPublishedPostJob for a published post" do
+    sign_in_as(@user)
+    published = planned_posts(:published_post)
+    assert_enqueued_with(job: VerifyPublishedPostJob) do
+      post verify_planned_post_path(published)
+    end
+    assert_redirected_to planned_post_path(published)
+    assert_match "queued", flash[:notice]
+  end
+
+  test "verify shows alert when post is not published" do
+    sign_in_as(@user)
+    post verify_planned_post_path(@planned_post)
+    assert_redirected_to planned_post_path(@planned_post)
+    assert flash[:alert].present?
+  end
+
+  test "show has re-verify button for published post with external_post_id" do
+    sign_in_as(@user)
+    get planned_post_path(planned_posts(:published_post))
+    assert_select "form[action=?]", verify_planned_post_path(planned_posts(:published_post))
+  end
+
+  test "show does not have re-verify button for draft post" do
+    sign_in_as(@user)
+    get planned_post_path(@planned_post)
+    assert_select "form[action=?]", verify_planned_post_path(@planned_post), count: 0
+  end
+
+  test "show displays permalink link when platform_payload has permalink" do
+    sign_in_as(@user)
+    published = planned_posts(:published_post)
+    published.update!(platform_payload: { "permalink" => "https://www.instagram.com/p/test123/" })
+    get planned_post_path(published)
+    assert_select "a[href=?]", "https://www.instagram.com/p/test123/"
+  end
+
+  test "show does not display permalink link when platform_payload has no permalink" do
+    sign_in_as(@user)
+    get planned_post_path(planned_posts(:published_post))
+    assert_select "a[href^='https://www.instagram.com/p/']", count: 0
+  end
+
   # URL decoding tests
   test "index decodes URL-encoded media asset names" do
     sign_in_as(@user)
