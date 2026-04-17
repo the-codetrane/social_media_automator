@@ -77,34 +77,23 @@ module Instagram
     # #exchange_code_for_token
     # -------------------------------------------------------------------------
 
-    test "exchange_code_for_token orchestrates short-lived → long-lived → ig_user_id and persists to user" do
-      short_token    = "EAAshort"
-      long_token     = "EAAlong_lived_token"
-      expires_in     = 5_184_000
-      ig_user_id     = "17841400099999"
-      page_id        = "10158000000001"
+    test "exchange_code_for_token orchestrates short-lived → long-lived → account and persists to user" do
+      short_token = "EAAshort"
+      long_token  = "EAAlong_lived_token"
+      expires_in  = 5_184_000
+      ig_user_id  = "17841400099999"
+      page_id     = "10158000000001"
+      username    = "cainandco"
 
       call_count = 0
-      graph_get_stub = lambda do |url, params|
+      graph_get_stub = lambda do |_url, _params|
         call_count += 1
         case call_count
-        when 1
-          # fetch_short_lived_token
-          { "access_token" => short_token }
-        when 2
-          # fetch_long_lived_token
-          { "access_token" => long_token, "expires_in" => expires_in }
+        when 1 then { "access_token" => short_token }
+        when 2 then { "access_token" => long_token, "expires_in" => expires_in }
         when 3
-          # fetch_ig_user_id
-          {
-            "data" => [
-              {
-                "id"   => page_id,
-                "name" => "My Page",
-                "instagram_business_account" => { "id" => ig_user_id }
-              }
-            ]
-          }
+          { "data" => [ { "id" => page_id, "name" => "Cain & Co.",
+                          "instagram_business_account" => { "id" => ig_user_id, "username" => username } } ] }
         end
       end
 
@@ -116,9 +105,33 @@ module Instagram
           assert_equal long_token,  updated.instagram_access_token
           assert_equal ig_user_id,  updated.instagram_user_id
           assert_equal page_id,     updated.instagram_page_id
+          assert_equal username,    updated.instagram_username
           assert_in_delta (Time.current + expires_in.seconds).to_i,
-                          updated.instagram_token_expires_at.to_i,
-                          2
+                          updated.instagram_token_expires_at.to_i, 2
+        end
+      end
+    end
+
+    test "connect_with_token persists username alongside user_id and page_id" do
+      long_token = "EAAlong"
+      expires_in = 5_184_000
+      ig_user_id = "17841400099999"
+      page_id    = "10158000000001"
+      username   = "cainandco"
+
+      graph_get_stub = lambda do |_url, _params|
+        { "data" => [ { "id" => page_id, "name" => "Cain & Co.",
+                        "instagram_business_account" => { "id" => ig_user_id, "username" => username } } ] }
+      end
+
+      @service.stub(:graph_get, graph_get_stub) do
+        freeze_time do
+          @service.connect_with_token(long_token, expires_in: expires_in, ig_user_id: ig_user_id)
+
+          updated = @user.reload
+          assert_equal ig_user_id, updated.instagram_user_id
+          assert_equal page_id,    updated.instagram_page_id
+          assert_equal username,   updated.instagram_username
         end
       end
     end

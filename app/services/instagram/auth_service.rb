@@ -48,14 +48,15 @@ module Instagram
       long_lived = fetch_long_lived_token(short_lived)
 
       # Step 3 – discover the connected Instagram Business Account
-      selected_ig_id, page_id = fetch_ig_user_id(long_lived[:token], ig_user_id: ig_user_id)
+      account = fetch_account(long_lived[:token], ig_user_id: ig_user_id)
 
       # Step 4 – persist everything
       @user.update!(
         instagram_access_token:     long_lived[:token],
         instagram_token_expires_at: Time.current + long_lived[:expires_in].to_i.seconds,
-        instagram_user_id:          selected_ig_id,
-        instagram_page_id:          page_id
+        instagram_user_id:          account[:ig_user_id],
+        instagram_page_id:          account[:page_id],
+        instagram_username:         account[:username]
       )
 
       @user
@@ -79,13 +80,14 @@ module Instagram
     # @param ig_user_id [String, nil] when nil the first found account is used
     # @return [User] the updated user
     def connect_with_token(long_lived_token, expires_in:, ig_user_id: nil)
-      selected_ig_id, page_id = fetch_ig_user_id(long_lived_token, ig_user_id: ig_user_id)
+      account = fetch_account(long_lived_token, ig_user_id: ig_user_id)
 
       @user.update!(
         instagram_access_token:     long_lived_token,
         instagram_token_expires_at: Time.current + expires_in.to_i.seconds,
-        instagram_user_id:          selected_ig_id,
-        instagram_page_id:          page_id
+        instagram_user_id:          account[:ig_user_id],
+        instagram_page_id:          account[:page_id],
+        instagram_username:         account[:username]
       )
 
       @user
@@ -149,7 +151,7 @@ module Instagram
     # Walk /me/accounts to find all Facebook Pages that have a connected
     # Instagram Business/Creator Account.
     #
-    # @return [Array<Hash>] array of { ig_user_id:, page_id:, username:, profile_picture_url: }
+    # @return [Array<Hash>] array of { ig_user_id:, page_id:, page_name:, username:, profile_picture_url: }
     def fetch_all_ig_accounts(access_token)
       accounts = graph_get("#{GRAPH_BASE}me/accounts",
         access_token: access_token,
@@ -164,6 +166,7 @@ module Instagram
           {
             ig_user_id:          iba["id"],
             page_id:             p["id"],
+            page_name:           p["name"],
             username:            iba["username"],
             profile_picture_url: iba["profile_picture_url"]
           }
@@ -175,8 +178,8 @@ module Instagram
     #
     # @param access_token [String]
     # @param ig_user_id [String, nil] when provided, selects that specific account
-    # @return [Array<String, String>] [ig_user_id, page_id]
-    def fetch_ig_user_id(access_token, ig_user_id: nil)
+    # @return [Hash] the matched account entry from fetch_all_ig_accounts
+    def fetch_account(access_token, ig_user_id: nil)
       candidates = fetch_all_ig_accounts(access_token)
 
       raise Instagram::ApiError, "No Instagram Business Account found for this Facebook user." if candidates.empty?
@@ -190,7 +193,7 @@ module Instagram
         raise Instagram::ApiError, message
       end
 
-      [ account[:ig_user_id], account[:page_id] ]
+      account
     end
 
     def graph_get(url, params)

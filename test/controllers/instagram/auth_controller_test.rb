@@ -49,21 +49,41 @@ class Instagram::AuthControllerTest < ActionDispatch::IntegrationTest
   # GET /instagram/callback
   # ------------------------------------------------------------------
 
-  test "callback: exchanges the code and redirects to root on success" do
-    user    = users(:one)
+  test "callback: renders account selection view with accounts from AuthService" do
+    user     = users(:one)
+    accounts = [
+      { ig_user_id: "111", page_id: "p1", page_name: "Cain & Co.", username: "cainandco", profile_picture_url: nil },
+      { ig_user_id: "222", page_id: "p2", page_name: "Other Page", username: "other",     profile_picture_url: nil }
+    ]
     service = Minitest::Mock.new
-    service.expect(:exchange_code_for_token, user) do |code, redirect_uri:|
+    service.expect(:exchange_code_for_long_lived_token, { token: "LONG_TOKEN", expires_in: 5_184_000 }) do |code, redirect_uri:|
       code == "valid_code" && redirect_uri == instagram_callback_url
     end
+    service.expect(:list_ig_accounts, accounts, [ "LONG_TOKEN" ])
 
     sign_in_as user
     Instagram::AuthService.stub(:new, service) do
       get instagram_callback_path, params: { code: "valid_code" }
     end
 
-    assert_redirected_to "/"
-    assert_equal "Instagram account connected successfully.", flash[:notice]
+    assert_response :ok
+    assert_match "Cain &amp; Co.", response.body
+    assert_match "@cainandco",     response.body
     service.verify
+  end
+
+  test "callback: stores pending token in session for select_account step" do
+    user    = users(:one)
+    service = Minitest::Mock.new
+    service.expect(:exchange_code_for_long_lived_token, { token: "PENDING_TOKEN", expires_in: 100 }) { true }
+    service.expect(:list_ig_accounts, [], [ "PENDING_TOKEN" ])
+
+    sign_in_as user
+    Instagram::AuthService.stub(:new, service) do
+      get instagram_callback_path, params: { code: "any_code" }
+    end
+
+    assert_equal "PENDING_TOKEN", session[:ig_pending_token]
   end
 
   test "callback: redirects to connect with an alert when code param is absent" do
@@ -77,7 +97,7 @@ class Instagram::AuthControllerTest < ActionDispatch::IntegrationTest
   test "callback: redirects to connect with an alert when AuthService raises ApiError" do
     user    = users(:one)
     service = Minitest::Mock.new
-    service.expect(:exchange_code_for_token, nil) { raise Instagram::ApiError.new("Invalid OAuth code.") }
+    service.expect(:exchange_code_for_long_lived_token, nil) { raise Instagram::ApiError.new("Invalid OAuth code.") }
 
     sign_in_as user
     Instagram::AuthService.stub(:new, service) do
@@ -91,5 +111,15 @@ class Instagram::AuthControllerTest < ActionDispatch::IntegrationTest
   test "callback: unauthenticated request redirects to sign-in" do
     get instagram_callback_path, params: { code: "some_code" }
     assert_redirected_to new_session_path
+  end
+
+  # ------------------------------------------------------------------
+  # GET /instagram/connect — username display
+  # ------------------------------------------------------------------
+
+  test "connect: shows connected username when instagram_username is present" do
+    sign_in_as users(:one)
+    get instagram_connect_path
+    assert_match "@cainandco", response.body
   end
 end

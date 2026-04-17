@@ -20,12 +20,18 @@ module Instagram
     end
 
     # GET /instagram/callback?code=…
-    # Instagram redirects here after the user grants permission.
+    # Exchange the OAuth code for a long-lived token then let the user pick
+    # which Instagram Business Account to connect.
     def callback
-      code    = params.require(:code).to_s
-      service = Instagram::AuthService.new(Current.user)
-      service.exchange_code_for_token(code, redirect_uri: instagram_callback_url)
-      redirect_to "/", notice: "Instagram account connected successfully."
+      code       = params.require(:code).to_s
+      service    = Instagram::AuthService.new(Current.user)
+      long_lived = service.exchange_code_for_long_lived_token(code, redirect_uri: instagram_callback_url)
+
+      session[:ig_pending_token]      = long_lived[:token]
+      session[:ig_pending_expires_in] = long_lived[:expires_in]
+
+      @ig_accounts = service.list_ig_accounts(long_lived[:token])
+      render :select_account
     rescue ActionController::ParameterMissing
       redirect_to instagram_connect_path, alert: "No authorisation code was returned by Instagram."
     rescue Instagram::ApiError => e
