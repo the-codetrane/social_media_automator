@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class PlannedPostsController < ApplicationController
-  before_action :set_planned_post, only: %i[show edit update publish]
+  before_action :set_planned_post, only: %i[show edit update publish verify]
 
   def index
     @planned_posts = PlannedPost.includes(:user, :media_asset, :social_template).order(created_at: :desc)
@@ -20,6 +20,15 @@ class PlannedPostsController < ApplicationController
       redirect_to @planned_post, notice: "Publishing to Facebook has been queued."
     else
       redirect_to @planned_post, alert: "Publishing is not supported for #{@planned_post.platform} yet."
+    end
+  end
+
+  def verify
+    if @planned_post.published? && @planned_post.external_post_id.present?
+      VerifyPublishedPostJob.perform_later(@planned_post.id)
+      redirect_to @planned_post, notice: "Verification has been queued."
+    else
+      redirect_to @planned_post, alert: "Post must be published before it can be verified."
     end
   end
 

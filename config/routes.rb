@@ -9,6 +9,7 @@ Rails.application.routes.draw do
   resources :planned_posts,    only: [ :index, :show, :edit, :update ] do
     member do
       post :publish
+      post :verify
     end
   end
   resources :social_templates, only: [ :index, :show, :edit, :update ]

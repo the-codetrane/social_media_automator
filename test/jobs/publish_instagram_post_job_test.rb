@@ -37,6 +37,17 @@ class PublishInstagramPostJobTest < ActiveSupport::TestCase
     end
   end
 
+  test "perform enqueues VerifyPublishedPostJob after successful publish" do
+    mock_publisher = Minitest::Mock.new
+    mock_publisher.expect(:publish, "ig_media_001", [ PlannedPost ])
+
+    Instagram::MediaPublisher.stub(:new, mock_publisher) do
+      assert_enqueued_with(job: VerifyPublishedPostJob) do
+        PublishInstagramPostJob.perform_now(@post.id)
+      end
+    end
+  end
+
   # -------------------------------------------------------------------------
   # Guard clauses
   # -------------------------------------------------------------------------

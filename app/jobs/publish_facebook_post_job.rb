@@ -33,6 +33,7 @@ class PublishFacebookPostJob < ApplicationJob
     publisher = Facebook::PagePublisher.new(planned_post.user)
     post_id   = publisher.publish(planned_post)
 
+    VerifyPublishedPostJob.set(wait: 2.minutes).perform_later(planned_post_id)
     Rails.logger.info("[PublishFacebookPostJob] Published PlannedPost##{planned_post_id} → post_id=#{post_id}")
   end
 end
