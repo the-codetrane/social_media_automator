@@ -12,7 +12,7 @@ Rails.application.routes.draw do
       post :verify
     end
   end
-  resources :social_templates, only: [ :index, :show, :edit, :update ]
+  resources :social_templates, only: [ :index, :show, :new, :create, :edit, :update, :destroy ]
   resources :sessions,         only: [ :index ]
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
