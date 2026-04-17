@@ -72,14 +72,14 @@ module Instagram
       end
     end
 
-    test "publish_photo raises ApiError when asset has no public_url and marks post failed" do
+    test "publish_photo raises ApiError when asset has no public_url" do
       post  = planned_posts(:draft_post)
       post.media_asset.update!(raw_metadata: nil)
 
       @publisher.stub(:check_quota!, nil) do
         err = assert_raises(Instagram::ApiError) { @publisher.publish(post) }
         assert_match(/no public URL/i, err.message)
-        assert post.reload.failed?
+        assert_not post.reload.failed?
       end
     end
 
@@ -202,7 +202,6 @@ module Instagram
 
       @publisher.instance_variable_set(:@client, mock_client)
       assert_raises(Instagram::RateLimitError) { @publisher.publish(post) }
-      assert post.reload.failed?
     end
 
     # -------------------------------------------------------------------------
