@@ -1,7 +1,7 @@
 class SocialMediaPostAgent < RubyLLM::Agent
   model "claude-haiku-4-5-20251001"
   inputs :user
-  tools FindSocialTemplate, ResolveMediaAsset, CreatePlannedPost
+  tools ListMediaAssets, FindSocialTemplate, ResolveMediaAsset, CreatePlannedPost
 
   instructions do
     <<~INSTRUCTIONS
@@ -29,7 +29,8 @@ class SocialMediaPostAgent < RubyLLM::Agent
       - Hashtag stuffing or broad irrelevant hashtags
 
       Workflow:
-      - If given a media URL, call resolve_media_asset first to obtain the media_asset_id.
+      - If given a bucket/directory URL (no file extension), call list_media_assets to discover files. You can pass a prefix to filter by folder.
+      - For each specific media URL, call resolve_media_asset to obtain the media_asset_id.
       - If the user mentions a template, call find_social_template to see available options.
       - Write the post with create_planned_post using the media_asset_id and a crafted caption.
 
