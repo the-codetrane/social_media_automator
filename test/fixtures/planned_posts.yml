@@ -62,6 +62,38 @@ facebook_draft_post:
   created_at: <%= Time.current %>
   updated_at: <%= Time.current %>
 
+due_instagram_post:
+  id: <%= ActiveRecord::FixtureSet.identify(:due_instagram_post) %>
+  media_asset_id: <%= ActiveRecord::FixtureSet.identify(:sample_image) %>
+  social_template_id: ~
+  platform: 0
+  caption: "Show tonight."
+  hashtags: "#livemusic"
+  platform_payload: ~
+  status: 1
+  scheduled_at: <%= 5.minutes.ago %>
+  published_at: ~
+  external_post_id: ~
+  user_id: <%= ActiveRecord::FixtureSet.identify(:one) %>
+  created_at: <%= 1.hour.ago %>
+  updated_at: <%= 1.hour.ago %>
+
+due_facebook_post:
+  id: <%= ActiveRecord::FixtureSet.identify(:due_facebook_post) %>
+  media_asset_id: <%= ActiveRecord::FixtureSet.identify(:sample_image) %>
+  social_template_id: ~
+  platform: 2
+  caption: "Doors at 8."
+  hashtags: "#blues"
+  platform_payload: ~
+  status: 1
+  scheduled_at: <%= 5.minutes.ago %>
+  published_at: ~
+  external_post_id: ~
+  user_id: <%= ActiveRecord::FixtureSet.identify(:one) %>
+  created_at: <%= 1.hour.ago %>
+  updated_at: <%= 1.hour.ago %>
+
 url_encoded_asset_post:
   id: <%= ActiveRecord::FixtureSet.identify(:url_encoded_asset_post) %>
   media_asset_id: <%= ActiveRecord::FixtureSet.identify(:url_encoded_name) %>
