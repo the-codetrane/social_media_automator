@@ -6,7 +6,7 @@ class ResolveMediaAsset < RubyLLM::Tool
     desc: "The public HTTP/HTTPS URL of the image or video"
 
   def execute(url:)
-    service = Api::MediaAssetFromUrlService.new(url: url)
+    service = Api::MediaAssetFromUrlService.new(url)
     service.call
 
     if service.success?
