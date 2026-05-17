@@ -1,0 +1,60 @@
+<% content_for :title, "Insights" %>
+
+<div class="flex items-center justify-between mb-6">
+  <div>
+    <h1 class="text-2xl font-bold text-gray-900">Insights</h1>
+    <p class="text-sm text-gray-500 mt-1"><%= @posts.size %> published post<%= "s" if @posts.size != 1 %> with data</p>
+  </div>
+</div>
+
+<% if @posts.empty? %>
+  <div class="text-center py-20 text-gray-400">
+    <p class="text-lg">No published posts found.</p>
+    <p class="text-sm mt-2">Publish a post first to see its insights here.</p>
+  </div>
+<% else %>
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    <% @posts.each do |post| %>
+      <%= link_to insight_path(post), class: "bg-white rounded-xl shadow-sm border border-gray-200 p-5 flex flex-col gap-4 hover:shadow-md hover:border-indigo-300 transition-all duration-200 cursor-pointer" do %>
+
+        <%# Badges %>
+        <div class="flex flex-wrap gap-2">
+          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium <%= platform_color_classes(post.platform) %> capitalize">
+            <%= post.platform %>
+          </span>
+          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+            published
+          </span>
+        </div>
+
+        <%# Caption %>
+        <% if post.caption.present? %>
+          <p class="text-sm text-gray-700 line-clamp-3 leading-relaxed"><%= post.caption.truncate(140) %></p>
+        <% else %>
+          <p class="text-sm text-gray-400 italic">No caption</p>
+        <% end %>
+
+        <%# Metadata %>
+        <dl class="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
+          <% if post.published_at.present? %>
+            <div class="col-span-2">
+              <dt class="text-gray-400 uppercase tracking-wide">Published</dt>
+              <dd class="text-green-700 font-medium"><%= post.published_at.strftime("%b %-d, %Y %H:%M") %></dd>
+            </div>
+          <% end %>
+          <div class="col-span-2">
+            <dt class="text-gray-400 uppercase tracking-wide">Owner</dt>
+            <dd class="text-gray-700"><%= post.user&.name || "—" %></dd>
+          </div>
+        </dl>
+
+        <div class="flex items-center gap-1 text-indigo-600 text-xs font-medium mt-auto pt-3 border-t border-gray-100">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+          </svg>
+          View Insights
+        </div>
+      <% end %>
+    <% end %>
+  </div>
+<% end %>
