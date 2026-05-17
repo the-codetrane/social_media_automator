@@ -94,6 +94,22 @@ due_facebook_post:
   created_at: <%= 1.hour.ago %>
   updated_at: <%= 1.hour.ago %>
 
+carousel_post:
+  id: <%= ActiveRecord::FixtureSet.identify(:carousel_post) %>
+  media_asset_id: <%= ActiveRecord::FixtureSet.identify(:sample_image) %>
+  social_template_id: ~
+  platform: 0
+  caption: "Carousel time!"
+  hashtags: "#photos"
+  platform_payload: <%= { "carousel_asset_ids" => [ActiveRecord::FixtureSet.identify(:sample_image), ActiveRecord::FixtureSet.identify(:sample_image_2)] }.to_json %>
+  status: 0
+  scheduled_at: ~
+  published_at: ~
+  external_post_id: ~
+  user_id: <%= ActiveRecord::FixtureSet.identify(:one) %>
+  created_at: <%= Time.current %>
+  updated_at: <%= Time.current %>
+
 url_encoded_asset_post:
   id: <%= ActiveRecord::FixtureSet.identify(:url_encoded_asset_post) %>
   media_asset_id: <%= ActiveRecord::FixtureSet.identify(:url_encoded_name) %>

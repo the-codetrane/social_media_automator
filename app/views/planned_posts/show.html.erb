@@ -65,7 +65,51 @@
       </div>
 
       <%# Media Preview %>
-      <% if @planned_post.media_asset.public_url? %>
+      <% if @carousel_assets&.any? %>
+        <div class="mb-6">
+          <p class="text-xs text-gray-400 uppercase tracking-wide mb-2">Media (<%= @carousel_assets.size %> photos)</p>
+          <div class="relative max-w-md rounded-lg overflow-hidden bg-gray-100" data-controller="carousel">
+            <% @carousel_assets.each_with_index do |asset, i| %>
+              <div data-carousel-target="slide" class="<%= i > 0 ? 'hidden' : '' %>">
+                <% if asset.public_url? %>
+                  <%= image_tag asset.public_url,
+                      class: "w-full h-auto object-contain",
+                      alt: decode_name(asset.external_name.presence || "Photo #{i + 1}") %>
+                <% else %>
+                  <div class="flex items-center justify-center h-48 text-gray-400 text-sm">No preview</div>
+                <% end %>
+              </div>
+            <% end %>
+
+            <% if @carousel_assets.size > 1 %>
+              <button type="button"
+                class="absolute left-2 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white rounded-full w-8 h-8 flex items-center justify-center transition-colors"
+                data-action="click->carousel#prev">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                </svg>
+              </button>
+              <button type="button"
+                class="absolute right-2 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white rounded-full w-8 h-8 flex items-center justify-center transition-colors"
+                data-action="click->carousel#next">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                </svg>
+              </button>
+              <div class="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5">
+                <% @carousel_assets.each_with_index do |_, i| %>
+                  <button type="button"
+                    class="w-2 h-2 rounded-full transition-colors <%= i == 0 ? 'bg-white' : 'bg-white/50' %>"
+                    data-carousel-target="dot"
+                    data-index="<%= i %>"
+                    data-action="click->carousel#goTo">
+                  </button>
+                <% end %>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      <% elsif @planned_post.media_asset.public_url? %>
         <div class="mb-6">
           <p class="text-xs text-gray-400 uppercase tracking-wide mb-2">Media</p>
           <div class="rounded-lg overflow-hidden bg-gray-100 max-w-md">

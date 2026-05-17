@@ -128,6 +128,23 @@ class PlannedPostsControllerTest < ActionDispatch::IntegrationTest
     assert_select "video", count: 0
   end
 
+  test "show renders all carousel slides for a carousel post" do
+    sign_in_as(@user)
+    get planned_post_path(planned_posts(:carousel_post))
+    assert_select "img[src=?]", media_assets(:sample_image).public_url
+    assert_select "img[src=?]", media_assets(:sample_image_2).public_url
+    assert_match "2 photos", response.body
+  end
+
+  test "show renders carousel navigation controls for a carousel post" do
+    sign_in_as(@user)
+    get planned_post_path(planned_posts(:carousel_post))
+    assert_select "[data-controller='carousel']"
+    assert_select "[data-action='click->carousel#prev']"
+    assert_select "[data-action='click->carousel#next']"
+    assert_select "[data-carousel-target='dot']", count: 2
+  end
+
   # Edit action tests
   test "edit redirects when not signed in" do
     get edit_planned_post_path(@planned_post)
