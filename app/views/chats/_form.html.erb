@@ -1,0 +1,15 @@
+<%= form_with url: chat_messages_path,
+              method: :post,
+              id: "chat-form",
+              data: { controller: "chat-form", action: "turbo:submit-end->chat-form#reset" },
+              class: "flex items-end gap-2" do |f| %>
+  <%= f.text_area :content,
+        rows: 1,
+        autofocus: true,
+        required: true,
+        placeholder: "Message…",
+        data: { chat_form_target: "input", action: "keydown->chat-form#submitOnEnter input->chat-form#autosize" },
+        class: "flex-1 resize-none rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder-gray-400 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none max-h-40" %>
+  <%= f.submit "Send",
+        class: "inline-flex items-center px-4 py-2 rounded-md text-sm font-medium bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer" %>
+<% end %>

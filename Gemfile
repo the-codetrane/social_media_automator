@@ -50,6 +50,9 @@ gem "faraday-retry", "~> 2.0"
 # LLM Gem
 gem "ruby_llm"
 
+# Markdown rendering for LLM chat responses
+gem "redcarpet", "~> 3.6"
+
 # CSS Bundling tools
 gem "cssbundling-rails"
 

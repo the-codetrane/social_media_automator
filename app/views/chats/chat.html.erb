@@ -1,0 +1,39 @@
+<% content_for :title, "Chat" %>
+
+<%= turbo_stream_from "chat_#{@chat.id}" %>
+
+<div class="flex items-center justify-between mb-6">
+  <div>
+    <h1 class="text-2xl font-bold text-gray-900">Chat</h1>
+    <p class="text-sm text-gray-500 mt-1">
+      Talking with
+      <span class="font-medium text-gray-700"><%= @chat.model&.model_id || RubyLLM.config.default_model %></span>
+      &middot; session #<%= @chat.id %>
+    </p>
+  </div>
+  <%= button_to "Clear",
+        destroy_chat_path,
+        method: :delete,
+        form: { data: { turbo_confirm: "Clear this conversation and start fresh?" } },
+        class: "px-3 py-2 rounded-md text-sm font-medium bg-white border border-gray-300 text-gray-700 hover:bg-red-50 hover:border-red-300 hover:text-red-700 transition-colors" %>
+</div>
+
+<div data-controller="chat"
+     class="bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col"
+     style="height: calc(100vh - 14rem); min-height: 400px;">
+  <div id="chat-messages"
+       data-chat-target="log"
+       class="flex-1 overflow-y-auto px-5 py-6 space-y-3">
+    <% if @messages.empty? %>
+      <div id="chat-empty" class="text-center text-sm text-gray-400 py-12">
+        Say something to get started.
+      </div>
+    <% else %>
+      <%= render partial: "chats/message", collection: @messages, as: :message %>
+    <% end %>
+  </div>
+
+  <div class="border-t border-gray-200 px-4 py-3 bg-gray-50 rounded-b-xl">
+    <%= render "chats/form", chat: @chat %>
+  </div>
+</div>

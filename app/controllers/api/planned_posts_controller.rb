@@ -2,6 +2,25 @@
 
 module Api
   class PlannedPostsController < BaseController
+    before_action :set_planned_post, only: [ :show, :update, :destroy ]
+
+    # GET /api/planned_posts
+    # Optional filters: ?status=scheduled&platform=instagram&user_id=1
+    def index
+      posts = PlannedPost.all
+      posts = posts.where(status: params[:status]) if params[:status].present?
+      posts = posts.where(platform: params[:platform]) if params[:platform].present?
+      posts = posts.where(user_id: params[:user_id]) if params[:user_id].present?
+      posts = posts.order(:scheduled_at)
+
+      render json: posts.map { |p| planned_post_response(p) }
+    end
+
+    # GET /api/planned_posts/:id
+    def show
+      render json: planned_post_response(@planned_post)
+    end
+
     def create
       resolved = resolve_media_assets(params[:planned_post])
       return if performed?
@@ -45,7 +64,49 @@ module Api
       render json: results, status: status
     end
 
+    # PATCH /api/planned_posts/:id
+    # Accepts media_asset_ids (array of existing IDs), media_urls (array of URLs),
+    # or scalar fields (caption, hashtags, scheduled_at, status, platform_payload).
+    # media_asset_ids / media_urls set carousel order; first entry becomes primary.
+    def update
+      attrs = update_post_params.to_h
+
+      if params[:planned_post][:media_asset_ids].present?
+        asset_ids = Array(params[:planned_post][:media_asset_ids]).map(&:to_i)
+        attrs[:media_asset_id] = asset_ids.first
+        attrs[:platform_payload] = (attrs[:platform_payload] || @planned_post.platform_payload || {})
+          .merge("carousel_asset_ids" => asset_ids)
+      elsif params[:planned_post][:media_urls].present?
+        resolved = resolve_media_assets(params[:planned_post])
+        return if performed?
+
+        attrs[:media_asset_id] = resolved[:primary_id]
+        if resolved[:all_ids].size > 1
+          attrs[:platform_payload] = (attrs[:platform_payload] || @planned_post.platform_payload || {})
+            .merge("carousel_asset_ids" => resolved[:all_ids])
+        end
+      end
+
+      if @planned_post.update(attrs)
+        render json: planned_post_response(@planned_post)
+      else
+        render json: { errors: @planned_post.errors.full_messages }, status: :unprocessable_entity
+      end
+    end
+
+    # DELETE /api/planned_posts/:id
+    def destroy
+      @planned_post.destroy!
+      head :no_content
+    end
+
     private
+
+    def set_planned_post
+      @planned_post = PlannedPost.find(params[:id])
+    rescue ActiveRecord::RecordNotFound
+      render json: { error: "Planned post not found" }, status: :not_found
+    end
 
     # Resolves media assets from various input formats.
     # Supports: media_asset_id, media_url (single), media_urls (array for carousels)
@@ -194,11 +255,28 @@ module Api
       end
     end
 
+    def update_post_params
+      params.require(:planned_post).permit(
+        :media_asset_id,
+        :social_template_id,
+        :platform,
+        :status,
+        :caption,
+        :hashtags,
+        :scheduled_at,
+        platform_payload: {},
+        media_urls: [],
+        media_asset_ids: []
+      ).except(:media_urls, :media_asset_ids)
+    end
+
     def planned_post_response(planned_post)
+      carousel_ids = planned_post.platform_payload&.dig("carousel_asset_ids")
       {
         id: planned_post.id,
         user_id: planned_post.user_id,
         media_asset_id: planned_post.media_asset_id,
+        carousel_asset_ids: carousel_ids || [ planned_post.media_asset_id ],
         social_template_id: planned_post.social_template_id,
         platform: planned_post.platform,
         status: planned_post.status,

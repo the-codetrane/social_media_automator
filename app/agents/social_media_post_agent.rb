@@ -1,7 +1,9 @@
 class SocialMediaPostAgent < RubyLLM::Agent
-  model "claude-haiku-4-5-20251001"
+  chat_model "Chat"
+  model "claude-haiku-4-5-20251001", assume_model_exists: true, provider: "anthropic"
   inputs :user
-  tools ListMediaAssets, FindSocialTemplate, ResolveMediaAsset, CreatePlannedPost
+  tools ListMediaAssets, FindSocialTemplate, ResolveMediaAsset, CreatePlannedPost,
+        ListPlannedPosts, GetPlannedPost, UpdatePlannedPost, DeletePlannedPost
 
   instructions do
     <<~INSTRUCTIONS
@@ -53,6 +55,14 @@ class SocialMediaPostAgent < RubyLLM::Agent
       - If the post is about new music, emphasize mood, inspiration, sound, and what listeners should feel.
       - If the post is backstage or candid, keep it loose, human, and voicey.
       - Match the caption to the media. Do not invent details not supported by the user or asset context.
+
+      Managing existing posts:
+      - Use list_planned_posts to find posts (filter by status, platform, or user_id).
+      - A post where is_carousel is false has only one image (carousel_asset_ids has one entry).
+      - Use get_planned_post to inspect a specific post before modifying it.
+      - To convert a single-photo post to a carousel: call update_planned_post with the post id and a media_asset_ids array of 2–10 asset IDs in the desired display order.
+      - To reorder carousel images: call update_planned_post with the same media_asset_ids in the new order.
+      - To replace a post entirely: call delete_planned_post, then create_planned_post with the new media.
 
       Status rules:
       - Default status is "draft" unless a specific time is given.

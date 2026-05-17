@@ -222,19 +222,18 @@ module Instagram
 
       @publisher.instance_variable_set(:@client, mock_client)
 
-      post = PlannedPost.create!(
-        user:        @user,
-        media_asset: @image_asset,
-        platform:    :instagram,
-        status:      :draft
-      )
+      # Replace the 5s real sleep between polls with virtual time travel so
+      # the deadline can be reached in zero wall-clock time.
+      test_case = self
+      @publisher.define_singleton_method(:sleep) { |seconds| test_case.travel(seconds.seconds) }
 
-      # Use a very short timeout for testing
-      error = assert_raises(Instagram::ContainerTimeoutError) do
-        @publisher.send(:wait_until_finished!, "cont_timeout", timeout: 0.1)
+      freeze_time do
+        error = assert_raises(Instagram::ContainerTimeoutError) do
+          @publisher.send(:wait_until_finished!, "cont_timeout", timeout: 1)
+        end
+
+        assert_match(/did not finish processing/, error.message)
       end
-
-      assert_match(/did not finish processing/, error.message)
     end
   end
 end
