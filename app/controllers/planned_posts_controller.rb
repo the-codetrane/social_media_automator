@@ -8,6 +8,8 @@ class PlannedPostsController < ApplicationController
   end
 
   def show
+    carousel_ids = @planned_post.platform_payload&.dig("carousel_asset_ids")
+    @carousel_assets = MediaAsset.where(id: carousel_ids).index_by(&:id).values_at(*carousel_ids).compact if carousel_ids.present?
   end
 
   def publish
