@@ -1,1 +1,63 @@
 @import "tailwindcss";
+
+/* Markdown rendered inside assistant chat bubbles. Tailwind v4 preflight
+   strips default list/heading styles, so we restore minimal typography. */
+.chat-markdown > *:first-child { margin-top: 0; }
+.chat-markdown > *:last-child  { margin-bottom: 0; }
+.chat-markdown p,
+.chat-markdown ul,
+.chat-markdown ol,
+.chat-markdown pre,
+.chat-markdown blockquote,
+.chat-markdown table { margin: 0.5rem 0; }
+.chat-markdown h1,
+.chat-markdown h2,
+.chat-markdown h3 { font-weight: 600; margin: 0.75rem 0 0.25rem; line-height: 1.25; }
+.chat-markdown h1 { font-size: 1.25rem; }
+.chat-markdown h2 { font-size: 1.125rem; }
+.chat-markdown h3 { font-size: 1rem; }
+.chat-markdown ul { list-style: disc;    padding-left: 1.25rem; }
+.chat-markdown ol { list-style: decimal; padding-left: 1.5rem; }
+.chat-markdown li { margin: 0.125rem 0; }
+.chat-markdown a  { color: var(--color-indigo-600); text-decoration: underline; }
+.chat-markdown a:hover { color: var(--color-indigo-800); }
+.chat-markdown code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  background: rgba(0, 0, 0, 0.06);
+  padding: 0.1em 0.3em;
+  border-radius: 4px;
+  font-size: 0.875em;
+  overflow-wrap: break-word;
+}
+.chat-markdown pre {
+  background: var(--color-gray-800);
+  color: var(--color-gray-50);
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  overflow-x: auto;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+.chat-markdown pre code {
+  background: transparent;
+  padding: 0;
+  color: inherit;
+  font-size: inherit;
+}
+.chat-markdown blockquote {
+  border-left: 3px solid var(--color-gray-300);
+  padding-left: 0.75rem;
+  color: var(--color-gray-600);
+}
+.chat-markdown table {
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+.chat-markdown th,
+.chat-markdown td {
+  border: 1px solid var(--color-gray-200);
+  padding: 0.25rem 0.5rem;
+  text-align: left;
+}
+.chat-markdown th { background: rgba(0, 0, 0, 0.04); font-weight: 600; }
+.chat-markdown hr { border: 0; border-top: 1px solid var(--color-gray-200); margin: 0.75rem 0; }

@@ -1,0 +1,8 @@
+sonar_pro:
+  id: <%= ActiveRecord::FixtureSet.identify(:sonar_pro) %>
+  provider: perplexity
+  model_id: sonar-pro
+  name: Sonar Pro
+  family: sonar
+  created_at: <%= Time.current %>
+  updated_at: <%= Time.current %>

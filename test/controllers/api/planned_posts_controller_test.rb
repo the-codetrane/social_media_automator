@@ -140,7 +140,7 @@ module Api
              headers: api_headers
 
         json = response.parsed_body
-        expected_keys = %w[id user_id media_asset_id social_template_id platform status caption hashtags scheduled_at platform_payload created_at updated_at]
+        expected_keys = %w[id user_id media_asset_id carousel_asset_ids social_template_id platform status caption hashtags scheduled_at platform_payload created_at updated_at]
         assert_equal expected_keys.sort, json.keys.sort
       end
     end

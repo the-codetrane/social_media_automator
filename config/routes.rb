@@ -15,6 +15,11 @@ Rails.application.routes.draw do
   resources :social_templates, only: [ :index, :show, :new, :create, :edit, :update, :destroy ]
   resources :sessions,         only: [ :index ]
 
+  # LLM chat
+  get    "chat",          to: "chats#chat",           as: :chat
+  post   "chat/messages", to: "chats#create_message", as: :chat_messages
+  delete "chat",          to: "chats#destroy",        as: :destroy_chat
+
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
   # Can be used by load balancers and uptime monitors to verify that the app is live.
   get "up" => "rails/health#show", as: :rails_health_check
@@ -33,11 +38,12 @@ Rails.application.routes.draw do
 
   # API endpoints
   namespace :api do
-    resources :planned_posts, only: [ :create ] do
+    resources :planned_posts, only: [ :index, :show, :create, :update, :destroy ] do
       collection do
         post :bulk_create
       end
     end
+    resources :media_assets, only: [ :index, :show ]
   end
 
   # Defines the root path route ("/")

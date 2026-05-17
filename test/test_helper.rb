@@ -4,6 +4,10 @@ require "rails/test_help"
 require_relative "test_helpers/session_test_helper"
 require "minitest/mock"
 
+RubyLLM.configure do |config|
+  config.anthropic_api_key ||= "test-api-key"
+end
+
 module ActiveSupport
   class TestCase
     # Run tests in parallel with specified workers

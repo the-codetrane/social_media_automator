@@ -1,0 +1,16 @@
+user_greeting:
+  id: <%= ActiveRecord::FixtureSet.identify(:user_greeting) %>
+  chat_id: <%= ActiveRecord::FixtureSet.identify(:chat_with_messages) %>
+  role: user
+  content: "Hello there"
+  created_at: <%= 2.minutes.ago %>
+  updated_at: <%= 2.minutes.ago %>
+
+assistant_reply:
+  id: <%= ActiveRecord::FixtureSet.identify(:assistant_reply) %>
+  chat_id: <%= ActiveRecord::FixtureSet.identify(:chat_with_messages) %>
+  model_id: <%= ActiveRecord::FixtureSet.identify(:sonar_pro) %>
+  role: assistant
+  content: "Hi! How can I help?"
+  created_at: <%= 1.minute.ago %>
+  updated_at: <%= 1.minute.ago %>
