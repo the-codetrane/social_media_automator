@@ -1,0 +1,123 @@
+<%
+  metrics    = insights[:metrics]
+  media_type = insights[:media_type]
+
+  reaction_data = Facebook::InsightsService::REACTION_KEYS.each_with_object({}) do |key, h|
+    label = Facebook::InsightsService::METRIC_LABELS.fetch(key, key.humanize)
+    h[label] = metrics.fetch(key, 0).to_i
+  end
+
+  total_reactions = reaction_data.values.sum
+
+  impressions_data = {
+    "Organic" => metrics.fetch("post_impressions_organic", 0).to_i,
+    "Paid"    => metrics.fetch("post_impressions_paid", 0).to_i
+  }
+%>
+
+<%# Top stat cards %>
+<div class="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6">
+  <% [
+    ["post_impressions_unique", "Reach"],
+    ["post_impressions",        "Total Impressions"],
+    ["post_clicks",             "Post Clicks"]
+  ].each do |key, fallback_label| %>
+    <% next unless metrics.key?(key) %>
+    <div class="bg-white rounded-xl border border-gray-200 p-5 text-center">
+      <p class="text-3xl font-bold text-gray-900"><%= number_with_delimiter(metrics[key].to_i) %></p>
+      <p class="text-xs text-gray-500 uppercase tracking-wide mt-1">
+        <%= Facebook::InsightsService::METRIC_LABELS.fetch(key, fallback_label) %>
+      </p>
+    </div>
+  <% end %>
+</div>
+
+<%# Reactions breakdown %>
+<% if total_reactions > 0 %>
+  <div class="bg-white rounded-xl border border-gray-200 p-5 mb-6">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Reactions</h2>
+      <span class="text-sm text-gray-500"><%= number_with_delimiter(total_reactions) %> total</span>
+    </div>
+    <%= bar_chart reaction_data,
+          colors: ["#1d4ed8"],
+          height: "240px",
+          library: {
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+          } %>
+  </div>
+<% end %>
+
+<%# Impressions breakdown: organic vs paid %>
+<% if impressions_data.values.sum > 0 %>
+  <div class="bg-white rounded-xl border border-gray-200 p-5 mb-6">
+    <h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-4">Impressions Breakdown</h2>
+    <div class="grid grid-cols-2 gap-4">
+      <div class="text-center p-4 bg-blue-50 rounded-lg">
+        <p class="text-2xl font-bold text-blue-700"><%= number_with_delimiter(impressions_data["Organic"]) %></p>
+        <p class="text-xs text-blue-500 uppercase tracking-wide mt-1">Organic</p>
+      </div>
+      <div class="text-center p-4 bg-indigo-50 rounded-lg">
+        <p class="text-2xl font-bold text-indigo-700"><%= number_with_delimiter(impressions_data["Paid"]) %></p>
+        <p class="text-xs text-indigo-500 uppercase tracking-wide mt-1">Paid</p>
+      </div>
+    </div>
+  </div>
+<% end %>
+
+<%# Video metrics — only shown when the post has video %>
+<% if media_type == "VIDEO" %>
+  <% has_video_data = %w[post_video_views post_video_views_unique post_video_avg_time_watched post_video_view_time].any? { |k| metrics.key?(k) } %>
+  <% if has_video_data %>
+    <div class="bg-white rounded-xl border border-gray-200 p-5 mb-6">
+      <h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-4">Video Performance</h2>
+      <div class="grid grid-cols-2 gap-4">
+        <% if metrics.key?("post_video_views") %>
+          <div class="text-center p-4 bg-blue-50 rounded-lg">
+            <p class="text-2xl font-bold text-blue-700"><%= number_with_delimiter(metrics["post_video_views"].to_i) %></p>
+            <p class="text-xs text-blue-500 uppercase tracking-wide mt-1">Video Views (3s+)</p>
+          </div>
+        <% end %>
+        <% if metrics.key?("post_video_views_unique") %>
+          <div class="text-center p-4 bg-blue-50 rounded-lg">
+            <p class="text-2xl font-bold text-blue-700"><%= number_with_delimiter(metrics["post_video_views_unique"].to_i) %></p>
+            <p class="text-xs text-blue-500 uppercase tracking-wide mt-1">Unique Video Views</p>
+          </div>
+        <% end %>
+        <% if metrics.key?("post_video_avg_time_watched") %>
+          <div class="text-center p-4 bg-indigo-50 rounded-lg">
+            <p class="text-2xl font-bold text-indigo-700"><%= (metrics["post_video_avg_time_watched"].to_f / 1000).round(1) %>s</p>
+            <p class="text-xs text-indigo-500 uppercase tracking-wide mt-1">Avg Watch Time</p>
+          </div>
+        <% end %>
+        <% if metrics.key?("post_video_view_time") %>
+          <div class="text-center p-4 bg-indigo-50 rounded-lg">
+            <p class="text-2xl font-bold text-indigo-700"><%= (metrics["post_video_view_time"].to_f / 1000 / 60).round(1) %>m</p>
+            <p class="text-xs text-indigo-500 uppercase tracking-wide mt-1">Total View Time</p>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+<% end %>
+
+<%# All metrics table %>
+<div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+  <div class="px-5 py-4 border-b border-gray-100">
+    <h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">All Metrics</h2>
+  </div>
+  <table class="w-full text-sm">
+    <tbody class="divide-y divide-gray-100">
+      <% metrics.each do |key, value| %>
+        <tr class="hover:bg-gray-50 transition-colors">
+          <td class="px-5 py-3 text-gray-600"><%= Facebook::InsightsService::METRIC_LABELS.fetch(key, key.humanize) %></td>
+          <td class="px-5 py-3 text-right font-semibold text-gray-900"><%= number_with_delimiter(value.to_i) %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+  <p class="px-5 py-3 text-xs text-gray-400 border-t border-gray-100">
+    Data from Meta Graph API &middot; External ID: <span class="font-mono"><%= post.external_post_id %></span>
+  </p>
+</div>

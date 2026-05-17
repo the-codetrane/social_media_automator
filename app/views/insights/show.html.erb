@@ -1,20 +1,12 @@
 <% content_for :title, "Post Insights" %>
 
 <%
-  metrics      = @insights[:metrics]
+  permalink    = @insights[:permalink] || @post.platform_payload&.dig("permalink_url")
   product_type = @insights[:product_type]
-  permalink    = @insights[:permalink] || @post.platform_payload&.dig("permalink")
-
-  engagement_keys = case product_type
-                    when "REELS" then %w[likes comments shares saved]
-                    when "STORY" then %w[shares replies]
-                    else              %w[likes comments shares saved]
-                    end
-
-  engagement_data = engagement_keys.each_with_object({}) do |key, h|
-    label = Instagram::InsightsService::METRIC_LABELS.fetch(key, key.humanize)
-    h[label] = metrics.fetch(key, 0).to_i
-  end
+  platform_label = @post.facebook? ? "Facebook" : product_type&.capitalize || "Instagram"
+  view_link_classes = @post.facebook? \
+    ? "inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+    : "inline-flex items-center gap-2 px-4 py-2 bg-pink-600 text-white text-sm font-medium rounded-lg hover:bg-pink-700 transition-colors"
 %>
 
 <div class="max-w-4xl mx-auto">
@@ -28,16 +20,15 @@
       <% end %>
       <div>
         <h1 class="text-2xl font-bold text-gray-900">Post Insights</h1>
-        <p class="text-sm text-gray-500 mt-0.5"><%= product_type.capitalize %> &middot; Published <%= @post.published_at.strftime("%b %-d, %Y") %></p>
+        <p class="text-sm text-gray-500 mt-0.5"><%= platform_label %> &middot; Published <%= @post.published_at.strftime("%b %-d, %Y") %></p>
       </div>
     </div>
     <% if permalink.present? %>
-      <%= link_to permalink, target: "_blank", rel: "noopener",
-          class: "inline-flex items-center gap-2 px-4 py-2 bg-pink-600 text-white text-sm font-medium rounded-lg hover:bg-pink-700 transition-colors" do %>
+      <%= link_to permalink, target: "_blank", rel: "noopener", class: view_link_classes do %>
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
         </svg>
-        View on Instagram
+        View on <%= @post.facebook? ? "Facebook" : "Instagram" %>
       <% end %>
     <% end %>
   </div>
@@ -50,74 +41,10 @@
     </div>
   <% end %>
 
-  <%# Top stat cards %>
-  <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6">
-    <% stat_keys = case product_type
-                   when "STORY" then %w[reach follows profile_visits]
-                   when "REELS" then %w[reach total_interactions profile_visits]
-                   else              %w[reach total_interactions profile_visits]
-                   end %>
-    <% stat_keys.each do |key| %>
-      <% next unless metrics.key?(key) %>
-      <div class="bg-white rounded-xl border border-gray-200 p-5 text-center">
-        <p class="text-3xl font-bold text-gray-900"><%= number_with_delimiter(metrics[key].to_i) %></p>
-        <p class="text-xs text-gray-500 uppercase tracking-wide mt-1"><%= Instagram::InsightsService::METRIC_LABELS.fetch(key, key.humanize) %></p>
-      </div>
-    <% end %>
-  </div>
-
-  <%# Engagement breakdown chart %>
-  <% if engagement_data.values.sum > 0 %>
-    <div class="bg-white rounded-xl border border-gray-200 p-5 mb-6">
-      <h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-4">Engagement Breakdown</h2>
-      <%= bar_chart engagement_data,
-            colors: ["#6366f1"],
-            height: "280px",
-            library: {
-              plugins: { legend: { display: false } },
-              scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
-            } %>
-    </div>
+  <%# Platform-specific metrics %>
+  <% if @post.facebook? %>
+    <%= render "facebook_metrics", post: @post, insights: @insights %>
+  <% else %>
+    <%= render "instagram_metrics", post: @post, insights: @insights %>
   <% end %>
-
-  <%# Reel-specific watch time metrics %>
-  <% if product_type == "REELS" && (metrics.key?("ig_reels_avg_watch_time") || metrics.key?("ig_reels_video_view_total_time")) %>
-    <div class="bg-white rounded-xl border border-gray-200 p-5 mb-6">
-      <h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-4">Watch Time</h2>
-      <div class="grid grid-cols-2 gap-4">
-        <% if metrics.key?("ig_reels_avg_watch_time") %>
-          <div class="text-center p-4 bg-indigo-50 rounded-lg">
-            <p class="text-2xl font-bold text-indigo-700"><%= (metrics["ig_reels_avg_watch_time"].to_f / 1000).round(1) %>s</p>
-            <p class="text-xs text-indigo-500 uppercase tracking-wide mt-1">Avg Watch Time</p>
-          </div>
-        <% end %>
-        <% if metrics.key?("ig_reels_video_view_total_time") %>
-          <div class="text-center p-4 bg-indigo-50 rounded-lg">
-            <p class="text-2xl font-bold text-indigo-700"><%= (metrics["ig_reels_video_view_total_time"].to_f / 1000 / 60).round(1) %>m</p>
-            <p class="text-xs text-indigo-500 uppercase tracking-wide mt-1">Total View Time</p>
-          </div>
-        <% end %>
-      </div>
-    </div>
-  <% end %>
-
-  <%# All metrics table %>
-  <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
-    <div class="px-5 py-4 border-b border-gray-100">
-      <h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">All Metrics</h2>
-    </div>
-    <table class="w-full text-sm">
-      <tbody class="divide-y divide-gray-100">
-        <% metrics.each do |key, value| %>
-          <tr class="hover:bg-gray-50 transition-colors">
-            <td class="px-5 py-3 text-gray-600"><%= Instagram::InsightsService::METRIC_LABELS.fetch(key, key.humanize) %></td>
-            <td class="px-5 py-3 text-right font-semibold text-gray-900"><%= number_with_delimiter(value.to_i) %></td>
-          </tr>
-        <% end %>
-      </tbody>
-    </table>
-    <p class="px-5 py-3 text-xs text-gray-400 border-t border-gray-100">
-      Data from Meta Graph API &middot; External ID: <span class="font-mono"><%= @post.external_post_id %></span>
-    </p>
-  </div>
 </div>

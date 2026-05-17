@@ -17,7 +17,11 @@ class InsightsController < ApplicationController
       return
     end
 
-    @insights = Instagram::InsightsService.new(@post.user).fetch(@post.external_post_id)
+    @insights = if @post.facebook?
+      Facebook::InsightsService.new(@post.user).fetch(@post)
+    else
+      Instagram::InsightsService.new(@post.user).fetch(@post.external_post_id)
+    end
   rescue Instagram::ApiError => e
     redirect_to insights_path, alert: "Could not load insights: #{e.message}"
   end
