@@ -7,6 +7,27 @@
   </div>
 </div>
 
+<% if @chart_series.any? { |s| s[:data].any? } %>
+  <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
+    <h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-4">Weekly Performance</h2>
+    <%= line_chart @chart_series,
+          height: "280px",
+          colors: ["#6366f1", "#ec4899", "#f59e0b", "#10b981", "#3b82f6", "#8b5cf6", "#f97316"],
+          library: {
+            scales: {
+              y: { beginAtZero: true, ticks: { precision: 0 } }
+            },
+            plugins: {
+              legend: { position: "bottom", labels: { boxWidth: 12, padding: 16 } },
+              tooltip: { mode: "index", intersect: false }
+            },
+            interaction: { mode: "index" },
+            elements: { point: { radius: 3, hitRadius: 8 } }
+          } %>
+    <p class="text-xs text-gray-400 mt-3">Metrics are populated when you view individual post insights. Open a post's detail page to load its data.</p>
+  </div>
+<% end %>
+
 <% if @posts.empty? %>
   <div class="text-center py-20 text-gray-400">
     <p class="text-lg">No published posts found.</p>
