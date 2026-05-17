@@ -1,0 +1,50 @@
+<% content_for :title, "Post Insights" %>
+
+<%
+  permalink    = @insights[:permalink] || @post.platform_payload&.dig("permalink_url")
+  product_type = @insights[:product_type]
+  platform_label = @post.facebook? ? "Facebook" : product_type&.capitalize || "Instagram"
+  view_link_classes = @post.facebook? \
+    ? "inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+    : "inline-flex items-center gap-2 px-4 py-2 bg-pink-600 text-white text-sm font-medium rounded-lg hover:bg-pink-700 transition-colors"
+%>
+
+<div class="max-w-4xl mx-auto">
+  <%# Header %>
+  <div class="flex items-center justify-between mb-6">
+    <div class="flex items-center gap-4">
+      <%= link_to insights_path, class: "text-gray-400 hover:text-gray-600 transition-colors" do %>
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+        </svg>
+      <% end %>
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900">Post Insights</h1>
+        <p class="text-sm text-gray-500 mt-0.5"><%= platform_label %> &middot; Published <%= @post.published_at.strftime("%b %-d, %Y") %></p>
+      </div>
+    </div>
+    <% if permalink.present? %>
+      <%= link_to permalink, target: "_blank", rel: "noopener", class: view_link_classes do %>
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+        </svg>
+        View on <%= @post.facebook? ? "Facebook" : "Instagram" %>
+      <% end %>
+    <% end %>
+  </div>
+
+  <%# Caption preview %>
+  <% if @post.caption.present? %>
+    <div class="bg-white rounded-xl border border-gray-200 px-5 py-4 mb-6">
+      <p class="text-xs text-gray-400 uppercase tracking-wide mb-1">Caption</p>
+      <p class="text-sm text-gray-700 leading-relaxed line-clamp-2"><%= @post.caption %></p>
+    </div>
+  <% end %>
+
+  <%# Platform-specific metrics %>
+  <% if @post.facebook? %>
+    <%= render "facebook_metrics", post: @post, insights: @insights %>
+  <% else %>
+    <%= render "instagram_metrics", post: @post, insights: @insights %>
+  <% end %>
+</div>

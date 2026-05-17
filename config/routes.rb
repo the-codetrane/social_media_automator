@@ -13,6 +13,7 @@ Rails.application.routes.draw do
     end
   end
   resources :social_templates, only: [ :index, :show, :new, :create, :edit, :update, :destroy ]
+  resources :insights,         only: [ :index, :show ]
   resources :sessions,         only: [ :index ]
 
   # LLM chat
