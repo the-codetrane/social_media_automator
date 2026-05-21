@@ -42,6 +42,24 @@ class PlannedPostsController < ApplicationController
     end
   end
 
+  def bulk_reschedule
+    amount = params[:amount].to_i.clamp(1, 10)
+    unit   = %w[hours days weeks].include?(params[:unit]) ? params[:unit] : "days"
+    posts  = PlannedPost.where(id: Array(params[:post_ids]).map(&:to_i))
+
+    duration = amount.public_send(unit)
+    posts.find_each { |post| post.update_column(:scheduled_at, post.scheduled_at + duration) }
+
+    redirect_to planned_posts_path, notice: "#{posts.count} post(s) rescheduled by #{amount} #{unit}."
+  end
+
+  def bulk_destroy
+    posts = PlannedPost.where(id: Array(params[:post_ids]).map(&:to_i))
+    count = posts.count
+    posts.destroy_all
+    redirect_to planned_posts_path, notice: "#{count} post(s) deleted."
+  end
+
   def edit
     @media_assets = MediaAsset.order(:external_name)
     @social_templates = SocialTemplate.order(:name)

@@ -11,6 +11,10 @@ Rails.application.routes.draw do
       post :publish
       post :verify
     end
+    collection do
+      patch :bulk_reschedule
+      delete :bulk_destroy
+    end
   end
   resources :social_templates, only: [ :index, :show, :new, :create, :edit, :update, :destroy ]
   resources :insights,         only: [ :index, :show ]
