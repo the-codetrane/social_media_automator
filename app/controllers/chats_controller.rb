@@ -11,12 +11,19 @@ class ChatsController < ApplicationController
   # POST /chat/messages
   def create_message
     content = params[:content].to_s.strip
+    upload = params[:attachment]
 
     if content.blank?
       redirect_to chat_path, alert: "Message cannot be blank." and return
     end
 
-    @chat.add_message(role: :user, content: content)
+    if upload.present?
+      media_asset = create_media_asset_from_upload(upload)
+      @chat.create_user_message(content, with: media_asset.file)
+    else
+      @chat.add_message(role: :user, content: content)
+    end
+
     broadcast_thinking
     ChatCompletionJob.perform_later(@chat.id)
 
@@ -49,6 +56,19 @@ class ChatsController < ApplicationController
     end
     session[:chat_id] = chat.id
     @chat = chat
+  end
+
+  def create_media_asset_from_upload(upload)
+    asset = MediaAsset.create!(
+      external_id: SecureRandom.uuid,
+      media_type: :image,
+      status: :processed,
+      first_seen_at: Time.current,
+      mime_type: upload.content_type,
+      file_size: upload.size
+    )
+    asset.file.attach(upload)
+    asset
   end
 
   def broadcast_thinking
