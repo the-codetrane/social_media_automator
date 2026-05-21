@@ -64,6 +64,38 @@ class InsightsControllerTest < ActionDispatch::IntegrationTest
     assert_select "a[href=?]", insight_path(@draft_post), count: 0
   end
 
+  test "index renders timeframe toggle when posts have cached insights" do
+    @published_post.update!(cached_insights: MOCK_INSIGHTS.stringify_keys)
+    sign_in_as(@user)
+    get insights_path
+    assert_select "button[data-period='daily']",   text: "Daily"
+    assert_select "button[data-period='weekly']",  text: "Weekly"
+    assert_select "button[data-period='monthly']", text: "Monthly"
+  end
+
+  test "index wires stimulus controller when posts have cached insights" do
+    @published_post.update!(cached_insights: MOCK_INSIGHTS.stringify_keys)
+    sign_in_as(@user)
+    get insights_path
+    assert_select "[data-controller='insights-chart']"
+    assert_select "[data-insights-chart-chart-id-value='insights-performance-chart']"
+  end
+
+  test "index embeds all three series as json data attributes" do
+    @published_post.update!(cached_insights: MOCK_INSIGHTS.stringify_keys)
+    sign_in_as(@user)
+    get insights_path
+    assert_match "data-insights-chart-daily-value",   response.body
+    assert_match "data-insights-chart-weekly-value",  response.body
+    assert_match "data-insights-chart-monthly-value", response.body
+  end
+
+  test "index does not render chart section when no posts have cached insights" do
+    sign_in_as(@user)
+    get insights_path
+    assert_select "[data-controller='insights-chart']", count: 0
+  end
+
   # ---------------------------------------------------------------------------
   # Show
   # ---------------------------------------------------------------------------

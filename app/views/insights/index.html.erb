@@ -7,13 +7,36 @@
   </div>
 </div>
 
-<% if @chart_series.any? { |s| s[:data].any? } %>
-  <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
-    <h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-4">Weekly Performance</h2>
-    <%= line_chart @chart_series,
+<% if @weekly_series.any? { |s| s[:data].any? } %>
+  <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8"
+       data-controller="insights-chart"
+       data-insights-chart-daily-value="<%= @daily_series.to_json %>"
+       data-insights-chart-weekly-value="<%= @weekly_series.to_json %>"
+       data-insights-chart-monthly-value="<%= @monthly_series.to_json %>"
+       data-insights-chart-chart-id-value="insights-performance-chart">
+    <div class="flex items-center justify-between mb-4">
+      <h2 data-insights-chart-target="title" class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Weekly Performance</h2>
+      <div class="flex rounded-lg border border-gray-200 overflow-hidden text-xs font-medium">
+        <button data-insights-chart-target="toggle"
+                data-action="click->insights-chart#switch"
+                data-period="daily"
+                class="px-3 py-1.5 bg-white text-gray-600 hover:bg-gray-50 transition-colors border-r border-gray-200">Daily</button>
+        <button data-insights-chart-target="toggle"
+                data-action="click->insights-chart#switch"
+                data-period="weekly"
+                class="px-3 py-1.5 bg-indigo-600 text-white transition-colors border-r border-gray-200">Weekly</button>
+        <button data-insights-chart-target="toggle"
+                data-action="click->insights-chart#switch"
+                data-period="monthly"
+                class="px-3 py-1.5 bg-white text-gray-600 hover:bg-gray-50 transition-colors">Monthly</button>
+      </div>
+    </div>
+    <%= line_chart @weekly_series,
+          id: "insights-performance-chart",
           height: "280px",
           colors: ["#6366f1", "#ec4899", "#f59e0b", "#10b981", "#3b82f6", "#8b5cf6", "#f97316"],
           library: {
+            animation: { duration: 600, easing: "easeInOutQuart" },
             scales: {
               y: { beginAtZero: true, ticks: { precision: 0 } }
             },

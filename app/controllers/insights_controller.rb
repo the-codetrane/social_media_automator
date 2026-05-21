@@ -19,7 +19,10 @@ class InsightsController < ApplicationController
       .includes(:user, :media_asset)
       .order(published_at: :desc)
 
-    @chart_series = build_weekly_series(@posts.where.not(cached_insights: nil))
+    posts_with_insights = @posts.where.not(cached_insights: nil)
+    @daily_series   = build_daily_series(posts_with_insights)
+    @weekly_series  = build_weekly_series(posts_with_insights)
+    @monthly_series = build_monthly_series(posts_with_insights)
   end
 
   def show
@@ -43,6 +46,25 @@ class InsightsController < ApplicationController
 
   private
 
+  def build_daily_series(posts)
+    cutoff = 30.days.ago.beginning_of_day
+    recent = posts.select { |p| p.published_at >= cutoff }
+    by_day = recent.group_by { |p| p.published_at.to_date }
+    date_range = (cutoff.to_date..Date.current).to_a
+
+    CHART_METRICS.map do |metric|
+      {
+        name: CHART_LABELS[metric],
+        data: date_range.index_with do |date|
+          (by_day[date] || []).sum do |post|
+            metrics = post.cached_insights.is_a?(Hash) ? post.cached_insights : {}
+            ((metrics["metrics"] || metrics)[metric] || 0).to_i
+          end
+        end.transform_keys { |d| d.strftime("%-m/%-d") }
+      }
+    end
+  end
+
   def build_weekly_series(posts)
     weekly = posts.group_by { |p| p.published_at.beginning_of_week(:monday) }
 
@@ -52,10 +74,25 @@ class InsightsController < ApplicationController
         data: weekly.transform_values do |week_posts|
           week_posts.sum do |post|
             metrics = post.cached_insights.is_a?(Hash) ? post.cached_insights : {}
-            metrics_hash = metrics["metrics"] || metrics
-            (metrics_hash[metric] || 0).to_i
+            ((metrics["metrics"] || metrics)[metric] || 0).to_i
           end
         end.transform_keys { |week| week.strftime("%-m/%-d") }
+      }
+    end
+  end
+
+  def build_monthly_series(posts)
+    monthly = posts.group_by { |p| p.published_at.beginning_of_month }
+
+    CHART_METRICS.map do |metric|
+      {
+        name: CHART_LABELS[metric],
+        data: monthly.transform_values do |month_posts|
+          month_posts.sum do |post|
+            metrics = post.cached_insights.is_a?(Hash) ? post.cached_insights : {}
+            ((metrics["metrics"] || metrics)[metric] || 0).to_i
+          end
+        end.transform_keys { |month| month.strftime("%b %Y") }
       }
     end
   end
