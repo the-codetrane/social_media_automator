@@ -4,7 +4,15 @@ class PlannedPostsController < ApplicationController
   before_action :set_planned_post, only: %i[show edit update publish verify]
 
   def index
-    @planned_posts = PlannedPost.includes(:user, :media_asset, :social_template).order(created_at: :desc)
+    @platforms = Array(params[:platforms]).map(&:to_s).select { |p| PlannedPost.platforms.key?(p) }
+    @status    = PlannedPost.statuses.key?(params[:status]) ? params[:status] : "scheduled"
+
+    scope = PlannedPost.includes(:user, :media_asset, :social_template)
+    scope = scope.where(platform: @platforms) if @platforms.any?
+    scope = scope.where(status: @status)
+
+    order_col = @status == "published" ? :published_at : :scheduled_at
+    @planned_posts = scope.order(order_col => :asc)
   end
 
   def show
@@ -32,6 +40,24 @@ class PlannedPostsController < ApplicationController
     else
       redirect_to @planned_post, alert: "Post must be published before it can be verified."
     end
+  end
+
+  def bulk_reschedule
+    amount = params[:amount].to_i.clamp(1, 10)
+    unit   = %w[hours days weeks].include?(params[:unit]) ? params[:unit] : "days"
+    posts  = PlannedPost.where(id: Array(params[:post_ids]).map(&:to_i))
+
+    duration = amount.public_send(unit)
+    posts.find_each { |post| post.update_column(:scheduled_at, post.scheduled_at + duration) }
+
+    redirect_to planned_posts_path, notice: "#{posts.count} post(s) rescheduled by #{amount} #{unit}."
+  end
+
+  def bulk_destroy
+    posts = PlannedPost.where(id: Array(params[:post_ids]).map(&:to_i))
+    count = posts.count
+    posts.destroy_all
+    redirect_to planned_posts_path, notice: "#{count} post(s) deleted."
   end
 
   def edit
