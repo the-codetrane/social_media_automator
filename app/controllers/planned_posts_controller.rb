@@ -4,7 +4,15 @@ class PlannedPostsController < ApplicationController
   before_action :set_planned_post, only: %i[show edit update publish verify]
 
   def index
-    @planned_posts = PlannedPost.includes(:user, :media_asset, :social_template).order(created_at: :desc)
+    @platforms = Array(params[:platforms]).map(&:to_s).select { |p| PlannedPost.platforms.key?(p) }
+    @status    = PlannedPost.statuses.key?(params[:status]) ? params[:status] : "scheduled"
+
+    scope = PlannedPost.includes(:user, :media_asset, :social_template)
+    scope = scope.where(platform: @platforms) if @platforms.any?
+    scope = scope.where(status: @status)
+
+    order_col = @status == "published" ? :published_at : :scheduled_at
+    @planned_posts = scope.order(order_col => :asc)
   end
 
   def show

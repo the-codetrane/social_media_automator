@@ -19,38 +19,62 @@ class PlannedPostsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
-  test "index lists all posts" do
+  test "index defaults to showing scheduled posts only" do
     sign_in_as(@user)
     get planned_posts_path
-    assert_match "Beautiful sunset", response.body
+    # Scheduled posts should appear
     assert_match "Amazing reel", response.body
-    assert_match "Live on IG", response.body
+    assert_match "Show tonight", response.body
+    assert_match "Doors at 8", response.body
+    # Draft and published posts should not appear
+    assert_no_match "Beautiful sunset", response.body
+    assert_no_match "Live on IG", response.body
   end
 
-  test "index shows platform badges" do
+  test "index with status=published shows published posts" do
     sign_in_as(@user)
-    get planned_posts_path
+    get planned_posts_path, params: { status: "published" }
+    assert_match "Live on IG", response.body
+    assert_no_match "Amazing reel", response.body
+  end
+
+  test "index with platform filter shows only matching platform" do
+    sign_in_as(@user)
+    get planned_posts_path, params: { platforms: [ "instagram" ], status: "scheduled" }
+    assert_match "Show tonight", response.body
+    assert_no_match "Amazing reel", response.body  # youtube
+    assert_no_match "Doors at 8", response.body    # facebook
+  end
+
+  test "index with no platform selected shows all platforms" do
+    sign_in_as(@user)
+    get planned_posts_path, params: { status: "scheduled" }
     assert_match "instagram", response.body
     assert_match "youtube", response.body
+    assert_match "facebook", response.body
   end
 
-  test "index shows status badges" do
+  test "index shows scheduled badge for default filter" do
     sign_in_as(@user)
     get planned_posts_path
-    assert_match "draft", response.body
     assert_match "scheduled", response.body
+  end
+
+  test "index shows published badge when filtering by published" do
+    sign_in_as(@user)
+    get planned_posts_path, params: { status: "published" }
     assert_match "published", response.body
   end
 
   test "index shows hashtags" do
     sign_in_as(@user)
-    get planned_posts_path
+    get planned_posts_path, params: { status: "draft" }
     assert_match "#nature #sunset #photography", response.body
   end
 
   test "index shows external post id for published post" do
     sign_in_as(@user)
-    get planned_posts_path
+    get planned_posts_path, params: { status: "published" }
     assert_match "ig_post_abc", response.body
   end
 
@@ -319,8 +343,7 @@ class PlannedPostsControllerTest < ActionDispatch::IntegrationTest
   # URL decoding tests
   test "index decodes URL-encoded media asset names" do
     sign_in_as(@user)
-    get planned_posts_path
-    # Should show decoded name, not URL-encoded
+    get planned_posts_path, params: { status: "draft" }
     assert_match "Big Guys BBQ", response.body
   end
 

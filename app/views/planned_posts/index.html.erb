@@ -1,6 +1,5 @@
 <% content_for :title, "Planned Posts" %>
 
-
 <div class="flex items-center justify-between mb-6">
   <div>
     <h1 class="text-2xl font-bold text-gray-900">Planned Posts</h1>
@@ -8,80 +7,147 @@
   </div>
 </div>
 
-<% if @planned_posts.empty? %>
-  <div class="text-center py-20 text-gray-400">No planned posts found.</div>
-<% else %>
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-    <% @planned_posts.each do |post| %>
-      <%= link_to planned_post_path(post), class: "bg-white rounded-xl shadow-sm border border-gray-200 p-5 flex flex-col gap-4 hover:shadow-md hover:border-gray-300 transition-all duration-200 cursor-pointer" do %>
+<%# Filter bar %>
+<%= form_with url: planned_posts_path,
+              method: :get,
+              data: { controller: "filter-form",
+                      action: "change->filter-form#submit",
+                      turbo_frame: "planned-posts-list",
+                      turbo_action: "advance" },
+              class: "flex flex-wrap items-center gap-3 mb-6" do %>
 
-        <%# Badges row %>
-        <div class="flex flex-wrap gap-2">
-          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium <%= platform_color_classes(post.platform) %> capitalize">
-            <%= post.platform %>
-          </span>
-          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium <%= status_color_classes(post.status) %> capitalize">
-            <%= post.status %>
-          </span>
-        </div>
+  <%# Platform toggles %>
+  <div class="flex items-center gap-1.5">
+    <span class="text-xs font-medium text-gray-500 mr-1">Platform</span>
 
-        <%# Caption %>
-        <% if post.caption.present? %>
-          <p class="text-sm text-gray-700 line-clamp-3 leading-relaxed">
-            <%= post.caption.truncate(160) %>
-          </p>
-        <% else %>
-          <p class="text-sm text-gray-400 italic">No caption</p>
-        <% end %>
+    <label class="cursor-pointer select-none">
+      <input type="checkbox" name="platforms[]" value="instagram"
+             class="peer sr-only"
+             <%= "checked" if @platforms.include?("instagram") %>>
+      <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border transition-colors
+                   bg-gray-100 text-gray-400 border-transparent
+                   peer-checked:bg-pink-100 peer-checked:text-pink-800 peer-checked:border-pink-200">
+        Instagram
+      </span>
+    </label>
 
-        <%# Hashtags %>
-        <% if post.hashtags.present? %>
-          <p class="text-xs text-indigo-600 truncate"><%= post.hashtags %></p>
-        <% end %>
+    <label class="cursor-pointer select-none">
+      <input type="checkbox" name="platforms[]" value="facebook"
+             class="peer sr-only"
+             <%= "checked" if @platforms.include?("facebook") %>>
+      <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border transition-colors
+                   bg-gray-100 text-gray-400 border-transparent
+                   peer-checked:bg-blue-100 peer-checked:text-blue-700 peer-checked:border-blue-200">
+        Facebook
+      </span>
+    </label>
+  </div>
 
-        <%# Metadata grid %>
-        <dl class="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
-          <% if post.scheduled_at.present? %>
-            <div class="col-span-2">
-              <dt class="text-gray-400 uppercase tracking-wide">Scheduled At</dt>
-              <dd class="text-gray-700 font-medium"><%= post.scheduled_at.strftime("%b %-d, %Y %H:%M") %></dd>
-            </div>
-          <% end %>
-          <% if post.published_at.present? %>
-            <div class="col-span-2">
-              <dt class="text-gray-400 uppercase tracking-wide">Published At</dt>
-              <dd class="text-green-700 font-medium"><%= post.published_at.strftime("%b %-d, %Y %H:%M") %></dd>
-            </div>
-          <% end %>
-          <div class="col-span-2">
-            <dt class="text-gray-400 uppercase tracking-wide">Media Asset</dt>
-            <dd class="text-gray-700 truncate">
-              <%= decode_name(post.media_asset&.external_name.presence || post.media_asset&.external_id) || "—" %>
-            </dd>
-          </div>
-          <div class="col-span-2">
-            <dt class="text-gray-400 uppercase tracking-wide">Owner</dt>
-            <dd class="text-gray-700"><%= post.user&.name || "—" %></dd>
-          </div>
-          <% if post.social_template.present? %>
-            <div class="col-span-2">
-              <dt class="text-gray-400 uppercase tracking-wide">Template</dt>
-              <dd class="text-gray-700 truncate"><%= post.social_template.name %></dd>
-            </div>
-          <% end %>
-          <% if post.external_post_id.present? %>
-            <div class="col-span-2">
-              <dt class="text-gray-400 uppercase tracking-wide">External Post ID</dt>
-              <dd class="text-gray-700 font-mono truncate"><%= post.external_post_id %></dd>
-            </div>
-          <% end %>
-        </dl>
+  <div class="h-5 w-px bg-gray-200"></div>
 
-        <p class="text-xs text-gray-400 border-t border-gray-100 pt-3 mt-auto">
-          Created <%= post.created_at.strftime("%b %-d, %Y") %>
-        </p>
-      <% end %>
-    <% end %>
+  <%# Status toggle (radio — exactly one always selected) %>
+  <div class="flex items-center gap-1.5">
+    <span class="text-xs font-medium text-gray-500 mr-1">Status</span>
+
+    <div class="inline-flex rounded-full border border-gray-200 bg-gray-100 p-0.5">
+      <label class="cursor-pointer select-none">
+        <input type="radio" name="status" value="scheduled"
+               class="peer sr-only"
+               <%= "checked" if @status == "scheduled" %>>
+        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium transition-colors
+                     text-gray-500 peer-checked:bg-white peer-checked:text-blue-800 peer-checked:shadow-sm">
+          Scheduled
+        </span>
+      </label>
+
+      <label class="cursor-pointer select-none">
+        <input type="radio" name="status" value="published"
+               class="peer sr-only"
+               <%= "checked" if @status == "published" %>>
+        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium transition-colors
+                     text-gray-500 peer-checked:bg-white peer-checked:text-green-800 peer-checked:shadow-sm">
+          Published
+        </span>
+      </label>
+    </div>
   </div>
 <% end %>
 
+<%= turbo_frame_tag "planned-posts-list" do %>
+  <% if @planned_posts.empty? %>
+    <div class="text-center py-20 text-gray-400">No planned posts found.</div>
+  <% else %>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <% @planned_posts.each do |post| %>
+        <%= link_to planned_post_path(post), class: "bg-white rounded-xl shadow-sm border border-gray-200 p-5 flex flex-col gap-4 hover:shadow-md hover:border-gray-300 transition-all duration-200 cursor-pointer" do %>
+
+          <%# Badges row %>
+          <div class="flex flex-wrap gap-2">
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium <%= platform_color_classes(post.platform) %> capitalize">
+              <%= post.platform %>
+            </span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium <%= status_color_classes(post.status) %> capitalize">
+              <%= post.status %>
+            </span>
+          </div>
+
+          <%# Caption %>
+          <% if post.caption.present? %>
+            <p class="text-sm text-gray-700 line-clamp-3 leading-relaxed">
+              <%= post.caption.truncate(160) %>
+            </p>
+          <% else %>
+            <p class="text-sm text-gray-400 italic">No caption</p>
+          <% end %>
+
+          <%# Hashtags %>
+          <% if post.hashtags.present? %>
+            <p class="text-xs text-indigo-600 truncate"><%= post.hashtags %></p>
+          <% end %>
+
+          <%# Metadata grid %>
+          <dl class="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
+            <% if post.scheduled_at.present? %>
+              <div class="col-span-2">
+                <dt class="text-gray-400 uppercase tracking-wide">Scheduled At</dt>
+                <dd class="text-gray-700 font-medium"><%= post.scheduled_at.strftime("%b %-d, %Y %H:%M") %></dd>
+              </div>
+            <% end %>
+            <% if post.published_at.present? %>
+              <div class="col-span-2">
+                <dt class="text-gray-400 uppercase tracking-wide">Published At</dt>
+                <dd class="text-green-700 font-medium"><%= post.published_at.strftime("%b %-d, %Y %H:%M") %></dd>
+              </div>
+            <% end %>
+            <div class="col-span-2">
+              <dt class="text-gray-400 uppercase tracking-wide">Media Asset</dt>
+              <dd class="text-gray-700 truncate">
+                <%= decode_name(post.media_asset&.external_name.presence || post.media_asset&.external_id) || "—" %>
+              </dd>
+            </div>
+            <div class="col-span-2">
+              <dt class="text-gray-400 uppercase tracking-wide">Owner</dt>
+              <dd class="text-gray-700"><%= post.user&.name || "—" %></dd>
+            </div>
+            <% if post.social_template.present? %>
+              <div class="col-span-2">
+                <dt class="text-gray-400 uppercase tracking-wide">Template</dt>
+                <dd class="text-gray-700 truncate"><%= post.social_template.name %></dd>
+              </div>
+            <% end %>
+            <% if post.external_post_id.present? %>
+              <div class="col-span-2">
+                <dt class="text-gray-400 uppercase tracking-wide">External Post ID</dt>
+                <dd class="text-gray-700 font-mono truncate"><%= post.external_post_id %></dd>
+              </div>
+            <% end %>
+          </dl>
+
+          <p class="text-xs text-gray-400 border-t border-gray-100 pt-3 mt-auto">
+            Created <%= post.created_at.strftime("%b %-d, %Y") %>
+          </p>
+        <% end %>
+      <% end %>
+    </div>
+  <% end %>
+<% end %>
