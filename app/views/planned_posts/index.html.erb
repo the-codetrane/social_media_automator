@@ -134,7 +134,7 @@
               </span>
             </label>
 
-            <%= link_to planned_post_path(post), class: "block bg-white rounded-xl shadow-sm border border-gray-200 pt-10 px-5 pb-5 flex flex-col gap-4 hover:shadow-md hover:border-gray-300 transition-all duration-200 cursor-pointer" do %>
+            <%= link_to planned_post_path(post), data: { turbo_frame: "_top" }, class: "block bg-white rounded-xl shadow-sm border border-gray-200 pt-10 px-5 pb-5 flex flex-col gap-4 hover:shadow-md hover:border-gray-300 transition-all duration-200 cursor-pointer" do %>
 
               <%# Badges row %>
               <div class="flex flex-wrap gap-2">
