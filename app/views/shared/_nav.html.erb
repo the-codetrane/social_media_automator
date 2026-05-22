@@ -9,6 +9,7 @@
         <%= link_to "Sessions",         sessions_path,         class: "px-3 py-2 rounded-md text-sm font-medium #{controller_name == 'sessions' && action_name == 'index' ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-100'}" %>
         <%= link_to "Chat",             chat_path,             class: "px-3 py-2 rounded-md text-sm font-medium #{controller_name == 'chats' ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-100'}" %>
         <%= link_to "Insights",         insights_path,         class: "px-3 py-2 rounded-md text-sm font-medium #{controller_name == 'insights' ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-100'}" %>
+        <%= link_to "Known People",     known_people_path,     class: "px-3 py-2 rounded-md text-sm font-medium #{controller_name == 'known_people' ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-100'}" %>
       </div>
       <% if authenticated? %>
         <%= button_to "Sign out", session_path, method: :delete, class: "text-sm text-gray-500 hover:text-red-600" %>
