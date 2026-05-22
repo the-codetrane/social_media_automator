@@ -1,6 +1,6 @@
 class SocialMediaPostAgent < RubyLLM::Agent
   chat_model "Chat"
-  model "claude-haiku-4-5-20251001", assume_model_exists: true, provider: "anthropic"
+  model "claude-sonnet-4-6", assume_model_exists: true, provider: "anthropic"
   inputs :user
   tools ListMediaAssets, FindSocialTemplate, ResolveMediaAsset, CreatePlannedPost,
         ListPlannedPosts, GetPlannedPost, UpdatePlannedPost, DeletePlannedPost
