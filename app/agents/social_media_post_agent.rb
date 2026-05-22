@@ -1,4 +1,4 @@
-class ga  < RubyLLM::Agent
+class SocialMediaPostAgent < RubyLLM::Agent
   chat_model "Chat"
   model "claude-sonnet-4-6", assume_model_exists: true, provider: "anthropic"
   inputs :user
