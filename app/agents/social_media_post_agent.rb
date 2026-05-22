@@ -6,6 +6,18 @@ class SocialMediaPostAgent < RubyLLM::Agent
         ListPlannedPosts, GetPlannedPost, UpdatePlannedPost, DeletePlannedPost,
         IdentifyPeopleInAsset, CheckCarouselForDuplicates
 
+  class << self
+    private
+
+    def apply_tools(llm_chat, runtime)
+      super
+      # Anthropic requires all tool_results for a parallel turn in one user message.
+      # RubyLLM stores each result as a separate DB record, which breaks that contract.
+      # Force sequential tool calls to avoid the format mismatch entirely.
+      llm_chat.with_tools(calls: :one)
+    end
+  end
+
   instructions do
     <<~INSTRUCTIONS
       You are the social media assistant for Cain & Co., a Minneapolis–Saint Paul based blues, country, and rock band.
