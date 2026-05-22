@@ -19,7 +19,7 @@ module Vision
         Do not include any explanation or markdown — raw JSON only.
       PROMPT
 
-      response = RubyLLM.chat(model: "claude-opus-4-7")
+      response = RubyLLM.chat(model: Vision::MODEL)
         .ask(prompt, with: image_urls)
 
       JSON.parse(response.content.strip.delete_prefix("```json").delete_suffix("```").strip)
