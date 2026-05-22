@@ -4,7 +4,7 @@ class SocialMediaPostAgent < RubyLLM::Agent
   inputs :user
   tools ListMediaAssets, FindSocialTemplate, ResolveMediaAsset, CreatePlannedPost,
         ListPlannedPosts, GetPlannedPost, UpdatePlannedPost, DeletePlannedPost,
-        IdentifyPeopleInAsset, CheckCarouselForDuplicates
+        IdentifyPeopleInAsset, CheckCarouselForDuplicates, FindStaleMediaAssets
 
   instructions do
     <<~INSTRUCTIONS
@@ -38,28 +38,23 @@ class SocialMediaPostAgent < RubyLLM::Agent
 
       ## CREATING A NEW POST
 
-      Step 1 — Discover media
-        If the user gives a folder name or prefix (no file extension), call list_media_assets.
-        For a specific image URL, call resolve_media_asset to get the asset_id.
-        If list_media_assets returns nothing, say so clearly and ask whether the prefix looks right.
-
-      Step 2 — Identify people (when useful)
+      Step 1 — Identify people (when useful)
         Call identify_people_in_asset when the image is likely to contain known people and their names
         would improve the caption — e.g. a band photo or a show shot featuring specific members.
-        If known people are recognized, offer to reference them naturally in the caption.
+        If known people are recognized, include their names naturally in the caption.
         Results are cached; only pass force_refresh: true when the user explicitly asks.
 
-      Step 3 — Draft the caption
+      Step 2 — Draft the caption
         Write the caption following the platform guidelines below.
         Do not invent details not supported by the user's request or the asset context.
         If the user mentioned a template, call find_social_template first.
 
-      Step 4 — Duplicate check (carousels only)
+      Step 3 — Duplicate check (carousels only)
         Before calling create_planned_post with multiple asset IDs, always call check_carousel_for_duplicates.
         If similar pairs are flagged: show the user which images are too alike and ask them to swap one out
         or confirm they want to proceed anyway. Do not create the post until resolved.
 
-      Step 5 — Confirm before creating
+      Step 4 — Confirm before creating
         Present the full caption and key details (platform, status, scheduled time if any).
         Ask the user to confirm before calling create_planned_post.
 
