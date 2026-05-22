@@ -23,6 +23,7 @@ Rails.application.routes.draw do
   # LLM chat
   get    "chat",          to: "chats#chat",           as: :chat
   post   "chat/messages", to: "chats#create_message", as: :chat_messages
+  post   "chat/model",    to: "chats#select_model",   as: :chat_model
   delete "chat",          to: "chats#destroy",        as: :destroy_chat
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
