@@ -14,7 +14,12 @@ class CheckCarouselForDuplicates < RubyLLM::Tool
     missing = ids - assets.keys
     return { error: "Assets not found: #{missing.join(', ')}" } if missing.any?
 
-    urls = ids.map do |id|
+    image_ids = ids.select { |id| assets[id].image? }
+    if image_ids.size < 2
+      return { similar_pairs: [], verdict: "No images to compare — carousel contains only videos." }
+    end
+
+    urls = image_ids.map do |id|
       asset = assets[id]
       return { error: "MediaAsset ##{id} has no public URL" } unless asset.public_url?
       asset.public_url
@@ -28,7 +33,7 @@ class CheckCarouselForDuplicates < RubyLLM::Tool
       else
         flagged = result.map do |item|
           pair_indices = Array(item["pair"]).map { |i| i.to_i - 1 }
-          { asset_ids: pair_indices.map { |i| ids[i] }, reason: item["reason"] }
+          { asset_ids: pair_indices.map { |i| image_ids[i] }, reason: item["reason"] }
         end
         { similar_pairs: flagged, verdict: "#{flagged.size} similar pair(s) detected — consider swapping one out." }
       end
