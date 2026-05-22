@@ -6,6 +6,7 @@ class User < ApplicationRecord
 
   has_many :planned_posts, dependent: :destroy
   has_many :social_templates, dependent: :nullify
+  has_many :known_people, dependent: :destroy
 
   validates :email_address, presence: true, uniqueness: true, format: { with: URI::MailTo::EMAIL_REGEXP }
   validates :name, presence: true

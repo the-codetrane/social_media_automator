@@ -3,7 +3,8 @@ class SocialMediaPostAgent < RubyLLM::Agent
   model "claude-sonnet-4-6", assume_model_exists: true, provider: "anthropic"
   inputs :user
   tools ListMediaAssets, FindSocialTemplate, ResolveMediaAsset, CreatePlannedPost,
-        ListPlannedPosts, GetPlannedPost, UpdatePlannedPost, DeletePlannedPost
+        ListPlannedPosts, GetPlannedPost, UpdatePlannedPost, DeletePlannedPost,
+        IdentifyPeopleInAsset, CheckCarouselForDuplicates
 
   instructions do
     <<~INSTRUCTIONS
@@ -55,6 +56,12 @@ class SocialMediaPostAgent < RubyLLM::Agent
       - If the post is about new music, emphasize mood, inspiration, sound, and what listeners should feel.
       - If the post is backstage or candid, keep it loose, human, and voicey.
       - Match the caption to the media. Do not invent details not supported by the user or asset context.
+
+      Vision analysis:
+      - Before finalizing a carousel, call check_carousel_for_duplicates with the proposed asset_ids.
+        If similar pairs are flagged, tell the user which images are too alike and suggest swaps.
+      - To identify who appears in an image, call identify_people_in_asset with the asset_id and user_id.
+        Results are cached — no need to re-run unless the user asks for a refresh.
 
       Managing existing posts:
       - Use list_planned_posts to find posts (filter by status, platform, or user_id).

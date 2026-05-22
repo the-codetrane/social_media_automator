@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_17_173331) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_21_000003) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.bigint "blob_id", null: false
     t.datetime "created_at", null: false
@@ -48,6 +48,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_17_173331) do
     t.index [ "user_id" ], name: "index_chats_on_user_id"
   end
 
+  create_table "known_people", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "name", null: false
+    t.text "notes"
+    t.string "reference_image_url"
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index [ "user_id", "name" ], name: "index_known_people_on_user_id_and_name", unique: true
+    t.index [ "user_id" ], name: "index_known_people_on_user_id"
+  end
+
   create_table "media_assets", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.float "duration_seconds"
@@ -56,6 +67,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_17_173331) do
     t.bigint "file_size"
     t.datetime "first_seen_at", null: false
     t.integer "height"
+    t.json "identified_people"
+    t.datetime "identified_people_at"
     t.datetime "last_processed_at"
     t.integer "media_type", default: 0, null: false
     t.string "mime_type"
@@ -187,6 +200,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_17_173331) do
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "chats", "models"
   add_foreign_key "chats", "users"
+  add_foreign_key "known_people", "users"
   add_foreign_key "messages", "chats"
   add_foreign_key "messages", "models"
   add_foreign_key "messages", "tool_calls"
