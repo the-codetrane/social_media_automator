@@ -1,11 +1,32 @@
 <% content_for :title, "Planned Posts" %>
 
-<div data-controller="bulk-select">
+<div data-controller="bulk-select view-toggle"
+     data-view-toggle-storage-key-value="planned_posts_view">
 
   <div class="flex items-center justify-between mb-6">
     <div>
       <h1 class="text-2xl font-bold text-gray-900">Planned Posts</h1>
       <p class="text-sm text-gray-500 mt-1"><%= @planned_posts.size %> record<%= "s" if @planned_posts.size != 1 %></p>
+    </div>
+    <div class="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+      <button type="button"
+              data-view-toggle-target="cardButton"
+              data-action="click->view-toggle#showCard"
+              title="Card view"
+              class="p-1.5 rounded-md transition-colors text-gray-400">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
+        </svg>
+      </button>
+      <button type="button"
+              data-view-toggle-target="tableButton"
+              data-action="click->view-toggle#showTable"
+              title="Table view"
+              class="p-1.5 rounded-md transition-colors text-gray-400">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M3 14h18M10 6h11M10 18h11M3 6h.01M3 18h.01" />
+        </svg>
+      </button>
     </div>
   </div>
 
@@ -110,101 +131,183 @@
 
   <%# Post grid %>
   <%= turbo_frame_tag "planned-posts-list",
-        data: { action: "turbo:frame-render->bulk-select#resetSelection" } do %>
+        data: { action: "turbo:frame-render->bulk-select#resetSelection turbo:frame-render->view-toggle#applyView" } do %>
     <% if @planned_posts.empty? %>
       <div class="text-center py-20 text-gray-400">No planned posts found.</div>
     <% else %>
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        <% @planned_posts.each do |post| %>
-          <div class="relative has-checked:ring-2 has-checked:ring-indigo-500 has-checked:ring-offset-1 rounded-xl">
 
-            <%# Selection checkbox — sibling of the link so click doesn't navigate %>
-            <label class="absolute top-3 left-3 z-10 cursor-pointer select-none">
-              <input type="checkbox"
-                     class="peer sr-only"
-                     value="<%= post.id %>"
-                     data-bulk-select-target="checkbox"
-                     data-action="change->bulk-select#toggle">
-              <span class="flex h-5 w-5 items-center justify-center rounded border-2 border-gray-300 bg-white shadow-sm
-                           peer-checked:border-indigo-600 peer-checked:bg-indigo-600 transition-colors">
-                <%# Checkmark is white-on-white when unchecked, visible when checked %>
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="white" class="h-3 w-3">
-                  <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" />
-                </svg>
-              </span>
-            </label>
+      <%# ── Card view ──────────────────────────────────────────────────────── %>
+      <div data-view-toggle-target="cardView">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <% @planned_posts.each do |post| %>
+            <div class="relative has-checked:ring-2 has-checked:ring-indigo-500 has-checked:ring-offset-1 rounded-xl">
 
-            <%= link_to planned_post_path(post), data: { turbo_frame: "_top" }, class: "block bg-white rounded-xl shadow-sm border border-gray-200 pt-10 px-5 pb-5 flex flex-col gap-4 hover:shadow-md hover:border-gray-300 transition-all duration-200 cursor-pointer" do %>
-
-              <%# Badges row %>
-              <div class="flex flex-wrap gap-2">
-                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium <%= platform_color_classes(post.platform) %> capitalize">
-                  <%= post.platform %>
+              <%# Selection checkbox — sibling of the link so click doesn't navigate %>
+              <label class="absolute top-3 left-3 z-10 cursor-pointer select-none">
+                <input type="checkbox"
+                       class="peer sr-only"
+                       value="<%= post.id %>"
+                       data-bulk-select-target="checkbox"
+                       data-action="change->bulk-select#toggle">
+                <span class="flex h-5 w-5 items-center justify-center rounded border-2 border-gray-300 bg-white shadow-sm
+                             peer-checked:border-indigo-600 peer-checked:bg-indigo-600 transition-colors">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="white" class="h-3 w-3">
+                    <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" />
+                  </svg>
                 </span>
-                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium <%= status_color_classes(post.status) %> capitalize">
-                  <%= post.status %>
-                </span>
-              </div>
+              </label>
 
-              <%# Caption %>
-              <% if post.caption.present? %>
-                <p class="text-sm text-gray-700 line-clamp-3 leading-relaxed">
-                  <%= post.caption.truncate(160) %>
+              <%= link_to planned_post_path(post), data: { turbo_frame: "_top" }, class: "block bg-white rounded-xl shadow-sm border border-gray-200 pt-10 px-5 pb-5 flex flex-col gap-4 hover:shadow-md hover:border-gray-300 transition-all duration-200 cursor-pointer" do %>
+
+                <%# Badges row %>
+                <div class="flex flex-wrap gap-2">
+                  <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium <%= platform_color_classes(post.platform) %> capitalize">
+                    <%= post.platform %>
+                  </span>
+                  <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium <%= status_color_classes(post.status) %> capitalize">
+                    <%= post.status %>
+                  </span>
+                </div>
+
+                <%# Caption %>
+                <% if post.caption.present? %>
+                  <p class="text-sm text-gray-700 line-clamp-3 leading-relaxed">
+                    <%= post.caption.truncate(160) %>
+                  </p>
+                <% else %>
+                  <p class="text-sm text-gray-400 italic">No caption</p>
+                <% end %>
+
+                <%# Hashtags %>
+                <% if post.hashtags.present? %>
+                  <p class="text-xs text-indigo-600 truncate"><%= post.hashtags %></p>
+                <% end %>
+
+                <%# Metadata grid %>
+                <dl class="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
+                  <% if post.scheduled_at.present? %>
+                    <div class="col-span-2">
+                      <dt class="text-gray-400 uppercase tracking-wide">Scheduled At</dt>
+                      <dd class="text-gray-700 font-medium"><%= post.scheduled_at.strftime("%b %-d, %Y %H:%M") %></dd>
+                    </div>
+                  <% end %>
+                  <% if post.published_at.present? %>
+                    <div class="col-span-2">
+                      <dt class="text-gray-400 uppercase tracking-wide">Published At</dt>
+                      <dd class="text-green-700 font-medium"><%= post.published_at.strftime("%b %-d, %Y %H:%M") %></dd>
+                    </div>
+                  <% end %>
+                  <div class="col-span-2">
+                    <dt class="text-gray-400 uppercase tracking-wide">Media Asset</dt>
+                    <dd class="text-gray-700 truncate">
+                      <%= decode_name(post.media_asset&.external_name.presence || post.media_asset&.external_id) || "—" %>
+                    </dd>
+                  </div>
+                  <div class="col-span-2">
+                    <dt class="text-gray-400 uppercase tracking-wide">Owner</dt>
+                    <dd class="text-gray-700"><%= post.user&.name || "—" %></dd>
+                  </div>
+                  <% if post.social_template.present? %>
+                    <div class="col-span-2">
+                      <dt class="text-gray-400 uppercase tracking-wide">Template</dt>
+                      <dd class="text-gray-700 truncate"><%= post.social_template.name %></dd>
+                    </div>
+                  <% end %>
+                  <% if post.external_post_id.present? %>
+                    <div class="col-span-2">
+                      <dt class="text-gray-400 uppercase tracking-wide">External Post ID</dt>
+                      <dd class="text-gray-700 font-mono truncate"><%= post.external_post_id %></dd>
+                    </div>
+                  <% end %>
+                </dl>
+
+                <p class="text-xs text-gray-400 border-t border-gray-100 pt-3 mt-auto">
+                  Created <%= post.created_at.strftime("%b %-d, %Y") %>
                 </p>
-              <% else %>
-                <p class="text-sm text-gray-400 italic">No caption</p>
               <% end %>
-
-              <%# Hashtags %>
-              <% if post.hashtags.present? %>
-                <p class="text-xs text-indigo-600 truncate"><%= post.hashtags %></p>
-              <% end %>
-
-              <%# Metadata grid %>
-              <dl class="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
-                <% if post.scheduled_at.present? %>
-                  <div class="col-span-2">
-                    <dt class="text-gray-400 uppercase tracking-wide">Scheduled At</dt>
-                    <dd class="text-gray-700 font-medium"><%= post.scheduled_at.strftime("%b %-d, %Y %H:%M") %></dd>
-                  </div>
-                <% end %>
-                <% if post.published_at.present? %>
-                  <div class="col-span-2">
-                    <dt class="text-gray-400 uppercase tracking-wide">Published At</dt>
-                    <dd class="text-green-700 font-medium"><%= post.published_at.strftime("%b %-d, %Y %H:%M") %></dd>
-                  </div>
-                <% end %>
-                <div class="col-span-2">
-                  <dt class="text-gray-400 uppercase tracking-wide">Media Asset</dt>
-                  <dd class="text-gray-700 truncate">
-                    <%= decode_name(post.media_asset&.external_name.presence || post.media_asset&.external_id) || "—" %>
-                  </dd>
-                </div>
-                <div class="col-span-2">
-                  <dt class="text-gray-400 uppercase tracking-wide">Owner</dt>
-                  <dd class="text-gray-700"><%= post.user&.name || "—" %></dd>
-                </div>
-                <% if post.social_template.present? %>
-                  <div class="col-span-2">
-                    <dt class="text-gray-400 uppercase tracking-wide">Template</dt>
-                    <dd class="text-gray-700 truncate"><%= post.social_template.name %></dd>
-                  </div>
-                <% end %>
-                <% if post.external_post_id.present? %>
-                  <div class="col-span-2">
-                    <dt class="text-gray-400 uppercase tracking-wide">External Post ID</dt>
-                    <dd class="text-gray-700 font-mono truncate"><%= post.external_post_id %></dd>
-                  </div>
-                <% end %>
-              </dl>
-
-              <p class="text-xs text-gray-400 border-t border-gray-100 pt-3 mt-auto">
-                Created <%= post.created_at.strftime("%b %-d, %Y") %>
-              </p>
-            <% end %>
-          </div>
-        <% end %>
+            </div>
+          <% end %>
+        </div>
       </div>
+
+      <%# ── Table view ─────────────────────────────────────────────────────── %>
+      <div data-view-toggle-target="tableView" class="hidden">
+        <div class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+          <table class="min-w-full divide-y divide-gray-200 text-sm">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="w-10 px-4 py-3"></th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Platform</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Status</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Caption</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Scheduled / Published</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Owner</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Media Asset</th>
+                <th class="w-10 px-4 py-3"></th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+              <% @planned_posts.each do |post| %>
+                <tr class="hover:bg-gray-50 transition-colors">
+                  <td class="px-4 py-3">
+                    <label class="cursor-pointer select-none">
+                      <input type="checkbox"
+                             class="peer sr-only"
+                             value="<%= post.id %>"
+                             data-bulk-select-target="checkbox"
+                             data-action="change->bulk-select#toggle">
+                      <span class="flex h-5 w-5 items-center justify-center rounded border-2 border-gray-300 bg-white shadow-sm
+                                   peer-checked:border-indigo-600 peer-checked:bg-indigo-600 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="white" class="h-3 w-3">
+                          <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" />
+                        </svg>
+                      </span>
+                    </label>
+                  </td>
+                  <td class="px-4 py-3">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium <%= platform_color_classes(post.platform) %> capitalize">
+                      <%= post.platform %>
+                    </span>
+                  </td>
+                  <td class="px-4 py-3">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium <%= status_color_classes(post.status) %> capitalize">
+                      <%= post.status %>
+                    </span>
+                  </td>
+                  <td class="px-4 py-3 max-w-xs">
+                    <% if post.caption.present? %>
+                      <p class="text-gray-700 truncate"><%= post.caption.truncate(80) %></p>
+                    <% else %>
+                      <p class="text-gray-400 italic">No caption</p>
+                    <% end %>
+                  </td>
+                  <td class="px-4 py-3 whitespace-nowrap">
+                    <% if post.scheduled_at.present? %>
+                      <span class="text-gray-600"><%= post.scheduled_at.strftime("%b %-d, %Y %H:%M") %></span>
+                    <% elsif post.published_at.present? %>
+                      <span class="text-green-700"><%= post.published_at.strftime("%b %-d, %Y %H:%M") %></span>
+                    <% else %>
+                      <span class="text-gray-400">—</span>
+                    <% end %>
+                  </td>
+                  <td class="px-4 py-3 text-gray-600 whitespace-nowrap"><%= post.user&.name || "—" %></td>
+                  <td class="px-4 py-3 text-gray-600 max-w-xs">
+                    <span class="truncate block"><%= decode_name(post.media_asset&.external_name.presence || post.media_asset&.external_id) || "—" %></span>
+                  </td>
+                  <td class="px-4 py-3">
+                    <%= link_to planned_post_path(post), data: { turbo_frame: "_top" }, class: "text-gray-400 hover:text-indigo-600 transition-colors" do %>
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                      </svg>
+                    <% end %>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
     <% end %>
   <% end %>
 
