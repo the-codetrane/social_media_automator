@@ -19,6 +19,7 @@ Rails.application.routes.draw do
   resources :social_templates, only: [ :index, :show, :new, :create, :edit, :update, :destroy ]
   resources :known_people,     only: [ :index, :show, :new, :create, :edit, :update, :destroy ]
   resources :insights,         only: [ :index, :show ]
+  get "llm_costs", to: "llm_costs#index", as: :llm_costs
   resources :sessions,         only: [ :index ]
 
   # LLM chat
