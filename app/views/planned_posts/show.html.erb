@@ -3,16 +3,16 @@
 
 <div class="max-w-3xl mx-auto">
   <%# Header with back link and edit CTA %>
-  <div class="flex items-center justify-between mb-6">
-    <div class="flex items-center gap-4">
+  <div class="flex flex-wrap items-start justify-between gap-3 mb-6">
+    <div class="flex items-center gap-3">
       <%= link_to planned_posts_path, class: "text-gray-400 hover:text-gray-600 transition-colors" do %>
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
         </svg>
       <% end %>
-      <h1 class="text-2xl font-bold text-gray-900">Planned Post</h1>
+      <h1 class="text-xl sm:text-2xl font-bold text-gray-900">Planned Post</h1>
     </div>
-    <div class="flex items-center gap-2">
+    <div class="flex flex-wrap items-center gap-2">
       <% if @planned_post.published? && @planned_post.external_post_id.present? %>
         <%= button_to verify_planned_post_path(@planned_post), method: :post,
             class: "inline-flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors" do %>
@@ -76,7 +76,7 @@
       <% if @carousel_assets&.any? %>
         <div class="mb-6">
           <p class="text-xs text-gray-400 uppercase tracking-wide mb-2">Media (<%= @carousel_assets.size %> photos)</p>
-          <div class="relative max-w-md rounded-lg overflow-hidden bg-gray-100" data-controller="carousel">
+          <div class="relative w-full sm:max-w-md rounded-lg overflow-hidden bg-gray-100" data-controller="carousel">
             <% @carousel_assets.each_with_index do |asset, i| %>
               <div data-carousel-target="slide" class="<%= i > 0 ? 'hidden' : '' %>">
                 <% if asset.public_url? %>
@@ -120,7 +120,7 @@
       <% elsif @planned_post.media_asset.public_url? %>
         <div class="mb-6">
           <p class="text-xs text-gray-400 uppercase tracking-wide mb-2">Media</p>
-          <div class="rounded-lg overflow-hidden bg-gray-100 max-w-md">
+          <div class="rounded-lg overflow-hidden bg-gray-100 w-full sm:max-w-md">
             <% if @planned_post.media_asset.image? %>
               <%= image_tag @planned_post.media_asset.public_url,
                   class: "w-full h-auto object-contain",
@@ -156,7 +156,7 @@
       <% end %>
 
       <%# Main metadata %>
-      <dl class="grid grid-cols-2 gap-6">
+      <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
         <% if @planned_post.scheduled_at.present? %>
           <div>
             <dt class="text-xs text-gray-400 uppercase tracking-wide mb-1">Scheduled At</dt>

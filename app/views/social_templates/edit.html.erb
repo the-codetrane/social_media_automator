@@ -43,7 +43,7 @@
         <%= form.text_area :default_caption, rows: 4, class: "w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors resize-none", placeholder: "Default caption for posts using this template..." %>
       </div>
 
-      <div class="grid grid-cols-2 gap-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <%= form.label :max_caption_length, "Max Caption Length", class: "block text-sm font-medium text-gray-700 mb-2" %>
           <%= form.number_field :max_caption_length, class: "w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors", placeholder: "e.g. 2200", min: 1 %>
@@ -59,7 +59,7 @@
       <%# Read-only fields for reference %>
       <div class="pt-4 border-t border-gray-200">
         <p class="text-xs text-gray-400 uppercase tracking-wide mb-3">Reference Information</p>
-        <dl class="grid grid-cols-2 gap-4 text-sm">
+        <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
           <div>
             <dt class="text-gray-500">Owner</dt>
             <dd class="text-gray-700"><%= @social_template.user&.name || "Global Template" %></dd>
@@ -71,9 +71,9 @@
         </dl>
       </div>
 
-      <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-200">
-        <%= link_to "Cancel", social_template_path(@social_template), class: "px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors" %>
-        <%= form.submit "Save Changes", class: "px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors cursor-pointer" %>
+      <div class="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-2 sm:gap-3 pt-4 border-t border-gray-200">
+        <%= link_to "Cancel", social_template_path(@social_template), class: "w-full sm:w-auto text-center px-4 py-2.5 sm:py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors border border-gray-300 rounded-lg sm:border-0 sm:rounded-none" %>
+        <%= form.submit "Save Changes", class: "w-full sm:w-auto px-4 py-2.5 sm:py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors cursor-pointer" %>
       </div>
     <% end %>
   </div>

@@ -10,16 +10,16 @@
 
 <div class="max-w-3xl mx-auto">
   <%# Header with back link and edit CTA %>
-  <div class="flex items-center justify-between mb-6">
-    <div class="flex items-center gap-4">
+  <div class="flex flex-wrap items-start justify-between gap-3 mb-6">
+    <div class="flex items-center gap-3">
       <%= link_to social_templates_path, class: "text-gray-400 hover:text-gray-600 transition-colors" do %>
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
         </svg>
       <% end %>
-      <h1 class="text-2xl font-bold text-gray-900"><%= @social_template.name %></h1>
+      <h1 class="text-xl sm:text-2xl font-bold text-gray-900"><%= @social_template.name %></h1>
     </div>
-    <div class="flex items-center gap-2">
+    <div class="flex flex-wrap items-center gap-2">
       <%= button_to social_template_path(@social_template), method: :delete,
           data: { turbo_confirm: "Delete \"#{@social_template.name}\"? This cannot be undone." },
           class: "inline-flex items-center gap-2 px-4 py-2 bg-white border border-red-300 text-red-600 text-sm font-medium rounded-lg hover:bg-red-50 transition-colors" do %>
@@ -76,7 +76,7 @@
       <% end %>
 
       <%# Main metadata %>
-      <dl class="grid grid-cols-2 gap-6">
+      <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
         <% if @social_template.max_caption_length.present? %>
           <div>
             <dt class="text-xs text-gray-400 uppercase tracking-wide mb-1">Max Caption Length</dt>
