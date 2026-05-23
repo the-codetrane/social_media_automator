@@ -37,7 +37,7 @@
                         action: "change->filter-form#submit",
                         turbo_frame: "planned-posts-list",
                         turbo_action: "advance" },
-                class: "flex flex-wrap items-center gap-3 mb-4" do %>
+                class: "flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-2 sm:gap-3 mb-4" do %>
 
     <%# Platform toggles %>
     <div class="flex items-center gap-1.5">
@@ -66,7 +66,7 @@
       </label>
     </div>
 
-    <div class="h-5 w-px bg-gray-200"></div>
+    <div class="hidden sm:block h-5 w-px bg-gray-200"></div>
 
     <%# Status toggle (radio — exactly one always selected) %>
     <div class="flex items-center gap-1.5">
@@ -232,7 +232,7 @@
 
       <%# ── Table view ─────────────────────────────────────────────────────── %>
       <div data-view-toggle-target="tableView" class="hidden">
-        <div class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+        <div class="rounded-xl border border-gray-200 bg-white shadow-sm overflow-x-auto">
           <table class="min-w-full divide-y divide-gray-200 text-sm">
             <thead class="bg-gray-50">
               <tr>

@@ -14,9 +14,9 @@
        data-insights-chart-weekly-value="<%= @weekly_series.to_json %>"
        data-insights-chart-monthly-value="<%= @monthly_series.to_json %>"
        data-insights-chart-chart-id-value="insights-performance-chart">
-    <div class="flex items-center justify-between mb-4">
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
       <h2 data-insights-chart-target="title" class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Weekly Performance</h2>
-      <div class="flex rounded-lg border border-gray-200 overflow-hidden text-xs font-medium">
+      <div class="flex rounded-lg border border-gray-200 overflow-hidden text-xs font-medium shrink-0">
         <button data-insights-chart-target="toggle"
                 data-action="click->insights-chart#switch"
                 data-period="daily"

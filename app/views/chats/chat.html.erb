@@ -2,15 +2,14 @@
 
 <%= turbo_stream_from "chat_#{@chat.id}" %>
 
-<div class="flex gap-5 items-start">
+<div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:gap-5">
 
   <%# Main chat column %>
   <div class="flex-1 min-w-0">
-    <div class="flex items-center justify-between mb-6">
+    <div class="flex items-center justify-between mb-4">
       <div>
-        <h1 class="text-2xl font-bold text-gray-900">Chat</h1>
-        <p class="text-sm text-gray-500 mt-1">
-          Talking with
+        <h1 class="text-xl sm:text-2xl font-bold text-gray-900">Chat</h1>
+        <p class="text-xs sm:text-sm text-gray-500 mt-0.5">
           <span class="font-medium text-gray-700"><%= @chat.model&.model_id || RubyLLM.config.default_model %></span>
           &middot; session #<%= @chat.id %>
         </p>
@@ -24,10 +23,10 @@
 
     <div data-controller="chat"
          class="bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col"
-         style="height: calc(100vh - 14rem); min-height: 400px;">
+         style="height: 65dvh; min-height: 380px;">
       <div id="chat-messages"
            data-chat-target="log"
-           class="flex-1 overflow-y-auto px-5 py-6 space-y-3">
+           class="flex-1 overflow-y-auto px-4 sm:px-5 py-5 space-y-3">
         <% if @messages.empty? %>
           <div id="chat-empty" class="text-center text-sm text-gray-400 py-12">
             Say something to get started.
@@ -37,55 +36,66 @@
         <% end %>
       </div>
 
-      <div class="border-t border-gray-200 px-4 py-3 bg-gray-50 rounded-b-xl">
+      <div class="border-t border-gray-200 px-3 sm:px-4 py-3 bg-gray-50 rounded-b-xl">
         <%= render "chats/form", chat: @chat %>
       </div>
     </div>
   </div>
 
-  <%# Model selector side panel %>
-  <div class="w-64 flex-shrink-0 mt-16">
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
-         style="max-height: calc(100vh - 14rem);">
-      <div class="px-4 py-3 border-b border-gray-100 bg-gray-50">
-        <h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Model</h2>
-      </div>
-      <div class="overflow-y-auto divide-y divide-gray-100" style="max-height: calc(100vh - 17rem);">
-        <% current_model_id = @chat.model&.model_id || RubyLLM.config.default_model %>
-        <% ChatsController::MODELS.each do |m| %>
-          <% selected = current_model_id == m[:id] %>
-          <%= button_to chat_model_path,
-                params: { model_id: m[:id] },
-                method: :post,
-                class: "w-full text-left p-4 transition-colors #{selected ? 'bg-indigo-50' : 'bg-white hover:bg-gray-50'}" do %>
-            <div class="flex items-center justify-between mb-0.5">
-              <span class="text-sm font-semibold <%= selected ? 'text-indigo-700' : 'text-gray-900' %>">
-                <%= m[:display_name] %>
-              </span>
-              <% if selected %>
-                <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-700">
-                  Active
+  <%# Model selector — side panel on desktop, collapsible section on mobile %>
+  <div class="w-full lg:w-64 lg:flex-shrink-0 lg:mt-16" data-controller="collapse">
+    <button type="button"
+            data-action="click->collapse#toggle"
+            class="lg:hidden w-full flex items-center justify-between px-4 py-3 bg-white rounded-xl border border-gray-200 shadow-sm text-sm font-medium text-gray-700">
+      <span>Change Model &mdash; <span class="text-indigo-600"><%= @chat.model&.model_id&.split("-")&.first(3)&.join("-") || "default" %></span></span>
+      <svg class="w-4 h-4 text-gray-400 transition-transform duration-200" data-collapse-target="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+      </svg>
+    </button>
+
+    <div class="hidden lg:block mt-2 lg:mt-0" data-collapse-target="content">
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden lg:overflow-y-auto"
+           style="max-height: calc(100dvh - 14rem);">
+        <div class="px-4 py-3 border-b border-gray-100 bg-gray-50 hidden lg:block">
+          <h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Model</h2>
+        </div>
+        <div class="divide-y divide-gray-100">
+          <% current_model_id = @chat.model&.model_id || RubyLLM.config.default_model %>
+          <% ChatsController::MODELS.each do |m| %>
+            <% selected = current_model_id == m[:id] %>
+            <%= button_to chat_model_path,
+                  params: { model_id: m[:id] },
+                  method: :post,
+                  class: "w-full text-left p-4 transition-colors #{selected ? 'bg-indigo-50' : 'bg-white hover:bg-gray-50'}" do %>
+              <div class="flex items-center justify-between mb-0.5">
+                <span class="text-sm font-semibold <%= selected ? 'text-indigo-700' : 'text-gray-900' %>">
+                  <%= m[:display_name] %>
                 </span>
-              <% end %>
-            </div>
-            <p class="text-xs text-gray-400 mb-2"><%= m[:tagline] %></p>
-            <p class="text-xs text-gray-600 mb-3 leading-relaxed"><%= m[:description] %></p>
-            <div class="space-y-1">
-              <% m[:strengths].each do |s| %>
-                <div class="flex items-start gap-1.5">
-                  <span class="text-green-500 text-xs mt-0.5 flex-shrink-0">+</span>
-                  <span class="text-xs text-gray-600"><%= s %></span>
-                </div>
-              <% end %>
-              <% m[:limitations].each do |l| %>
-                <div class="flex items-start gap-1.5">
-                  <span class="text-red-400 text-xs mt-0.5 flex-shrink-0">&minus;</span>
-                  <span class="text-xs text-gray-500"><%= l %></span>
-                </div>
-              <% end %>
-            </div>
+                <% if selected %>
+                  <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-700">
+                    Active
+                  </span>
+                <% end %>
+              </div>
+              <p class="text-xs text-gray-400 mb-2"><%= m[:tagline] %></p>
+              <p class="text-xs text-gray-600 mb-3 leading-relaxed"><%= m[:description] %></p>
+              <div class="space-y-1">
+                <% m[:strengths].each do |s| %>
+                  <div class="flex items-start gap-1.5">
+                    <span class="text-green-500 text-xs mt-0.5 flex-shrink-0">+</span>
+                    <span class="text-xs text-gray-600"><%= s %></span>
+                  </div>
+                <% end %>
+                <% m[:limitations].each do |l| %>
+                  <div class="flex items-start gap-1.5">
+                    <span class="text-red-400 text-xs mt-0.5 flex-shrink-0">&minus;</span>
+                    <span class="text-xs text-gray-500"><%= l %></span>
+                  </div>
+                <% end %>
+              </div>
+            <% end %>
           <% end %>
-        <% end %>
+        </div>
       </div>
     </div>
   </div>

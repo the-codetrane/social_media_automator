@@ -1,21 +1,106 @@
-<nav class="bg-white border-b border-gray-200 mb-8">
+<% content_active   = %w[planned_posts media_assets social_templates].include?(controller_name) %>
+<% analytics_active = %w[insights llm_costs].include?(controller_name) %>
+
+<nav class="bg-white border-b border-gray-200 mb-8 relative">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="flex items-center justify-between h-16">
-      <div class="flex items-center gap-1 flex-wrap">
-        <%= link_to "Users",            users_path,            class: "px-3 py-2 rounded-md text-sm font-medium #{controller_name == 'users' ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-100'}" %>
-        <%= link_to "Media Assets",     media_assets_path,     class: "px-3 py-2 rounded-md text-sm font-medium #{controller_name == 'media_assets' ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-100'}" %>
-        <%= link_to "Planned Posts",    planned_posts_path,    class: "px-3 py-2 rounded-md text-sm font-medium #{controller_name == 'planned_posts' ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-100'}" %>
-        <%= link_to "Templates",        social_templates_path, class: "px-3 py-2 rounded-md text-sm font-medium #{controller_name == 'social_templates' ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-100'}" %>
-        <%= link_to "Sessions",         sessions_path,         class: "px-3 py-2 rounded-md text-sm font-medium #{controller_name == 'sessions' && action_name == 'index' ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-100'}" %>
-        <%= link_to "Chat",             chat_path,             class: "px-3 py-2 rounded-md text-sm font-medium #{controller_name == 'chats' ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-100'}" %>
-        <%= link_to "Insights",         insights_path,         class: "px-3 py-2 rounded-md text-sm font-medium #{controller_name == 'insights' ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-100'}" %>
-        <%= link_to "Known People",     known_people_path,     class: "px-3 py-2 rounded-md text-sm font-medium #{controller_name == 'known_people' ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-100'}" %>
-        <%= link_to "LLM Costs",       llm_costs_path,        class: "px-3 py-2 rounded-md text-sm font-medium #{controller_name == 'llm_costs' ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-100'}" %>
+
+    <%# ── Top bar ── %>
+    <div class="flex items-center justify-between h-14 sm:h-16">
+
+      <%# Desktop nav (hidden on mobile) %>
+      <div class="hidden sm:flex items-center gap-1">
+        <%= link_to "Users", users_path, class: "px-3 py-2 rounded-md text-sm font-medium #{controller_name == 'users' ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-100'}" %>
+
+        <%# Content dropdown %>
+        <div data-controller="dropdown" class="relative">
+          <button data-action="click->dropdown#toggle"
+                  class="flex items-center gap-1 px-3 py-2 rounded-md text-sm font-medium <%= content_active ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-100' %>">
+            Content
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+            </svg>
+          </button>
+          <div data-dropdown-target="menu" class="hidden absolute left-0 top-full mt-1 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50">
+            <%= link_to "Planned Posts", planned_posts_path, class: "block px-4 py-2 text-sm #{controller_name == 'planned_posts' ? 'bg-indigo-50 text-indigo-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}" %>
+            <%= link_to "Media Assets",  media_assets_path,  class: "block px-4 py-2 text-sm #{controller_name == 'media_assets' ? 'bg-indigo-50 text-indigo-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}" %>
+            <%= link_to "Templates",     social_templates_path, class: "block px-4 py-2 text-sm #{controller_name == 'social_templates' ? 'bg-indigo-50 text-indigo-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}" %>
+          </div>
+        </div>
+
+        <%= link_to "Chat",         chat_path,         class: "px-3 py-2 rounded-md text-sm font-medium #{controller_name == 'chats' ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-100'}" %>
+        <%= link_to "Known People", known_people_path, class: "px-3 py-2 rounded-md text-sm font-medium #{controller_name == 'known_people' ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-100'}" %>
+
+        <%# Analytics dropdown %>
+        <div data-controller="dropdown" class="relative">
+          <button data-action="click->dropdown#toggle"
+                  class="flex items-center gap-1 px-3 py-2 rounded-md text-sm font-medium <%= analytics_active ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-100' %>">
+            Analytics
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+            </svg>
+          </button>
+          <div data-dropdown-target="menu" class="hidden absolute left-0 top-full mt-1 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50">
+            <%= link_to "Insights",  insights_path,  class: "block px-4 py-2 text-sm #{controller_name == 'insights' ? 'bg-indigo-50 text-indigo-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}" %>
+            <%= link_to "LLM Costs", llm_costs_path, class: "block px-4 py-2 text-sm #{controller_name == 'llm_costs' ? 'bg-indigo-50 text-indigo-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}" %>
+          </div>
+        </div>
       </div>
+
+      <%# Mobile: app name + hamburger %>
+      <div class="flex sm:hidden items-center gap-3" data-controller="dropdown">
+        <span class="text-sm font-semibold text-gray-800">
+          <% active_name = case controller_name
+            when "users" then "Users"
+            when "planned_posts" then "Planned Posts"
+            when "media_assets" then "Media Assets"
+            when "social_templates" then "Templates"
+            when "chats" then "Chat"
+            when "known_people" then "Known People"
+            when "insights" then "Insights"
+            when "llm_costs" then "LLM Costs"
+            else "Social Media"
+          end %>
+          <%= active_name %>
+        </span>
+        <button data-action="click->dropdown#toggle"
+                aria-label="Open navigation menu"
+                class="ml-auto p-2 rounded-md text-gray-600 hover:bg-gray-100 transition-colors">
+          <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+          </svg>
+        </button>
+
+        <%# Mobile drawer — positioned absolutely under the nav bar %>
+        <div data-dropdown-target="menu"
+             class="hidden absolute left-0 right-0 top-14 bg-white border-b border-gray-200 shadow-lg z-50 px-4 pt-3 pb-4 space-y-1">
+          <%= link_to "Users", users_path, class: "block px-3 py-2.5 rounded-md text-sm font-medium #{controller_name == 'users' ? 'bg-indigo-600 text-white' : 'text-gray-700 hover:bg-gray-100'}" %>
+
+          <p class="px-3 pt-2 pb-1 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Content</p>
+          <%= link_to "Planned Posts", planned_posts_path, class: "block px-3 py-2.5 rounded-md text-sm font-medium #{controller_name == 'planned_posts' ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700 hover:bg-gray-100'}" %>
+          <%= link_to "Media Assets",  media_assets_path,  class: "block px-3 py-2.5 rounded-md text-sm font-medium #{controller_name == 'media_assets' ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700 hover:bg-gray-100'}" %>
+          <%= link_to "Templates",     social_templates_path, class: "block px-3 py-2.5 rounded-md text-sm font-medium #{controller_name == 'social_templates' ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700 hover:bg-gray-100'}" %>
+
+          <%= link_to "Chat",         chat_path,         class: "block px-3 py-2.5 rounded-md text-sm font-medium mt-1 #{controller_name == 'chats' ? 'bg-indigo-600 text-white' : 'text-gray-700 hover:bg-gray-100'}" %>
+          <%= link_to "Known People", known_people_path, class: "block px-3 py-2.5 rounded-md text-sm font-medium #{controller_name == 'known_people' ? 'bg-indigo-600 text-white' : 'text-gray-700 hover:bg-gray-100'}" %>
+
+          <p class="px-3 pt-2 pb-1 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Analytics</p>
+          <%= link_to "Insights",  insights_path,  class: "block px-3 py-2.5 rounded-md text-sm font-medium #{controller_name == 'insights' ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700 hover:bg-gray-100'}" %>
+          <%= link_to "LLM Costs", llm_costs_path, class: "block px-3 py-2.5 rounded-md text-sm font-medium #{controller_name == 'llm_costs' ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700 hover:bg-gray-100'}" %>
+
+          <% if authenticated? %>
+            <div class="pt-2 border-t border-gray-100 mt-2">
+              <%= button_to "Sign out", session_path, method: :delete, class: "w-full text-left px-3 py-2.5 rounded-md text-sm font-medium text-red-600 hover:bg-red-50 transition-colors" %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+      <%# Sign out (desktop only) %>
       <% if authenticated? %>
-        <%= button_to "Sign out", session_path, method: :delete, class: "text-sm text-gray-500 hover:text-red-600" %>
+        <div class="hidden sm:block">
+          <%= button_to "Sign out", session_path, method: :delete, class: "text-sm text-gray-500 hover:text-red-600" %>
+        </div>
       <% end %>
     </div>
   </div>
 </nav>
-
