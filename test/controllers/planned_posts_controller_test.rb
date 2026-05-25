@@ -362,4 +362,124 @@ class PlannedPostsControllerTest < ActionDispatch::IntegrationTest
     # The select dropdown should show decoded names
     assert_match "Big Guys BBQ", response.body
   end
+
+  test "edit shows post type radios" do
+    sign_in_as(@user)
+    get edit_planned_post_path(@planned_post)
+    assert_select "input[type='radio'][name='planned_post[post_type]'][value='single']"
+    assert_select "input[type='radio'][name='planned_post[post_type]'][value='carousel']"
+  end
+
+  test "edit pre-selects carousel for a carousel post" do
+    sign_in_as(@user)
+    get edit_planned_post_path(planned_posts(:carousel_post))
+    assert_select "input[type='radio'][name='planned_post[post_type]'][value='carousel'][checked]"
+  end
+
+  test "edit pre-selects single for a non-carousel post" do
+    sign_in_as(@user)
+    get edit_planned_post_path(@planned_post)
+    assert_select "input[type='radio'][name='planned_post[post_type]'][value='single'][checked]"
+  end
+
+  test "edit only shows processed media assets in carousel picker" do
+    sign_in_as(@user)
+    get edit_planned_post_path(@planned_post)
+    # All fixture assets have status: processed so they all appear
+    assert_select "[data-carousel-select-target='checkbox']"
+  end
+
+  # Carousel update tests
+  test "update with carousel post type sets carousel_asset_ids in platform_payload" do
+    sign_in_as(@user)
+    asset1 = media_assets(:sample_image)
+    asset2 = media_assets(:sample_image_2)
+
+    patch planned_post_path(@planned_post), params: {
+      planned_post: {
+        post_type: "carousel",
+        caption: @planned_post.caption,
+        hashtags: @planned_post.hashtags,
+        status: @planned_post.status,
+        carousel_asset_ids: [ asset1.id, asset2.id ]
+      }
+    }
+
+    assert_redirected_to planned_post_path(@planned_post)
+    @planned_post.reload
+    assert_equal [ asset1.id, asset2.id ], @planned_post.platform_payload["carousel_asset_ids"]
+    assert_equal asset1.id, @planned_post.media_asset_id
+  end
+
+  test "update with carousel preserves ordering of carousel_asset_ids" do
+    sign_in_as(@user)
+    asset1 = media_assets(:sample_image)
+    asset2 = media_assets(:sample_image_2)
+
+    patch planned_post_path(@planned_post), params: {
+      planned_post: {
+        post_type: "carousel",
+        caption: @planned_post.caption,
+        status: @planned_post.status,
+        carousel_asset_ids: [ asset2.id, asset1.id ]
+      }
+    }
+
+    @planned_post.reload
+    assert_equal [ asset2.id, asset1.id ], @planned_post.platform_payload["carousel_asset_ids"]
+    assert_equal asset2.id, @planned_post.media_asset_id
+  end
+
+  test "update with carousel type and fewer than 2 assets re-renders edit with error" do
+    sign_in_as(@user)
+    patch planned_post_path(@planned_post), params: {
+      planned_post: {
+        post_type: "carousel",
+        caption: @planned_post.caption,
+        status: @planned_post.status,
+        carousel_asset_ids: [ media_assets(:sample_image).id ]
+      }
+    }
+
+    assert_response :unprocessable_entity
+    assert_match "Carousel posts require at least 2 media assets", response.body
+  end
+
+  test "update with single post type clears carousel_asset_ids" do
+    sign_in_as(@user)
+    carousel = planned_posts(:carousel_post)
+
+    patch planned_post_path(carousel), params: {
+      planned_post: {
+        post_type: "single",
+        caption: carousel.caption,
+        status: carousel.status,
+        media_asset_id: media_assets(:sample_image).id
+      }
+    }
+
+    assert_redirected_to planned_post_path(carousel)
+    carousel.reload
+    assert_nil carousel.platform_payload["carousel_asset_ids"]
+    assert_equal media_assets(:sample_image).id, carousel.media_asset_id
+  end
+
+  test "update with single post type succeeds with valid media_asset_id" do
+    sign_in_as(@user)
+    new_asset = media_assets(:sample_image_2)
+
+    patch planned_post_path(@planned_post), params: {
+      planned_post: {
+        post_type: "single",
+        caption: "Updated caption",
+        status: @planned_post.status,
+        media_asset_id: new_asset.id
+      }
+    }
+
+    assert_redirected_to planned_post_path(@planned_post)
+    @planned_post.reload
+    assert_equal new_asset.id, @planned_post.media_asset_id
+    assert_equal "Updated caption", @planned_post.caption
+  end
 end

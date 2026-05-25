@@ -17,6 +17,10 @@ class PlannedPost < ApplicationRecord
   scope :upcoming, -> { where(status: :scheduled).where("scheduled_at > ?", Time.current).order(:scheduled_at) }
   scope :for_platform, ->(platform) { where(platform: platform) }
 
+  def post_type
+    (platform_payload&.dig("carousel_asset_ids")&.size.to_i >= 2) ? "carousel" : "single"
+  end
+
   private
 
   def published_at_not_in_future
