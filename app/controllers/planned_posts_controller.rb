@@ -61,16 +61,32 @@ class PlannedPostsController < ApplicationController
   end
 
   def edit
-    @media_assets = MediaAsset.order(:external_name)
-    @social_templates = SocialTemplate.order(:name)
+    load_form_data
   end
 
   def update
-    if @planned_post.update(planned_post_params)
+    post_type = params.dig(:planned_post, :post_type)
+    carousel_ids = Array(params.dig(:planned_post, :carousel_asset_ids)).map(&:to_i).reject(&:zero?)
+
+    @planned_post.assign_attributes(planned_post_params)
+
+    if post_type == "carousel"
+      if carousel_ids.size < 2
+        @planned_post.errors.add(:base, "Carousel posts require at least 2 media assets")
+        load_form_data
+        render :edit, status: :unprocessable_entity
+        return
+      end
+      @planned_post.media_asset_id = carousel_ids.first
+      @planned_post.platform_payload = (@planned_post.platform_payload || {}).merge("carousel_asset_ids" => carousel_ids)
+    else
+      @planned_post.platform_payload = (@planned_post.platform_payload || {}).except("carousel_asset_ids")
+    end
+
+    if @planned_post.save
       redirect_to @planned_post, notice: "Planned post was successfully updated."
     else
-      @media_assets = MediaAsset.order(:external_name)
-      @social_templates = SocialTemplate.order(:name)
+      load_form_data
       render :edit, status: :unprocessable_entity
     end
   end
@@ -79,6 +95,12 @@ class PlannedPostsController < ApplicationController
 
   def set_planned_post
     @planned_post = PlannedPost.find(params[:id])
+  end
+
+  def load_form_data
+    @media_assets = MediaAsset.ready.order(:external_name)
+    @social_templates = SocialTemplate.order(:name)
+    @carousel_asset_ids = @planned_post.platform_payload&.dig("carousel_asset_ids") || []
   end
 
   def planned_post_params
