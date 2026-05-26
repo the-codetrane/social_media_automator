@@ -1,0 +1,93 @@
+<% content_for :title, @user.name %>
+
+<div class="mb-6 flex items-center justify-between">
+  <%= link_to "← Back to Users", admin_users_path, class: "text-sm text-gray-500 hover:text-gray-700" %>
+  <div class="flex items-center gap-2">
+    <%= link_to "Edit", edit_admin_user_path(@user), class: "px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50" %>
+    <%= button_to "Resend Invite", invite_admin_user_path(@user), method: :post,
+        data: { turbo_confirm: "Send a new invite email to #{@user.email_address}?" },
+        class: "px-3 py-1.5 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-lg hover:bg-indigo-700 cursor-pointer" %>
+    <% unless @user == Current.user %>
+      <%= button_to "Delete", admin_user_path(@user), method: :delete,
+          data: { turbo_confirm: "Delete #{@user.name}? This cannot be undone." },
+          class: "px-3 py-1.5 text-sm font-medium text-white bg-red-600 border border-transparent rounded-lg hover:bg-red-700 cursor-pointer" %>
+    <% end %>
+  </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+  <%# Profile card %>
+  <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+    <div class="flex items-center gap-4 mb-6">
+      <div class="w-14 h-14 rounded-full bg-indigo-100 text-indigo-700 font-bold text-xl flex items-center justify-center shrink-0">
+        <%= @user.name.to_s.split.map(&:first).first(2).join.upcase.presence || "?" %>
+      </div>
+      <div>
+        <h1 class="text-xl font-bold text-gray-900"><%= @user.name %></h1>
+        <p class="text-sm text-gray-500"><%= @user.email_address %></p>
+      </div>
+      <div class="ml-auto">
+        <% if @user.admin? %>
+          <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">Admin</span>
+        <% else %>
+          <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">User</span>
+        <% end %>
+      </div>
+    </div>
+
+    <dl class="grid grid-cols-2 gap-x-6 gap-y-4 text-sm">
+      <div>
+        <dt class="text-xs font-medium text-gray-400 uppercase tracking-wide">Joined</dt>
+        <dd class="mt-1 text-gray-900"><%= @user.created_at.strftime("%B %-d, %Y") %></dd>
+      </div>
+      <div>
+        <dt class="text-xs font-medium text-gray-400 uppercase tracking-wide">Planned Posts</dt>
+        <dd class="mt-1 text-gray-900 font-semibold"><%= @user.planned_posts.count %></dd>
+      </div>
+      <div>
+        <dt class="text-xs font-medium text-gray-400 uppercase tracking-wide">Instagram Status</dt>
+        <dd class="mt-1">
+          <% if @user.instagram_connected? %>
+            <% if @user.instagram_token_expiring? %>
+              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">Token Expiring</span>
+            <% else %>
+              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Connected</span>
+            <% end %>
+          <% else %>
+            <span class="text-gray-400">Not connected</span>
+          <% end %>
+        </dd>
+      </div>
+      <% if @user.instagram_token_expires_at.present? %>
+        <div>
+          <dt class="text-xs font-medium text-gray-400 uppercase tracking-wide">Token Expires</dt>
+          <dd class="mt-1 text-gray-900"><%= @user.instagram_token_expires_at.strftime("%b %-d, %Y") %></dd>
+        </div>
+      <% end %>
+      <% if @user.instagram_user_id.present? %>
+        <div class="col-span-2">
+          <dt class="text-xs font-medium text-gray-400 uppercase tracking-wide">Instagram ID</dt>
+          <dd class="mt-1 text-gray-900 font-mono text-xs"><%= @user.instagram_user_id %></dd>
+        </div>
+      <% end %>
+    </dl>
+  </div>
+
+  <%# Password reset card %>
+  <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+    <h2 class="text-sm font-semibold text-gray-900 mb-4">Set Password</h2>
+    <p class="text-xs text-gray-500 mb-4">Directly update this user's password. Their active sessions will be invalidated.</p>
+
+    <%= form_with url: update_password_admin_user_path(@user), method: :patch, class: "space-y-3" do |f| %>
+      <div>
+        <%= f.label :password, "New Password", class: "block text-xs font-medium text-gray-700 mb-1" %>
+        <%= f.password_field "user[password]", class: "block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500", placeholder: "••••••••", autocomplete: "new-password" %>
+      </div>
+      <div>
+        <%= f.label :password_confirmation, "Confirm Password", class: "block text-xs font-medium text-gray-700 mb-1" %>
+        <%= f.password_field "user[password_confirmation]", class: "block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500", placeholder: "••••••••", autocomplete: "new-password" %>
+      </div>
+      <%= f.submit "Update Password", class: "w-full py-2 px-4 bg-gray-800 text-white text-sm font-medium rounded-lg hover:bg-gray-900 transition-colors cursor-pointer" %>
+    <% end %>
+  </div>
+</div>

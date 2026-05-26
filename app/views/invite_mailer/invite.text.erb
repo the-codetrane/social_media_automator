@@ -1,0 +1,9 @@
+Hi <%= @user.name %>,
+
+You've been invited to Social Media Automator. Visit the link below to set your password and get started:
+
+<%= edit_password_url(@user.password_reset_token) %>
+
+This link will expire in <%= distance_of_time_in_words(0, @user.password_reset_token_expires_in) %>.
+
+If you weren't expecting this invite, you can ignore this email.

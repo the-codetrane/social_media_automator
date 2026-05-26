@@ -3,6 +3,16 @@ Rails.application.routes.draw do
   resource  :registration, only: %i[ new create ]
   resources :passwords, param: :token
 
+  # Admin panel
+  namespace :admin do
+    resources :users do
+      member do
+        post :invite
+        patch :update_password
+      end
+    end
+  end
+
   # Model index pages
   resources :users,            only: [ :index, :show, :edit, :update ]
   resources :media_assets,     only: [ :index, :show, :edit, :update ]
