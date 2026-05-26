@@ -59,6 +59,7 @@
               <% unless user == Current.user %>
                 <%= button_to "Delete", admin_user_path(user), method: :delete,
                     data: { turbo_confirm: "Delete #{user.name}? This cannot be undone." },
+                    form: { class: "contents" },
                     class: "text-xs text-red-500 hover:text-red-700 font-medium bg-transparent border-0 cursor-pointer p-0" %>
               <% end %>
             </div>
