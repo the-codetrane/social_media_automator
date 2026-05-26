@@ -65,6 +65,7 @@ class Admin::UsersController < Admin::BaseController
   end
 
   def user_params
+    # brakeman:ignore:MassAssignment - admin-only controller; admins may promote/demote other users
     params.require(:user).permit(:name, :email_address, :admin)
   end
 
