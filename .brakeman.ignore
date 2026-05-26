@@ -1,0 +1,8 @@
+{
+  "ignored_warnings": [
+    {
+      "fingerprint": "5eba56e3ae688ad2234254e2ef5ae24c938a6275a06c8c9acdd625b97dcc38a2",
+      "note": "Admin-only controller (require_admin before_action). Permitting :admin is intentional — admins may promote/demote other users."
+    }
+  ]
+}
