@@ -1,5 +1,6 @@
 <% content_active   = %w[planned_posts media_assets social_templates].include?(controller_name) %>
 <% analytics_active = %w[insights llm_costs].include?(controller_name) %>
+<% admin_active     = controller.class.module_parent == Admin %>
 
 <nav class="bg-white border-b border-gray-200 mb-8 relative">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -9,7 +10,10 @@
 
       <%# Desktop nav (hidden on mobile) %>
       <div class="hidden sm:flex items-center gap-1">
-        <%= link_to "Users", users_path, class: "px-3 py-2 rounded-md text-sm font-medium #{controller_name == 'users' ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-100'}" %>
+        <%= link_to "Users", users_path, class: "px-3 py-2 rounded-md text-sm font-medium #{controller_name == 'users' && !admin_active ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-100'}" %>
+        <% if Current.user&.admin? %>
+          <%= link_to "Admin", admin_users_path, class: "px-3 py-2 rounded-md text-sm font-medium #{admin_active ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-100'}" %>
+        <% end %>
 
         <%# Content dropdown %>
         <div data-controller="dropdown" class="relative">
@@ -73,7 +77,10 @@
         <%# Mobile drawer — positioned absolutely under the nav bar %>
         <div data-dropdown-target="menu"
              class="hidden absolute left-0 right-0 top-14 bg-white border-b border-gray-200 shadow-lg z-50 px-4 pt-3 pb-4 space-y-1">
-          <%= link_to "Users", users_path, class: "block px-3 py-2.5 rounded-md text-sm font-medium #{controller_name == 'users' ? 'bg-indigo-600 text-white' : 'text-gray-700 hover:bg-gray-100'}" %>
+          <%= link_to "Users", users_path, class: "block px-3 py-2.5 rounded-md text-sm font-medium #{controller_name == 'users' && !admin_active ? 'bg-indigo-600 text-white' : 'text-gray-700 hover:bg-gray-100'}" %>
+          <% if Current.user&.admin? %>
+            <%= link_to "Admin", admin_users_path, class: "block px-3 py-2.5 rounded-md text-sm font-medium #{admin_active ? 'bg-indigo-600 text-white' : 'text-gray-700 hover:bg-gray-100'}" %>
+          <% end %>
 
           <p class="px-3 pt-2 pb-1 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Content</p>
           <%= link_to "Planned Posts", planned_posts_path, class: "block px-3 py-2.5 rounded-md text-sm font-medium #{controller_name == 'planned_posts' ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700 hover:bg-gray-100'}" %>
