@@ -13,7 +13,7 @@ production:
   dispatch_scheduled_posts:
     class: DispatchScheduledPostsJob
     queue: default
-    schedule: every thirty minutes at minute 0, 30
+    schedule: "*/30 * * * *"
 
   clear_solid_queue_finished_jobs:
     command: "SolidQueue::Job.clear_finished_in_batches(sleep_between_batches: 0.3)"
