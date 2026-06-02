@@ -19,7 +19,7 @@ class ChatsController < ApplicationController
       limitations: [ "Slower than Haiku", "Overkill for very simple lookups" ]
     },
     {
-      id: "claude-opus-4-7",
+      id: "claude-opus-4-8",
       display_name: "Claude Opus",
       tagline: "Most capable",
       description: "Best for complex creative writing, multi-step workflows, and nuanced reasoning.",
