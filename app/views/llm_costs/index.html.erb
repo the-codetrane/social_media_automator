@@ -21,9 +21,9 @@
                sub:   "vs billing cache reads at full input price" %>
 
     <%= render "llm_costs/stat_card",
-               label: "Cached tokens",
-               value: number_with_delimiter(@totals[:total_cache_read]),
-               sub:   "read from cache (+ #{number_with_delimiter(@totals[:total_cache_write])} written)" %>
+               label: "Total request tokens",
+               value: number_with_delimiter(@totals[:total_input] + @totals[:total_cache_read] + @totals[:total_cache_write]),
+               sub:   "input + #{number_with_delimiter(@totals[:total_cache_read])} cache read + #{number_with_delimiter(@totals[:total_cache_write])} cache write" %>
   </div>
 
   <%# ── By-model summary ───────────────────────────────────────────── %>
@@ -34,10 +34,11 @@
         <tr>
           <th class="px-4 py-3 text-left font-medium text-gray-600">Model</th>
           <th class="px-4 py-3 text-right font-medium text-gray-600">Responses</th>
-          <th class="px-4 py-3 text-right font-medium text-gray-600">Input tokens</th>
-          <th class="px-4 py-3 text-right font-medium text-gray-600">Output tokens</th>
+          <th class="px-4 py-3 text-right font-medium text-gray-600">Input</th>
+          <th class="px-4 py-3 text-right font-medium text-gray-600">Output</th>
           <th class="px-4 py-3 text-right font-medium text-gray-600">Cache read</th>
           <th class="px-4 py-3 text-right font-medium text-gray-600">Cache write</th>
+          <th class="px-4 py-3 text-right font-medium text-gray-600">Total request</th>
           <th class="px-4 py-3 text-right font-medium text-gray-600">Est. cost</th>
         </tr>
       </thead>
@@ -50,6 +51,7 @@
             <td class="px-4 py-3 text-right text-gray-700"><%= number_with_delimiter(stats[:total_output]) %></td>
             <td class="px-4 py-3 text-right text-gray-500"><%= number_with_delimiter(stats[:total_cache_read]) %></td>
             <td class="px-4 py-3 text-right text-gray-500"><%= number_with_delimiter(stats[:total_cache_write]) %></td>
+            <td class="px-4 py-3 text-right text-gray-500"><%= number_with_delimiter(stats[:total_input] + stats[:total_cache_read] + stats[:total_cache_write]) %></td>
             <td class="px-4 py-3 text-right font-semibold text-gray-900"><%= format_llm_cost(stats[:cost]) %></td>
           </tr>
         <% end %>
@@ -60,6 +62,7 @@
           <td class="px-4 py-3 text-right text-gray-700"><%= number_with_delimiter(@totals[:total_output]) %></td>
           <td class="px-4 py-3 text-right text-gray-500"><%= number_with_delimiter(@totals[:total_cache_read]) %></td>
           <td class="px-4 py-3 text-right text-gray-500"><%= number_with_delimiter(@totals[:total_cache_write]) %></td>
+          <td class="px-4 py-3 text-right text-gray-500"><%= number_with_delimiter(@totals[:total_input] + @totals[:total_cache_read] + @totals[:total_cache_write]) %></td>
           <td class="px-4 py-3 text-right text-gray-900"><%= format_llm_cost(@totals[:cost]) %></td>
         </tr>
       </tbody>
@@ -82,6 +85,7 @@
             <th class="px-4 py-3 text-right font-medium text-gray-600">Output</th>
             <th class="px-4 py-3 text-right font-medium text-gray-600">Cache read</th>
             <th class="px-4 py-3 text-right font-medium text-gray-600">Cache write</th>
+            <th class="px-4 py-3 text-right font-medium text-gray-600">Total request</th>
             <th class="px-4 py-3 text-right font-medium text-gray-600">Est. cost</th>
           </tr>
         </thead>
@@ -95,6 +99,7 @@
               <td class="px-4 py-3 text-right text-gray-700"><%= number_with_delimiter(row[:total_output]) %></td>
               <td class="px-4 py-3 text-right text-gray-500"><%= number_with_delimiter(row[:total_cache_read]) %></td>
               <td class="px-4 py-3 text-right text-gray-500"><%= number_with_delimiter(row[:total_cache_write]) %></td>
+              <td class="px-4 py-3 text-right text-gray-500"><%= number_with_delimiter(row[:total_input] + row[:total_cache_read] + row[:total_cache_write]) %></td>
               <td class="px-4 py-3 text-right font-medium text-gray-900"><%= format_llm_cost(row[:cost]) %></td>
             </tr>
           <% end %>
@@ -104,6 +109,8 @@
     <p class="text-xs text-gray-400 mt-2">
       Costs are estimates based on public Anthropic/Perplexity pricing as of May 2026.
       Cache write assumes the 5-minute TTL (1.25× input rate).
+      <em>Input</em> = standard non-cached tokens (RubyLLM 1.15+).
+      <em>Total request</em> = input + cache read + cache write.
     </p>
   <% end %>
 </div>
