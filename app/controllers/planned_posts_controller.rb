@@ -18,6 +18,12 @@ class PlannedPostsController < ApplicationController
   def show
     carousel_ids = @planned_post.platform_payload&.dig("carousel_asset_ids")
     @carousel_assets = MediaAsset.where(id: carousel_ids).index_by(&:id).values_at(*carousel_ids).compact if carousel_ids.present?
+
+    order_col = @planned_post.published? ? :published_at : :scheduled_at
+    order_val = @planned_post.send(order_col)
+    base = PlannedPost.where(status: @planned_post.status)
+    @prev_post = base.where("#{order_col} < ?", order_val).order(order_col => :desc).first
+    @next_post = base.where("#{order_col} > ?", order_val).order(order_col => :asc).first
   end
 
   def publish

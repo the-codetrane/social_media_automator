@@ -28,7 +28,11 @@
         <%# Instagram status %>
         <div class="flex flex-wrap gap-2">
           <% if user.instagram_connected? %>
-            <% if user.instagram_token_expiring? %>
+            <% if user.instagram_token_expired? %>
+              <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                ⛔ Token Expired
+              </span>
+            <% elsif user.instagram_token_expiring? %>
               <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
                 ⚠️ Token Expiring
               </span>

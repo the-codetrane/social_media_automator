@@ -11,6 +11,14 @@
         </svg>
       <% end %>
       <h1 class="text-xl sm:text-2xl font-bold text-gray-900">Planned Post</h1>
+      <div class="flex items-center gap-1 ml-2">
+        <%= @prev_post \
+          ? link_to(planned_post_path(@prev_post), title: "Previous post", class: "p-1 rounded text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors") { tag.svg(class: "w-4 h-4", fill: "none", stroke: "currentColor", viewBox: "0 0 24 24") { tag.path(stroke_linecap: "round", stroke_linejoin: "round", stroke_width: "2", d: "M15 19l-7-7 7-7") } }
+          : tag.span(class: "p-1 text-gray-200") { tag.svg(class: "w-4 h-4", fill: "none", stroke: "currentColor", viewBox: "0 0 24 24") { tag.path(stroke_linecap: "round", stroke_linejoin: "round", stroke_width: "2", d: "M15 19l-7-7 7-7") } } %>
+        <%= @next_post \
+          ? link_to(planned_post_path(@next_post), title: "Next post", class: "p-1 rounded text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors") { tag.svg(class: "w-4 h-4", fill: "none", stroke: "currentColor", viewBox: "0 0 24 24") { tag.path(stroke_linecap: "round", stroke_linejoin: "round", stroke_width: "2", d: "M9 5l7 7-7 7") } }
+          : tag.span(class: "p-1 text-gray-200") { tag.svg(class: "w-4 h-4", fill: "none", stroke: "currentColor", viewBox: "0 0 24 24") { tag.path(stroke_linecap: "round", stroke_linejoin: "round", stroke_width: "2", d: "M9 5l7 7-7 7") } } %>
+      </div>
     </div>
     <div class="flex flex-wrap items-center gap-2">
       <% if @planned_post.published? && @planned_post.external_post_id.present? %>
