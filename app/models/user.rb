@@ -22,6 +22,13 @@ class User < ApplicationRecord
     instagram_access_token.present? && instagram_user_id.present?
   end
 
+  # True if the stored token has already expired.
+  def instagram_token_expired?
+    instagram_connected? &&
+      instagram_token_expires_at.present? &&
+      instagram_token_expires_at <= Time.current
+  end
+
   # True if the stored token is expired or will expire within +buffer+.
   def instagram_token_expiring?(buffer: 7.days)
     return true unless instagram_connected?

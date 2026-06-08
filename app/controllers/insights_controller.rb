@@ -40,6 +40,10 @@ class InsightsController < ApplicationController
     end
 
     @post.update_column(:cached_insights, @insights)
+
+    base = PlannedPost.published.where.not(external_post_id: nil)
+    @prev_post = base.where("published_at < ?", @post.published_at).order(published_at: :desc).first
+    @next_post = base.where("published_at > ?", @post.published_at).order(published_at: :asc).first
   rescue Instagram::ApiError => e
     redirect_to insights_path, alert: "Could not load insights: #{e.message}"
   end
