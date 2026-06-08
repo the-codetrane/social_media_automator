@@ -56,8 +56,6 @@ module Instagram
       redirect_to instagram_connect_path, alert: "Instagram connection failed: #{e.message}"
     end
 
-    private
-
     # POST /instagram/refresh_token
     # Extends the stored long-lived token for another 60 days.
     def refresh_token
@@ -68,6 +66,8 @@ module Instagram
     rescue Instagram::ApiError => e
       redirect_to instagram_connect_path, alert: "Could not refresh token: #{e.message}"
     end
+
+    private
 
     def finish_connection(token, expires_in, ig_user_id)
       Instagram::AuthService.new(Current.user)
