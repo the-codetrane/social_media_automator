@@ -18,7 +18,9 @@ class PlannedPost < ApplicationRecord
   scope :for_platform, ->(platform) { where(platform: platform) }
 
   def post_type
-    (platform_payload&.dig("carousel_asset_ids")&.size.to_i >= 2) ? "carousel" : "single"
+    return "carousel" if platform_payload&.dig("carousel_asset_ids")&.size.to_i >= 2
+    return "carousel" if social_template&.name&.match?(/carousel/i)
+    "single"
   end
 
   private
