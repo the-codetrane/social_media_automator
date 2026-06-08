@@ -104,7 +104,7 @@ class PlannedPostsController < ApplicationController
   end
 
   def load_form_data
-    @media_assets = MediaAsset.ready.order(:external_name)
+    @media_assets = MediaAsset.where(status: [ :discovered, :processed ]).order(:external_name)
     @social_templates = SocialTemplate.order(:name)
     @carousel_asset_ids = @planned_post.platform_payload&.dig("carousel_asset_ids") || []
   end
