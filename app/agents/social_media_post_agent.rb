@@ -2,8 +2,8 @@ class SocialMediaPostAgent < RubyLLM::Agent
   chat_model "Chat"
   model "claude-sonnet-4-6", assume_model_exists: true, provider: "anthropic"
   inputs :user
-  tools ListMediaAssets, FindSocialTemplate, ResolveMediaAsset, CreatePlannedPost,
-        ListPlannedPosts, GetPlannedPost, UpdatePlannedPost, DeletePlannedPost,
+  tools ListMediaAssets, SyncMediaAssetsFromSpaces, FindSocialTemplate, ResolveMediaAsset,
+        CreatePlannedPost, ListPlannedPosts, GetPlannedPost, UpdatePlannedPost, DeletePlannedPost,
         IdentifyPeopleInAsset, CheckCarouselForDuplicates, FindStaleMediaAssets
 
   class << self
@@ -47,6 +47,16 @@ class SocialMediaPostAgent < RubyLLM::Agent
       - Clichés: "unforgettable experience," "elevate," "excited to announce"
       - Excessive emojis
       - Hashtag stuffing or broad irrelevant hashtags
+
+      ## DISCOVERING MEDIA
+
+      Call list_media_assets (no prefix) to see all files across every directory in Spaces.
+      Use the `directory` field in results to understand how content is organized.
+      To filter by type, pass media_type_filter: 'image', 'video', or 'audio'.
+
+      To register all discovered files as MediaAsset records in one shot, call
+      sync_media_assets_from_spaces. Run this before bulk-creating posts from a new directory.
+      Use dry_run: true first to preview how many new records would be created.
 
       ## CREATING A NEW POST
 

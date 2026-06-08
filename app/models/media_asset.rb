@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class MediaAsset < ApplicationRecord
-  enum :media_type, { image: 0, video: 1 }
+  enum :media_type, { image: 0, video: 1, audio: 2 }
   enum :status, { discovered: 0, processed: 1, failed: 2, archived: 3 }
 
   # ActiveStorage attachment for the media file (stored on DigitalOcean Spaces)
@@ -20,6 +20,7 @@ class MediaAsset < ApplicationRecord
 
   scope :images, -> { where(media_type: :image) }
   scope :videos, -> { where(media_type: :video) }
+  scope :audios, -> { where(media_type: :audio) }
   scope :ready, -> { where(status: :processed) }
 
   # Returns the public URL for this media asset.
