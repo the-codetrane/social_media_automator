@@ -55,11 +55,17 @@ export default class extends Controller {
       item.innerHTML = `
         <span class="text-xs font-medium text-gray-400 w-4 shrink-0">${index + 1}</span>
         <span class="flex-1 text-sm text-gray-700 truncate">${this._escapeHtml(checkbox.dataset.name)}</span>
-        <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <button type="button" data-carousel-select-id="${id}" class="remove-btn p-0.5 rounded text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors shrink-0" aria-label="Remove">
+          <svg class="w-4 h-4 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+        <svg class="w-4 h-4 text-gray-400 shrink-0 drag-handle" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"/>
         </svg>
       `
 
+      item.querySelector(".remove-btn").addEventListener("click", this._remove.bind(this))
       item.addEventListener("dragstart", this._dragStart.bind(this))
       item.addEventListener("dragover", this._dragOver.bind(this))
       item.addEventListener("drop", this._dragDrop.bind(this))
@@ -79,6 +85,14 @@ export default class extends Controller {
       input.value = id
       container.appendChild(input)
     })
+  }
+
+  _remove(event) {
+    const id = parseInt(event.currentTarget.dataset.carouselSelectId)
+    this._orderedIds = this._orderedIds.filter(i => i !== id)
+    const checkbox = this.checkboxTargets.find(cb => parseInt(cb.value) === id)
+    if (checkbox) checkbox.checked = false
+    this.render()
   }
 
   _dragStart(event) {
