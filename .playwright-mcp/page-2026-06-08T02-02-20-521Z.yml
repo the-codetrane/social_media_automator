@@ -1,0 +1,374 @@
+- generic [active] [ref=e1]:
+  - navigation [ref=e2]:
+    - generic [ref=e4]:
+      - generic [ref=e5]:
+        - link "Users" [ref=e6] [cursor=pointer]:
+          - /url: /users
+        - link "Admin" [ref=e7] [cursor=pointer]:
+          - /url: /admin/users
+        - button "Content" [ref=e9]:
+          - text: Content
+          - img [ref=e10]
+        - link "Chat" [ref=e12] [cursor=pointer]:
+          - /url: /chat
+        - link "Known People" [ref=e13] [cursor=pointer]:
+          - /url: /known_people
+        - button "Analytics" [ref=e15]:
+          - text: Analytics
+          - img [ref=e16]
+      - button "Sign out" [ref=e20]
+  - main [ref=e21]:
+    - generic [ref=e22]:
+      - generic [ref=e23]:
+        - generic [ref=e24]:
+          - heading "Planned Posts" [level=1] [ref=e25]
+          - paragraph [ref=e26]: 13 records
+        - generic [ref=e27]:
+          - button "Card view" [ref=e28]:
+            - img [ref=e29]
+          - button "Table view" [ref=e31]:
+            - img [ref=e32]
+      - generic [ref=e34]:
+        - generic [ref=e35]:
+          - generic [ref=e36]: Platform
+          - generic [ref=e37] [cursor=pointer]:
+            - checkbox "Instagram" [ref=e38]
+            - generic [ref=e39]: Instagram
+          - generic [ref=e40] [cursor=pointer]:
+            - checkbox "Facebook" [ref=e41]
+            - generic [ref=e42]: Facebook
+        - generic [ref=e44]:
+          - generic [ref=e45]: Status
+          - generic [ref=e46]:
+            - generic [ref=e47] [cursor=pointer]:
+              - radio "Scheduled" [checked] [ref=e48]
+              - generic [ref=e49]: Scheduled
+            - generic [ref=e50] [cursor=pointer]:
+              - radio "Published" [ref=e51]
+              - generic [ref=e52]: Published
+      - generic [ref=e55]:
+        - generic [ref=e56]:
+          - generic [ref=e57] [cursor=pointer]:
+            - checkbox [ref=e58]
+            - img [ref=e60]
+          - 'link "facebook scheduled Harum atque quia. Et maxime dolores. #quos #deleniti #sit #quos #deleniti #sit Scheduled At Apr 19, 2026 12:42 Media Asset est_1567.png Owner Gerry Lubowitz Template Instagram Reel Template Created Apr 13, 2026" [ref=e62] [cursor=pointer]':
+            - /url: /planned_posts/21
+            - generic [ref=e63]:
+              - generic [ref=e64]: facebook
+              - generic [ref=e65]: scheduled
+            - paragraph [ref=e66]: "Harum atque quia. Et maxime dolores. #quos #deleniti #sit"
+            - paragraph [ref=e67]: "#quos #deleniti #sit"
+            - generic [ref=e68]:
+              - generic [ref=e69]:
+                - term [ref=e70]: Scheduled At
+                - definition [ref=e71]: Apr 19, 2026 12:42
+              - generic [ref=e72]:
+                - term [ref=e73]: Media Asset
+                - definition [ref=e74]: est_1567.png
+              - generic [ref=e75]:
+                - term [ref=e76]: Owner
+                - definition [ref=e77]: Gerry Lubowitz
+              - generic [ref=e78]:
+                - term [ref=e79]: Template
+                - definition [ref=e80]: Instagram Reel Template
+            - paragraph [ref=e81]: Created Apr 13, 2026
+        - generic [ref=e82]:
+          - generic [ref=e83] [cursor=pointer]:
+            - checkbox [ref=e84]
+            - img [ref=e86]
+          - 'link "youtube scheduled Officia vitae labore. Voluptatem blanditiis consequuntur. #eaque #natus #placeat #non #eaque #natus #placeat #non Scheduled At Apr 25, 2026 12:42 Media Asset est_1567.png Owner Byron Corkery Template Instagram Carousel Created Apr 13, 2026" [ref=e88] [cursor=pointer]':
+            - /url: /planned_posts/31
+            - generic [ref=e89]:
+              - generic [ref=e90]: youtube
+              - generic [ref=e91]: scheduled
+            - paragraph [ref=e92]: "Officia vitae labore. Voluptatem blanditiis consequuntur. #eaque #natus #placeat #non"
+            - paragraph [ref=e93]: "#eaque #natus #placeat #non"
+            - generic [ref=e94]:
+              - generic [ref=e95]:
+                - term [ref=e96]: Scheduled At
+                - definition [ref=e97]: Apr 25, 2026 12:42
+              - generic [ref=e98]:
+                - term [ref=e99]: Media Asset
+                - definition [ref=e100]: est_1567.png
+              - generic [ref=e101]:
+                - term [ref=e102]: Owner
+                - definition [ref=e103]: Byron Corkery
+              - generic [ref=e104]:
+                - term [ref=e105]: Template
+                - definition [ref=e106]: Instagram Carousel
+            - paragraph [ref=e107]: Created Apr 13, 2026
+        - generic [ref=e108]:
+          - generic [ref=e109] [cursor=pointer]:
+            - checkbox [ref=e110]
+            - img [ref=e112]
+          - 'link "youtube scheduled Distinctio similique aut. Illum ut cum. Dolor fuga et. #excepturi #aut #praesentium #autem #praesentium #et #excepturi #aut #praesentium #autem #praesentium #et Scheduled At Apr 26, 2026 12:42 Media Asset error_5928.png Owner Mr. Jose Schneider Template Instagram Carousel Created Apr 13, 2026" [ref=e114] [cursor=pointer]':
+            - /url: /planned_posts/6
+            - generic [ref=e115]:
+              - generic [ref=e116]: youtube
+              - generic [ref=e117]: scheduled
+            - paragraph [ref=e118]: "Distinctio similique aut. Illum ut cum. Dolor fuga et. #excepturi #aut #praesentium #autem #praesentium #et"
+            - paragraph [ref=e119]: "#excepturi #aut #praesentium #autem #praesentium #et"
+            - generic [ref=e120]:
+              - generic [ref=e121]:
+                - term [ref=e122]: Scheduled At
+                - definition [ref=e123]: Apr 26, 2026 12:42
+              - generic [ref=e124]:
+                - term [ref=e125]: Media Asset
+                - definition [ref=e126]: error_5928.png
+              - generic [ref=e127]:
+                - term [ref=e128]: Owner
+                - definition [ref=e129]: Mr. Jose Schneider
+              - generic [ref=e130]:
+                - term [ref=e131]: Template
+                - definition [ref=e132]: Instagram Carousel
+            - paragraph [ref=e133]: Created Apr 13, 2026
+        - generic [ref=e134]:
+          - generic [ref=e135] [cursor=pointer]:
+            - checkbox [ref=e136]
+            - img [ref=e138]
+          - 'link "youtube scheduled Quas excepturi facere. Debitis tempora recusandae. Labore doloremque consequatur. #iusto #nam #occaecati #ipsum #expedita #occaecati #modi #ut #iusto #nam #occaecati #ipsum #expedita #occaecati #modi #ut Scheduled At Apr 26, 2026 12:42 Media Asset est_1567.png Owner Mr. Jose Schneider Template YouTube Standard Video Created Apr 13, 2026" [ref=e140] [cursor=pointer]':
+            - /url: /planned_posts/10
+            - generic [ref=e141]:
+              - generic [ref=e142]: youtube
+              - generic [ref=e143]: scheduled
+            - paragraph [ref=e144]: "Quas excepturi facere. Debitis tempora recusandae. Labore doloremque consequatur. #iusto #nam #occaecati #ipsum #expedita #occaecati #modi #ut"
+            - paragraph [ref=e145]: "#iusto #nam #occaecati #ipsum #expedita #occaecati #modi #ut"
+            - generic [ref=e146]:
+              - generic [ref=e147]:
+                - term [ref=e148]: Scheduled At
+                - definition [ref=e149]: Apr 26, 2026 12:42
+              - generic [ref=e150]:
+                - term [ref=e151]: Media Asset
+                - definition [ref=e152]: est_1567.png
+              - generic [ref=e153]:
+                - term [ref=e154]: Owner
+                - definition [ref=e155]: Mr. Jose Schneider
+              - generic [ref=e156]:
+                - term [ref=e157]: Template
+                - definition [ref=e158]: YouTube Standard Video
+            - paragraph [ref=e159]: Created Apr 13, 2026
+        - generic [ref=e160]:
+          - generic [ref=e161] [cursor=pointer]:
+            - checkbox [ref=e162]
+            - img [ref=e164]
+          - 'link "youtube scheduled Numquam quaerat suscipit. Maxime vel voluptate. Repellendus ipsa ullam. #est #amet #aut #est #amet #aut Scheduled At May 1, 2026 12:42 Media Asset est_1567.png Owner Alvaro Barton Template YouTube Standard Video Created Apr 13, 2026" [ref=e166] [cursor=pointer]':
+            - /url: /planned_posts/47
+            - generic [ref=e167]:
+              - generic [ref=e168]: youtube
+              - generic [ref=e169]: scheduled
+            - paragraph [ref=e170]: "Numquam quaerat suscipit. Maxime vel voluptate. Repellendus ipsa ullam. #est #amet #aut"
+            - paragraph [ref=e171]: "#est #amet #aut"
+            - generic [ref=e172]:
+              - generic [ref=e173]:
+                - term [ref=e174]: Scheduled At
+                - definition [ref=e175]: May 1, 2026 12:42
+              - generic [ref=e176]:
+                - term [ref=e177]: Media Asset
+                - definition [ref=e178]: est_1567.png
+              - generic [ref=e179]:
+                - term [ref=e180]: Owner
+                - definition [ref=e181]: Alvaro Barton
+              - generic [ref=e182]:
+                - term [ref=e183]: Template
+                - definition [ref=e184]: YouTube Standard Video
+            - paragraph [ref=e185]: Created Apr 13, 2026
+        - generic [ref=e186]:
+          - generic [ref=e187] [cursor=pointer]:
+            - checkbox [ref=e188]
+            - img [ref=e190]
+          - 'link "youtube scheduled Commodi dolorem repellat. Deleniti ea velit. #optio #quam #consequuntur #sed #et #nam #consectetur #quasi #animi #optio #quam #consequuntur #sed #et #nam #consectetur #quasi #animi Scheduled At May 2, 2026 12:42 Media Asset error_5928.png Owner Thad Stehr Template Instagram Feed Post Created Apr 13, 2026" [ref=e192] [cursor=pointer]':
+            - /url: /planned_posts/11
+            - generic [ref=e193]:
+              - generic [ref=e194]: youtube
+              - generic [ref=e195]: scheduled
+            - paragraph [ref=e196]: "Commodi dolorem repellat. Deleniti ea velit. #optio #quam #consequuntur #sed #et #nam #consectetur #quasi #animi"
+            - paragraph [ref=e197]: "#optio #quam #consequuntur #sed #et #nam #consectetur #quasi #animi"
+            - generic [ref=e198]:
+              - generic [ref=e199]:
+                - term [ref=e200]: Scheduled At
+                - definition [ref=e201]: May 2, 2026 12:42
+              - generic [ref=e202]:
+                - term [ref=e203]: Media Asset
+                - definition [ref=e204]: error_5928.png
+              - generic [ref=e205]:
+                - term [ref=e206]: Owner
+                - definition [ref=e207]: Thad Stehr
+              - generic [ref=e208]:
+                - term [ref=e209]: Template
+                - definition [ref=e210]: Instagram Feed Post
+            - paragraph [ref=e211]: Created Apr 13, 2026
+        - generic [ref=e212]:
+          - generic [ref=e213] [cursor=pointer]:
+            - checkbox [ref=e214]
+            - img [ref=e216]
+          - 'link "facebook scheduled Consectetur reprehenderit minima. Deserunt perspiciatis vitae. #eveniet #ratione #laboriosam #necessitatibus #deserunt #accusantium #eveniet #ratione #laboriosam #necessitatibus #deserunt #accusantium Scheduled At May 6, 2026 12:42 Media Asset error_5928.png Owner Thad Stehr Template YouTube Premiere Created Apr 13, 2026" [ref=e218] [cursor=pointer]':
+            - /url: /planned_posts/14
+            - generic [ref=e219]:
+              - generic [ref=e220]: facebook
+              - generic [ref=e221]: scheduled
+            - paragraph [ref=e222]: "Consectetur reprehenderit minima. Deserunt perspiciatis vitae. #eveniet #ratione #laboriosam #necessitatibus #deserunt #accusantium"
+            - paragraph [ref=e223]: "#eveniet #ratione #laboriosam #necessitatibus #deserunt #accusantium"
+            - generic [ref=e224]:
+              - generic [ref=e225]:
+                - term [ref=e226]: Scheduled At
+                - definition [ref=e227]: May 6, 2026 12:42
+              - generic [ref=e228]:
+                - term [ref=e229]: Media Asset
+                - definition [ref=e230]: error_5928.png
+              - generic [ref=e231]:
+                - term [ref=e232]: Owner
+                - definition [ref=e233]: Thad Stehr
+              - generic [ref=e234]:
+                - term [ref=e235]: Template
+                - definition [ref=e236]: YouTube Premiere
+            - paragraph [ref=e237]: Created Apr 13, 2026
+        - generic [ref=e238]:
+          - generic [ref=e239] [cursor=pointer]:
+            - checkbox [ref=e240]
+            - img [ref=e242]
+          - 'link "youtube scheduled Harum qui non. #vel #ad #vitae #sed #suscipit #consequatur #assumenda #quis #enim #non #vel #ad #vitae #sed #suscipit #consequatur #assumenda #quis #enim #non Scheduled At May 6, 2026 12:42 Media Asset error_5928.png Owner Alvaro Barton Template YouTube Standard Video Created Apr 13, 2026" [ref=e244] [cursor=pointer]':
+            - /url: /planned_posts/50
+            - generic [ref=e245]:
+              - generic [ref=e246]: youtube
+              - generic [ref=e247]: scheduled
+            - paragraph [ref=e248]: "Harum qui non. #vel #ad #vitae #sed #suscipit #consequatur #assumenda #quis #enim #non"
+            - paragraph [ref=e249]: "#vel #ad #vitae #sed #suscipit #consequatur #assumenda #quis #enim #non"
+            - generic [ref=e250]:
+              - generic [ref=e251]:
+                - term [ref=e252]: Scheduled At
+                - definition [ref=e253]: May 6, 2026 12:42
+              - generic [ref=e254]:
+                - term [ref=e255]: Media Asset
+                - definition [ref=e256]: error_5928.png
+              - generic [ref=e257]:
+                - term [ref=e258]: Owner
+                - definition [ref=e259]: Alvaro Barton
+              - generic [ref=e260]:
+                - term [ref=e261]: Template
+                - definition [ref=e262]: YouTube Standard Video
+            - paragraph [ref=e263]: Created Apr 13, 2026
+        - generic [ref=e264]:
+          - generic [ref=e265] [cursor=pointer]:
+            - checkbox [ref=e266]
+            - img [ref=e268]
+          - 'link "instagram scheduled Repellendus numquam doloribus. Et modi quibusdam. Quam ut molestiae. #aut #veniam #consequatur #libero #id #aut #veniam #consequatur #libero #id Scheduled At May 7, 2026 12:42 Media Asset error_5928.png Owner Gerry Lubowitz Template Instagram Story Default Created Apr 13, 2026" [ref=e270] [cursor=pointer]':
+            - /url: /planned_posts/22
+            - generic [ref=e271]:
+              - generic [ref=e272]: instagram
+              - generic [ref=e273]: scheduled
+            - paragraph [ref=e274]: "Repellendus numquam doloribus. Et modi quibusdam. Quam ut molestiae. #aut #veniam #consequatur #libero #id"
+            - paragraph [ref=e275]: "#aut #veniam #consequatur #libero #id"
+            - generic [ref=e276]:
+              - generic [ref=e277]:
+                - term [ref=e278]: Scheduled At
+                - definition [ref=e279]: May 7, 2026 12:42
+              - generic [ref=e280]:
+                - term [ref=e281]: Media Asset
+                - definition [ref=e282]: error_5928.png
+              - generic [ref=e283]:
+                - term [ref=e284]: Owner
+                - definition [ref=e285]: Gerry Lubowitz
+              - generic [ref=e286]:
+                - term [ref=e287]: Template
+                - definition [ref=e288]: Instagram Story Default
+            - paragraph [ref=e289]: Created Apr 13, 2026
+        - generic [ref=e290]:
+          - generic [ref=e291] [cursor=pointer]:
+            - checkbox [ref=e292]
+            - img [ref=e294]
+          - 'link "facebook scheduled Eos ipsa fuga. At ea sit. #perferendis #voluptas #assumenda #doloremque #pariatur #sed #est #exercitationem #voluptatum #perferendis #voluptas #assumenda #doloremque #pariatur #sed #est #exercitationem #voluptatum Scheduled At May 7, 2026 12:42 Media Asset est_1567.png Owner Byron Corkery Template Facebook Story Template Created Apr 13, 2026" [ref=e296] [cursor=pointer]':
+            - /url: /planned_posts/35
+            - generic [ref=e297]:
+              - generic [ref=e298]: facebook
+              - generic [ref=e299]: scheduled
+            - paragraph [ref=e300]: "Eos ipsa fuga. At ea sit. #perferendis #voluptas #assumenda #doloremque #pariatur #sed #est #exercitationem #voluptatum"
+            - paragraph [ref=e301]: "#perferendis #voluptas #assumenda #doloremque #pariatur #sed #est #exercitationem #voluptatum"
+            - generic [ref=e302]:
+              - generic [ref=e303]:
+                - term [ref=e304]: Scheduled At
+                - definition [ref=e305]: May 7, 2026 12:42
+              - generic [ref=e306]:
+                - term [ref=e307]: Media Asset
+                - definition [ref=e308]: est_1567.png
+              - generic [ref=e309]:
+                - term [ref=e310]: Owner
+                - definition [ref=e311]: Byron Corkery
+              - generic [ref=e312]:
+                - term [ref=e313]: Template
+                - definition [ref=e314]: Facebook Story Template
+            - paragraph [ref=e315]: Created Apr 13, 2026
+        - generic [ref=e316]:
+          - generic [ref=e317] [cursor=pointer]:
+            - checkbox [ref=e318]
+            - img [ref=e320]
+          - 'link "instagram scheduled Consequuntur sint aut. #sunt #qui #modi #quaerat #est #sed #ut #possimus #et #sunt #qui #modi #quaerat #est #sed #ut #possimus #et Scheduled At May 7, 2026 12:42 Media Asset error_5928.png Owner Lazaro D''Amore Template Facebook Live Replay Created Apr 13, 2026" [ref=e322] [cursor=pointer]':
+            - /url: /planned_posts/42
+            - generic [ref=e323]:
+              - generic [ref=e324]: instagram
+              - generic [ref=e325]: scheduled
+            - paragraph [ref=e326]: "Consequuntur sint aut. #sunt #qui #modi #quaerat #est #sed #ut #possimus #et"
+            - paragraph [ref=e327]: "#sunt #qui #modi #quaerat #est #sed #ut #possimus #et"
+            - generic [ref=e328]:
+              - generic [ref=e329]:
+                - term [ref=e330]: Scheduled At
+                - definition [ref=e331]: May 7, 2026 12:42
+              - generic [ref=e332]:
+                - term [ref=e333]: Media Asset
+                - definition [ref=e334]: error_5928.png
+              - generic [ref=e335]:
+                - term [ref=e336]: Owner
+                - definition [ref=e337]: Lazaro D'Amore
+              - generic [ref=e338]:
+                - term [ref=e339]: Template
+                - definition [ref=e340]: Facebook Live Replay
+            - paragraph [ref=e341]: Created Apr 13, 2026
+        - generic [ref=e342]:
+          - generic [ref=e343] [cursor=pointer]:
+            - checkbox [ref=e344]
+            - img [ref=e346]
+          - 'link "instagram scheduled Et fugit aliquid. Qui fuga sed. Cupiditate quia perspiciatis. #occaecati #eum #sint #saepe #occaecati #eum #sint #saepe Scheduled At May 13, 2026 12:42 Media Asset error_5928.png Owner Alvaro Barton Template Facebook Live Replay Created Apr 13, 2026" [ref=e348] [cursor=pointer]':
+            - /url: /planned_posts/49
+            - generic [ref=e349]:
+              - generic [ref=e350]: instagram
+              - generic [ref=e351]: scheduled
+            - paragraph [ref=e352]: "Et fugit aliquid. Qui fuga sed. Cupiditate quia perspiciatis. #occaecati #eum #sint #saepe"
+            - paragraph [ref=e353]: "#occaecati #eum #sint #saepe"
+            - generic [ref=e354]:
+              - generic [ref=e355]:
+                - term [ref=e356]: Scheduled At
+                - definition [ref=e357]: May 13, 2026 12:42
+              - generic [ref=e358]:
+                - term [ref=e359]: Media Asset
+                - definition [ref=e360]: error_5928.png
+              - generic [ref=e361]:
+                - term [ref=e362]: Owner
+                - definition [ref=e363]: Alvaro Barton
+              - generic [ref=e364]:
+                - term [ref=e365]: Template
+                - definition [ref=e366]: Facebook Live Replay
+            - paragraph [ref=e367]: Created Apr 13, 2026
+        - generic [ref=e368]:
+          - generic [ref=e369] [cursor=pointer]:
+            - checkbox [ref=e370]
+            - img [ref=e372]
+          - 'link "instagram scheduled Rem et reiciendis. Est suscipit a. Ex cupiditate quaerat. #quas #perferendis #qui #aliquam #dolore #earum #aut #quas #perferendis #qui #aliquam #dolore #earum #aut Scheduled At May 23, 2026 12:42 Media Asset error_5928.png Owner Thad Stehr Template YouTube Short Format Created Apr 13, 2026" [ref=e374] [cursor=pointer]':
+            - /url: /planned_posts/12
+            - generic [ref=e375]:
+              - generic [ref=e376]: instagram
+              - generic [ref=e377]: scheduled
+            - paragraph [ref=e378]: "Rem et reiciendis. Est suscipit a. Ex cupiditate quaerat. #quas #perferendis #qui #aliquam #dolore #earum #aut"
+            - paragraph [ref=e379]: "#quas #perferendis #qui #aliquam #dolore #earum #aut"
+            - generic [ref=e380]:
+              - generic [ref=e381]:
+                - term [ref=e382]: Scheduled At
+                - definition [ref=e383]: May 23, 2026 12:42
+              - generic [ref=e384]:
+                - term [ref=e385]: Media Asset
+                - definition [ref=e386]: error_5928.png
+              - generic [ref=e387]:
+                - term [ref=e388]: Owner
+                - definition [ref=e389]: Thad Stehr
+              - generic [ref=e390]:
+                - term [ref=e391]: Template
+                - definition [ref=e392]: YouTube Short Format
+            - paragraph [ref=e393]: Created Apr 13, 2026

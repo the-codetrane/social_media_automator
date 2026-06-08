@@ -1,0 +1,61 @@
+- generic [active] [ref=e1]:
+  - navigation [ref=e2]:
+    - generic [ref=e4]:
+      - generic [ref=e5]:
+        - link "Users" [ref=e6] [cursor=pointer]:
+          - /url: /users
+        - link "Admin" [ref=e7] [cursor=pointer]:
+          - /url: /admin/users
+        - button "Content" [ref=e9]:
+          - text: Content
+          - img [ref=e10]
+        - link "Chat" [ref=e12] [cursor=pointer]:
+          - /url: /chat
+        - link "Known People" [ref=e13] [cursor=pointer]:
+          - /url: /known_people
+        - button "Analytics" [ref=e15]:
+          - text: Analytics
+          - img [ref=e16]
+      - button "Sign out" [ref=e20]
+  - main [ref=e21]:
+    - generic [ref=e22]:
+      - generic [ref=e23]:
+        - generic [ref=e24]:
+          - link [ref=e25] [cursor=pointer]:
+            - /url: /media_assets
+            - img [ref=e26]
+          - heading "esse_9695.avi" [level=1] [ref=e28]
+        - link "Edit" [ref=e29] [cursor=pointer]:
+          - /url: /media_assets/1/edit
+          - img [ref=e30]
+          - text: Edit
+      - generic [ref=e32]:
+        - generic [ref=e33]:
+          - generic [ref=e34]:
+            - generic [ref=e35]: video
+            - generic [ref=e36]: archived
+          - generic [ref=e37]:
+            - generic [ref=e38]:
+              - term [ref=e39]: Dimensions
+              - definition [ref=e40]: 1080 × 1080
+            - generic [ref=e41]:
+              - term [ref=e42]: Duration
+              - definition [ref=e43]: 2m 14s
+            - generic [ref=e44]:
+              - term [ref=e45]: File Size
+              - definition [ref=e46]: 69.8 MB
+            - generic [ref=e47]:
+              - term [ref=e48]: MIME Type
+              - definition [ref=e49]: video/quicktime
+            - generic [ref=e50]:
+              - term [ref=e51]: First Seen
+              - definition [ref=e52]: May 13, 2025
+            - generic [ref=e53]:
+              - term [ref=e54]: Planned Posts
+              - definition [ref=e55]: "0"
+            - generic [ref=e56]:
+              - term [ref=e57]: Added
+              - definition [ref=e58]: April 13, 2026
+        - button "Additional Details" [ref=e60]:
+          - generic [ref=e61]: Additional Details
+          - img [ref=e62]

@@ -1,0 +1,49 @@
+- generic [active] [ref=e1]:
+  - navigation [ref=e2]:
+    - generic [ref=e4]:
+      - generic [ref=e5]:
+        - link "Users" [ref=e6] [cursor=pointer]:
+          - /url: /users
+        - link "Admin" [ref=e7] [cursor=pointer]:
+          - /url: /admin/users
+        - button "Content" [ref=e9]:
+          - text: Content
+          - img [ref=e10]
+        - link "Chat" [ref=e12] [cursor=pointer]:
+          - /url: /chat
+        - link "Known People" [ref=e13] [cursor=pointer]:
+          - /url: /known_people
+        - button "Analytics" [ref=e15]:
+          - text: Analytics
+          - img [ref=e16]
+      - button "Sign out" [ref=e20]
+  - main [ref=e21]:
+    - generic [ref=e22]:
+      - generic [ref=e23]:
+        - generic [ref=e24]:
+          - link [ref=e25] [cursor=pointer]:
+            - /url: /users
+            - img [ref=e26]
+          - heading "Michael Cain" [level=1] [ref=e28]
+        - link "Edit" [ref=e29] [cursor=pointer]:
+          - /url: /users/11/edit
+          - img [ref=e30]
+          - text: Edit
+      - generic [ref=e32]:
+        - generic [ref=e33]:
+          - generic [ref=e34]:
+            - generic [ref=e35]: MC
+            - generic [ref=e36]:
+              - paragraph [ref=e37]: Michael Cain
+              - paragraph [ref=e38]: michael.m.cain.ii@gmail.com
+          - generic [ref=e40]: ⚠️ Token Expiring
+          - generic [ref=e41]:
+            - generic [ref=e42]:
+              - term [ref=e43]: Planned Posts
+              - definition [ref=e44]: "0"
+            - generic [ref=e45]:
+              - term [ref=e46]: Joined
+              - definition [ref=e47]: April 15, 2026
+        - button "Additional Details" [ref=e49]:
+          - generic [ref=e50]: Additional Details
+          - img [ref=e51]

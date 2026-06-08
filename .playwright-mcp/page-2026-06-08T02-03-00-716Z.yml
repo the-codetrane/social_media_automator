@@ -1,0 +1,31 @@
+- generic [active] [ref=e1]:
+  - navigation [ref=e2]:
+    - generic [ref=e4]:
+      - generic [ref=e5]:
+        - link "Users" [ref=e6] [cursor=pointer]:
+          - /url: /users
+        - link "Admin" [ref=e7] [cursor=pointer]:
+          - /url: /admin/users
+        - button "Content" [ref=e9]:
+          - text: Content
+          - img [ref=e10]
+        - link "Chat" [ref=e12] [cursor=pointer]:
+          - /url: /chat
+        - link "Known People" [ref=e13] [cursor=pointer]:
+          - /url: /known_people
+        - button "Analytics" [ref=e15]:
+          - text: Analytics
+          - img [ref=e16]
+      - button "Sign out" [ref=e20]
+  - main [ref=e21]:
+    - generic [ref=e22]:
+      - generic [ref=e23]:
+        - heading "Known People" [level=1] [ref=e24]
+        - paragraph [ref=e25]: Reference photos used by the AI to identify people in your media.
+      - link "Add Person" [ref=e26] [cursor=pointer]:
+        - /url: /known_people/new
+        - img [ref=e27]
+        - text: Add Person
+    - generic [ref=e29]:
+      - paragraph [ref=e30]: No known people yet.
+      - paragraph [ref=e31]: Add reference photos so the AI can recognize band members and key subjects.
