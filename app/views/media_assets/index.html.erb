@@ -121,14 +121,10 @@
                 <% end %>
                 <% if asset.mime_type.present? %>
                   <div>
-                    <dt class="text-gray-400 uppercase tracking-wide">MIME Type</dt>
-                    <dd class="text-gray-700 truncate"><%= asset.mime_type %></dd>
+                    <dt class="text-gray-400 uppercase tracking-wide">Format</dt>
+                    <dd class="text-gray-700 truncate"><%= asset.mime_type.split("/").last&.upcase %></dd>
                   </div>
                 <% end %>
-                <div class="col-span-2">
-                  <dt class="text-gray-400 uppercase tracking-wide">External ID</dt>
-                  <dd class="text-gray-700 font-mono truncate"><%= asset.external_id %></dd>
-                </div>
                 <div>
                   <dt class="text-gray-400 uppercase tracking-wide">First Seen</dt>
                   <dd class="text-gray-700"><%= asset.first_seen_at.strftime("%b %-d, %Y") %></dd>
