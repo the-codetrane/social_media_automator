@@ -41,3 +41,6 @@
 /node_modules
 
 /CLAUDE.md
+
+# Playwright files
+.playwright-mcp/
