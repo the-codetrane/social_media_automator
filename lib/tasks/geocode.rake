@@ -77,4 +77,36 @@ namespace :geocode do
 
     puts "\nFinished. Total geocoded: #{exif_geocoded + address_geocoded}"
   end
+
+  desc "Forward geocode media assets whose external_name mentions VENUE using ADDRESS (FORCE=true to overwrite existing coordinates)"
+  task venue: :environment do
+    venue   = ENV["VENUE"].presence   || abort("Usage: bin/rails geocode:venue VENUE='...' ADDRESS='...'")
+    address = ENV["ADDRESS"].presence || abort("Usage: bin/rails geocode:venue VENUE='...' ADDRESS='...'")
+    force   = ENV["FORCE"] == "true"
+
+    results = Geocoder.search(address)
+    abort "Could not geocode address: #{address}" if results.empty?
+
+    geo = results.first
+    lat = geo.latitude
+    lon = geo.longitude
+    puts "Resolved: #{address} → #{lat}, #{lon}"
+
+    candidates = MediaAsset.where("LOWER(external_name) LIKE ?", "%#{venue.downcase}%")
+    candidates = candidates.where(latitude: nil) unless force
+
+    puts "#{candidates.count} asset(s) matching \"#{venue}\"#{force ? "" : " without existing coordinates"}"
+
+    updated = 0
+    candidates.find_each do |asset|
+      asset.latitude  = lat
+      asset.longitude = lon
+      asset.save!
+      updated += 1
+      puts "  [#{asset.id}] #{asset.external_name} → #{asset.city}, #{asset.country}"
+      sleep 1  # Nominatim rate limit: 1 req/sec
+    end
+
+    puts "\nDone. #{updated} asset(s) geocoded."
+  end
 end
