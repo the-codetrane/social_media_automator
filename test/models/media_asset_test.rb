@@ -4,6 +4,18 @@ require "test_helper"
 
 class MediaAssetTest < ActiveSupport::TestCase
   # ---------------------------------------------------------------------------
+  # Helpers
+  # ---------------------------------------------------------------------------
+  # Returns a minimal ActiveStorage attachment double: attached? => true,
+  # open yields the given tempfile.
+  def build_file_stub(tempfile)
+    stub = Object.new
+    stub.define_singleton_method(:attached?) { true }
+    stub.define_singleton_method(:open) { |&blk| blk.call(tempfile) }
+    stub
+  end
+
+  # ---------------------------------------------------------------------------
   # Fixtures
   # ---------------------------------------------------------------------------
   test "fixtures are valid" do
@@ -143,5 +155,125 @@ class MediaAssetTest < ActiveSupport::TestCase
 
   test "has_one_attached :file" do
     assert_respond_to media_assets(:sample_image), :file
+  end
+
+  # ---------------------------------------------------------------------------
+  # Geocoding — geocoded?
+  # ---------------------------------------------------------------------------
+  test "geocoded? is true when latitude and longitude are present" do
+    asset = media_assets(:geocoded_image)
+    assert asset.geocoded?
+  end
+
+  test "geocoded? is false when latitude is nil" do
+    asset = media_assets(:sample_image)
+    assert_nil asset.latitude
+    assert_not asset.geocoded?
+  end
+
+  # ---------------------------------------------------------------------------
+  # Geocoding — reverse_geocode callback
+  # ---------------------------------------------------------------------------
+  test "reverse_geocode populates address fields when coordinates change" do
+    asset = media_assets(:sample_image)
+    asset.latitude  = 37.7749
+    asset.longitude = -122.4194
+
+    result = Struct.new(:address, :city, :state, :country).new(
+      "San Francisco, CA, USA", "San Francisco", "California", "United States"
+    )
+
+    Geocoder.stub(:search, [ result ]) do
+      asset.valid?
+    end
+
+    assert_equal "San Francisco, CA, USA", asset.address
+    assert_equal "San Francisco", asset.city
+    assert_equal "California", asset.state
+    assert_equal "United States", asset.country
+  end
+
+  test "reverse_geocode does not fire when lat and lng are unchanged" do
+    asset = media_assets(:geocoded_image)
+    called = false
+
+    asset.external_name = "renamed.jpg"
+    Geocoder.stub(:search, ->(*) { called = true; [] }) do
+      asset.valid?
+    end
+
+    assert_not called, "Geocoder.search should not be called when lat/lng are unchanged"
+  end
+
+  # ---------------------------------------------------------------------------
+  # Geocoding — extract_gps_from_exif callback guards
+  # ---------------------------------------------------------------------------
+  test "extract_gps_from_exif skips when mime_type is not jpeg" do
+    asset = media_assets(:sample_image)
+    asset.mime_type = "image/png"
+    # Guard short-circuits before any file access; passes without error
+    Geocoder.stub(:search, []) do
+      assert asset.valid?
+    end
+  end
+
+  test "extract_gps_from_exif skips for videos" do
+    Geocoder.stub(:search, []) do
+      assert media_assets(:sample_video).valid?
+    end
+  end
+
+  test "extract_gps_from_exif skips when latitude is already set" do
+    asset = media_assets(:geocoded_image)
+    assert_not_nil asset.latitude
+    Geocoder.stub(:search, []) do
+      assert asset.valid?
+    end
+  end
+
+  # ---------------------------------------------------------------------------
+  # Geocoding — extract_gps_from_exif extraction
+  # ---------------------------------------------------------------------------
+  test "extract_gps_from_exif sets lat and lng from embedded jpeg gps" do
+    asset = media_assets(:sample_image)
+    assert_nil asset.latitude
+
+    tempfile  = Tempfile.new([ "test", ".jpg" ])
+    gps_stub  = Struct.new(:latitude, :longitude).new(37.7749, -122.4194)
+    exif_stub = Struct.new(:gps).new(gps_stub)
+    file_stub = build_file_stub(tempfile)
+
+    asset.stub(:file, file_stub) do
+      EXIFR::JPEG.stub(:new, exif_stub) do
+        Geocoder.stub(:search, []) do
+          asset.valid?
+        end
+      end
+    end
+
+    assert_in_delta 37.7749,   asset.latitude,  0.0001
+    assert_in_delta(-122.4194, asset.longitude, 0.0001)
+  ensure
+    tempfile&.close
+    tempfile&.unlink
+  end
+
+  test "extract_gps_from_exif is resilient to malformed jpeg" do
+    asset    = media_assets(:sample_image)
+    tempfile = Tempfile.new([ "test", ".jpg" ])
+    file_stub = build_file_stub(tempfile)
+
+    asset.stub(:file, file_stub) do
+      EXIFR::JPEG.stub(:new, ->(_) { raise EXIFR::MalformedJPEG, "not a JPEG" }) do
+        Geocoder.stub(:search, []) do
+          assert_nothing_raised { asset.valid? }
+        end
+      end
+    end
+
+    assert_nil asset.latitude
+  ensure
+    tempfile&.close
+    tempfile&.unlink
   end
 end

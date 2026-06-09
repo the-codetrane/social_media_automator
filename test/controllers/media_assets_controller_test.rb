@@ -203,4 +203,34 @@ class MediaAssetsControllerTest < ActionDispatch::IntegrationTest
     get media_asset_path(url_encoded_asset)
     assert_select "title", text: /Big Guys BBQ/
   end
+
+  # Geocoding / location section
+  test "show renders address for geocoded asset" do
+    sign_in_as(@user)
+    get media_asset_path(media_assets(:geocoded_image))
+    assert_match "San Francisco, CA, USA", response.body
+  end
+
+  test "show does not render location section for non-geocoded asset" do
+    sign_in_as(@user)
+    get media_asset_path(@media_asset)
+    assert_no_match "Map unavailable", response.body
+    assert_select "iframe", count: 0
+  end
+
+  test "show renders map coordinate fallback when no maps api key configured" do
+    sign_in_as(@user)
+    Rails.application.credentials.stub(:dig, ->(*args) { nil }) do
+      get media_asset_path(media_assets(:geocoded_image))
+    end
+    assert_match "Map unavailable", response.body
+  end
+
+  test "show renders google maps iframe when maps api key configured" do
+    sign_in_as(@user)
+    Rails.application.credentials.stub(:dig, ->(*args) { "test_key" if args == [ :google, :maps_api_key ] }) do
+      get media_asset_path(media_assets(:geocoded_image))
+    end
+    assert_select "iframe[src*=?]", "google.com/maps"
+  end
 end

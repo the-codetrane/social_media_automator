@@ -83,3 +83,26 @@ url_encoded_name:
   created_at: <%= Time.current %>
   updated_at: <%= Time.current %>
 
+geocoded_image:
+  id: <%= ActiveRecord::FixtureSet.identify(:geocoded_image) %>
+  external_id: "gdrive_file_geo_001"
+  external_name: "sf_photo.jpg"
+  mime_type: "image/jpeg"
+  file_size: 2048000
+  media_type: 0
+  width: 1080
+  height: 1080
+  duration_seconds: ~
+  latitude: 37.7749
+  longitude: -122.4194
+  address: "San Francisco, CA, USA"
+  city: "San Francisco"
+  state: "California"
+  country: "United States"
+  raw_metadata: '{"public_url": "https://cdn.example.com/sf_photo.jpg"}'
+  status: 1
+  first_seen_at: <%= 1.day.ago %>
+  last_processed_at: <%= 1.hour.ago %>
+  created_at: <%= Time.current %>
+  updated_at: <%= Time.current %>
+
