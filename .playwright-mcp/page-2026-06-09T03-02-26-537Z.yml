@@ -1,0 +1,65 @@
+- generic [active] [ref=e1]:
+  - navigation [ref=e2]:
+    - generic [ref=e4]:
+      - generic [ref=e5]:
+        - link "SMA" [ref=e6] [cursor=pointer]:
+          - /url: /
+          - img [ref=e7]
+          - generic [ref=e9]: SMA
+        - link "Users" [ref=e10] [cursor=pointer]:
+          - /url: /users
+        - link "Admin" [ref=e11] [cursor=pointer]:
+          - /url: /admin/users
+        - button "Content" [ref=e13]:
+          - text: Content
+          - img [ref=e14]
+        - link "Chat" [ref=e16] [cursor=pointer]:
+          - /url: /chat
+        - link "Known People" [ref=e17] [cursor=pointer]:
+          - /url: /known_people
+        - button "Analytics" [ref=e19]:
+          - text: Analytics
+          - img [ref=e20]
+      - button "Sign out" [ref=e24]
+  - main [ref=e25]:
+    - generic [ref=e26]:
+      - generic [ref=e27]:
+        - generic [ref=e28]:
+          - link [ref=e29] [cursor=pointer]:
+            - /url: /media_assets
+            - img [ref=e30]
+          - heading "Untitled-740.jpg" [level=1] [ref=e32]
+        - link "Edit" [ref=e33] [cursor=pointer]:
+          - /url: /media_assets/955/edit
+          - img [ref=e34]
+          - text: Edit
+      - generic [ref=e36]:
+        - generic [ref=e37]:
+          - generic [ref=e38]:
+            - generic [ref=e39]: image
+            - generic [ref=e40]: discovered
+          - generic [ref=e41]:
+            - paragraph [ref=e42]: Preview
+            - img "Untitled-740.jpg" [ref=e44]
+          - generic [ref=e45]:
+            - generic [ref=e46]:
+              - term [ref=e47]: First Seen
+              - definition [ref=e48]: May 22, 2026
+            - generic [ref=e49]:
+              - term [ref=e50]: Planned Posts
+              - definition [ref=e51]: "0"
+            - generic [ref=e52]:
+              - term [ref=e53]: Added
+              - definition [ref=e54]: May 22, 2026
+        - generic [ref=e55]:
+          - button "Additional Details" [ref=e56]:
+            - generic [ref=e57]: Additional Details
+            - img [ref=e58]
+          - generic [ref=e61]:
+            - generic [ref=e62]:
+              - term [ref=e63]: External ID
+              - definition [ref=e64]: api_dfb1a1913e8806ef
+            - generic [ref=e65]:
+              - term [ref=e66]: Raw Metadata
+              - definition [ref=e67]:
+                - generic [ref=e68]: "\"{\\\"public_url\\\":\\\"https://ig-mcp-images.sfo3.cdn.digitaloceanspaces.com/Porchfest/Untitled-740.jpg\\\",\\\"source\\\":\\\"api\\\"}\""
