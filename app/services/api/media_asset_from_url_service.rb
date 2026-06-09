@@ -4,6 +4,7 @@ module Api
   class MediaAssetFromUrlService
     SUPPORTED_IMAGE_EXTENSIONS = %w[.jpg .jpeg .png .gif .webp .heic].freeze
     SUPPORTED_VIDEO_EXTENSIONS = %w[.mp4 .mov .avi .webm .m4v].freeze
+    SUPPORTED_AUDIO_EXTENSIONS = %w[.mp3 .wav .m4a .aac .flac].freeze
 
     attr_reader :url, :media_asset, :error
 
@@ -89,8 +90,9 @@ module Api
         :image
       elsif SUPPORTED_VIDEO_EXTENSIONS.include?(extension)
         :video
+      elsif SUPPORTED_AUDIO_EXTENSIONS.include?(extension)
+        :audio
       else
-        # Default to video for DigitalOcean Spaces content (common use case)
         :video
       end
     rescue StandardError
