@@ -1,11 +1,26 @@
 # frozen_string_literal: true
 
+require "exifr/jpeg"
+
 class MediaAsset < ApplicationRecord
   enum :media_type, { image: 0, video: 1 }
   enum :status, { discovered: 0, processed: 1, failed: 2, archived: 3 }
 
+  reverse_geocoded_by :latitude, :longitude do |obj, results|
+    if (geo = results.first)
+      obj.address = geo.address
+      obj.city    = geo.city
+      obj.state   = geo.state
+      obj.country = geo.country
+    end
+  end
+  after_validation :reverse_geocode, if: -> { (latitude_changed? || longitude_changed?) && latitude.present? }
+
   # ActiveStorage attachment for the media file (stored on DigitalOcean Spaces)
   has_one_attached :file
+
+  before_validation :extract_gps_from_exif,
+    if: -> { file.attached? && image? && latitude.nil? && mime_type&.include?("jpeg") }
 
   has_many :planned_posts, dependent: :destroy
 
@@ -44,5 +59,18 @@ class MediaAsset < ApplicationRecord
   # @return [Boolean]
   def public_url?
     public_url.present?
+  end
+
+  private
+
+  def extract_gps_from_exif
+    file.open do |tempfile|
+      exif = EXIFR::JPEG.new(tempfile.path)
+      return unless exif&.gps
+      self.latitude  = exif.gps.latitude
+      self.longitude = exif.gps.longitude
+    end
+  rescue EXIFR::MalformedJPEG, EXIFR::MalformedTIFF
+    # File lacks EXIF or GPS data — skip silently
   end
 end

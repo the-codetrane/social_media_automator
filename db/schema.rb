@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_25_191018) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_08_222759) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.bigint "blob_id", null: false
     t.datetime "created_at", null: false
@@ -60,6 +60,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_25_191018) do
   end
 
   create_table "media_assets", force: :cascade do |t|
+    t.string "address"
+    t.string "city"
+    t.string "country"
     t.datetime "created_at", null: false
     t.float "duration_seconds"
     t.string "external_id", null: false
@@ -70,13 +73,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_25_191018) do
     t.json "identified_people"
     t.datetime "identified_people_at"
     t.datetime "last_processed_at"
+    t.float "latitude"
+    t.float "longitude"
     t.integer "media_type", default: 0, null: false
     t.string "mime_type"
     t.json "raw_metadata"
+    t.string "state"
     t.integer "status", default: 0, null: false
     t.datetime "updated_at", null: false
     t.integer "width"
     t.index [ "external_id" ], name: "index_media_assets_on_external_id", unique: true
+    t.index [ "latitude", "longitude" ], name: "index_media_assets_on_latitude_and_longitude"
     t.index [ "media_type" ], name: "index_media_assets_on_media_type"
     t.index [ "status" ], name: "index_media_assets_on_status"
   end
