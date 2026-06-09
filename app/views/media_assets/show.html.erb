@@ -174,12 +174,14 @@
             <dd class="text-gray-700 font-mono break-all"><%= @media_asset.external_id %></dd>
           </div>
           <% if @media_asset.raw_metadata.present? %>
-            <div>
-              <dt class="text-gray-400 uppercase tracking-wide text-xs mb-1">Raw Metadata</dt>
-              <dd class="text-gray-700 font-mono text-xs bg-gray-50 rounded-lg p-4 overflow-x-auto">
-                <pre><%= JSON.pretty_generate(@media_asset.raw_metadata) %></pre>
-              </dd>
-            </div>
+            <% metadata = @media_asset.raw_metadata %>
+            <% metadata = JSON.parse(metadata) if metadata.is_a?(String) %>
+            <% metadata.each do |key, value| %>
+              <div>
+                <dt class="text-gray-400 uppercase tracking-wide text-xs mb-1"><%= key.humanize %></dt>
+                <dd class="text-gray-700 font-mono text-xs break-all"><%= value %></dd>
+              </div>
+            <% end %>
           <% end %>
         </dl>
       </div>
