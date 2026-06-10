@@ -115,4 +115,20 @@ namespace :geocode do
 
     puts "\nDone. #{updated} asset(s) geocoded."
   end
+
+  desc "Fetch and cache static map images for geocoded assets that don't have one yet"
+  task fetch_static_maps: :environment do
+    candidates = MediaAsset.geocoded
+      .left_joins(:static_map_image_attachment)
+      .where(active_storage_attachments: { id: nil })
+
+    puts "#{candidates.count} geocoded asset(s) without a static map image"
+
+    candidates.find_each do |asset|
+      FetchStaticMapJob.perform_now(asset.id)
+      puts "  [#{asset.id}] #{asset.external_name} ✓"
+    end
+
+    puts "Done."
+  end
 end
