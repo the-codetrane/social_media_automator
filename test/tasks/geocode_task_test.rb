@@ -64,6 +64,27 @@ class GeocodeVenueTaskTest < ActiveSupport::TestCase
     assert_in_delta(-122.4324,  asset.longitude, 0.0001)
   end
 
+  test "matches assets whose external_name is URL-encoded" do
+    asset = MediaAsset.create!(
+      external_id: "venue_task_url_encoded",
+      external_name: "091625-Green%20Room-Web-1.jpg",
+      media_type: :image,
+      status: :processed,
+      first_seen_at: Time.current
+    )
+
+    ENV["VENUE"]   = "Green Room"
+    ENV["ADDRESS"] = "1805 Geary Blvd, San Francisco, CA"
+
+    Geocoder.stub(:search, [ GEO_RESULT ]) do
+      Rake::Task["geocode:venue"].invoke
+    end
+
+    asset.reload
+    assert_in_delta 37.7849,   asset.latitude,  0.0001
+    assert_in_delta(-122.4324, asset.longitude, 0.0001)
+  end
+
   test "venue name matching is case-insensitive" do
     asset = MediaAsset.create!(
       external_id: "venue_task_002",

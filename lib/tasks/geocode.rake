@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "open-uri"
+require "cgi"
 
 namespace :geocode do
   desc "Extract GPS from EXIF and reverse geocode media assets lacking location data"
@@ -92,7 +93,12 @@ namespace :geocode do
     lon = geo.longitude
     puts "Resolved: #{address} → #{lat}, #{lon}"
 
-    candidates = MediaAsset.where("LOWER(external_name) LIKE ?", "%#{venue.downcase}%")
+    encoded_venue = CGI.escape(venue).gsub("+", "%20")
+    candidates = MediaAsset.where(
+      "LOWER(external_name) LIKE ? OR LOWER(external_name) LIKE ?",
+      "%#{venue.downcase}%",
+      "%#{encoded_venue.downcase}%"
+    )
     candidates = candidates.where(latitude: nil) unless force
 
     puts "#{candidates.count} asset(s) matching \"#{venue}\"#{force ? "" : " without existing coordinates"}"
