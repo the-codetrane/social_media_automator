@@ -218,19 +218,22 @@ class MediaAssetsControllerTest < ActionDispatch::IntegrationTest
     assert_select "iframe", count: 0
   end
 
-  test "show renders map coordinate fallback when no maps api key configured" do
+  test "show renders pending state when static map image not yet fetched" do
     sign_in_as(@user)
-    Rails.application.credentials.stub(:dig, ->(*args) { nil }) do
-      get media_asset_path(media_assets(:geocoded_image))
-    end
-    assert_match "Map unavailable", response.body
+    get media_asset_path(media_assets(:geocoded_image))
+    assert_match "Map image pending", response.body
+    assert_select "iframe", count: 0
   end
 
-  test "show renders google maps iframe when maps api key configured" do
+  test "show renders static map image when attached" do
     sign_in_as(@user)
-    Rails.application.credentials.stub(:dig, ->(*args) { "test_key" if args == [ :google, :maps_api_key ] }) do
-      get media_asset_path(media_assets(:geocoded_image))
-    end
-    assert_select "iframe[src*=?]", "google.com/maps"
+    asset = media_assets(:geocoded_image)
+    asset.static_map_image.attach(
+      io: File.open(Rails.root.join("test/fixtures/files/test_image.png")),
+      filename: "static_map.png",
+      content_type: "image/png"
+    )
+    get media_asset_path(asset)
+    assert_select "img[alt=?]", "Map"
   end
 end
