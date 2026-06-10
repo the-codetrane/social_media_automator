@@ -597,6 +597,149 @@ module Api
       end
     end
 
+    # ===========================================
+    # Index Action Tests
+    # ===========================================
+
+    test "index returns all posts" do
+      stub_api_key do
+        get api_planned_posts_path, headers: api_headers
+        assert_response :ok
+        assert_instance_of Array, response.parsed_body
+        assert response.parsed_body.size >= PlannedPost.count
+      end
+    end
+
+    test "index filters by status" do
+      stub_api_key do
+        get api_planned_posts_path, params: { status: "draft" }, headers: api_headers
+        assert_response :ok
+        assert response.parsed_body.all? { |p| p["status"] == "draft" }
+        assert response.parsed_body.size >= 1
+      end
+    end
+
+    test "index filters by platform" do
+      stub_api_key do
+        get api_planned_posts_path, params: { platform: "youtube" }, headers: api_headers
+        assert_response :ok
+        assert response.parsed_body.all? { |p| p["platform"] == "youtube" }
+        assert response.parsed_body.size >= 1
+      end
+    end
+
+    test "index filters by user_id" do
+      stub_api_key do
+        get api_planned_posts_path, params: { user_id: @user.id }, headers: api_headers
+        assert_response :ok
+        assert response.parsed_body.all? { |p| p["user_id"] == @user.id }
+      end
+    end
+
+    test "index filters by scheduled_at_after" do
+      stub_api_key do
+        cutoff = 1.day.from_now.iso8601
+        get api_planned_posts_path, params: { scheduled_at_after: cutoff }, headers: api_headers
+        assert_response :ok
+        response.parsed_body.each do |p|
+          next if p["scheduled_at"].nil?
+          assert Time.parse(p["scheduled_at"]) >= 1.day.from_now
+        end
+      end
+    end
+
+    test "index filters by scheduled_at_before" do
+      stub_api_key do
+        cutoff = Time.current.iso8601
+        get api_planned_posts_path, params: { scheduled_at_before: cutoff }, headers: api_headers
+        assert_response :ok
+        response.parsed_body.each do |p|
+          next if p["scheduled_at"].nil?
+          assert Time.parse(p["scheduled_at"]) <= Time.current
+        end
+      end
+    end
+
+    test "index search by caption" do
+      stub_api_key do
+        get api_planned_posts_path, params: { q: "sunset" }, headers: api_headers
+        assert_response :ok
+        captions = response.parsed_body.map { |p| p["caption"] }
+        assert captions.any? { |c| c&.downcase&.include?("sunset") }
+      end
+    end
+
+    test "index search by hashtags" do
+      stub_api_key do
+        get api_planned_posts_path, params: { q: "livemusic" }, headers: api_headers
+        assert_response :ok
+        assert response.parsed_body.size >= 1
+        assert response.parsed_body.all? { |p|
+          p["caption"]&.include?("livemusic") || p["hashtags"]&.include?("livemusic")
+        }
+      end
+    end
+
+    test "index search returns empty array for no match" do
+      stub_api_key do
+        get api_planned_posts_path, params: { q: "zzznomatch" }, headers: api_headers
+        assert_response :ok
+        assert_empty response.parsed_body
+      end
+    end
+
+    test "index default sort is scheduled_at asc" do
+      stub_api_key do
+        get api_planned_posts_path, params: { status: "scheduled" }, headers: api_headers
+        assert_response :ok
+        timestamps = response.parsed_body.map { |p| p["scheduled_at"] }.compact
+        assert_equal timestamps.sort, timestamps
+      end
+    end
+
+    test "index sorts by created_at desc" do
+      stub_api_key do
+        get api_planned_posts_path, params: { sort: "created_at", direction: "desc" }, headers: api_headers
+        assert_response :ok
+        timestamps = response.parsed_body.map { |p| p["created_at"] }
+        assert_equal timestamps.sort.reverse, timestamps
+      end
+    end
+
+    test "index ignores unknown sort column and uses default" do
+      stub_api_key do
+        get api_planned_posts_path, params: { sort: "injected; DROP TABLE--" }, headers: api_headers
+        assert_response :ok
+      end
+    end
+
+    test "index returns pagination headers" do
+      stub_api_key do
+        get api_planned_posts_path, headers: api_headers
+        assert response.headers["X-Total-Count"].present?
+        assert response.headers["X-Page"].present?
+        assert response.headers["X-Per-Page"].present?
+        assert response.headers["X-Total-Pages"].present?
+      end
+    end
+
+    test "index paginates results" do
+      stub_api_key do
+        get api_planned_posts_path, params: { per_page: 2, page: 1 }, headers: api_headers
+        assert_response :ok
+        assert_equal 2, response.parsed_body.size
+        assert_equal "2", response.headers["X-Per-Page"]
+        assert_equal "1", response.headers["X-Page"]
+      end
+    end
+
+    test "index caps per_page at 200" do
+      stub_api_key do
+        get api_planned_posts_path, params: { per_page: 9999 }, headers: api_headers
+        assert_equal "200", response.headers["X-Per-Page"]
+      end
+    end
+
     private
 
     def api_headers

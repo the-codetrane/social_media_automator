@@ -2,16 +2,44 @@
 
 module Api
   class PlannedPostsController < BaseController
+    ALLOWED_SORT_COLUMNS = %w[scheduled_at created_at published_at].freeze
+    DEFAULT_PER_PAGE = 50
+    MAX_PER_PAGE = 200
+
     before_action :set_planned_post, only: [ :show, :update, :destroy ]
 
     # GET /api/planned_posts
-    # Optional filters: ?status=scheduled&platform=instagram&user_id=1
+    # Filters: status, platform, user_id, scheduled_at_after, scheduled_at_before
+    # Search:  q (searches caption, hashtags)
+    # Sort:    sort=scheduled_at|created_at|published_at, direction=asc|desc
+    # Page:    page, per_page (default 50, max 200)
     def index
       posts = PlannedPost.all
       posts = posts.where(status: params[:status]) if params[:status].present?
       posts = posts.where(platform: params[:platform]) if params[:platform].present?
       posts = posts.where(user_id: params[:user_id]) if params[:user_id].present?
-      posts = posts.order(:scheduled_at)
+      posts = posts.where("scheduled_at >= ?", params[:scheduled_at_after]) if params[:scheduled_at_after].present?
+      posts = posts.where("scheduled_at <= ?", params[:scheduled_at_before]) if params[:scheduled_at_before].present?
+
+      if params[:q].present?
+        term = "%#{params[:q]}%"
+        posts = posts.where("caption LIKE ? OR hashtags LIKE ?", term, term)
+      end
+
+      sort_col = ALLOWED_SORT_COLUMNS.include?(params[:sort]) ? params[:sort] : "scheduled_at"
+      direction = params[:direction]&.downcase == "desc" ? :desc : :asc
+      posts = posts.order(sort_col => direction)
+
+      per_page = [ (params[:per_page] || DEFAULT_PER_PAGE).to_i, MAX_PER_PAGE ].min
+      per_page = DEFAULT_PER_PAGE if per_page < 1
+      page = [ (params[:page] || 1).to_i, 1 ].max
+      total = posts.count
+      posts = posts.offset((page - 1) * per_page).limit(per_page)
+
+      response.set_header("X-Total-Count", total.to_s)
+      response.set_header("X-Page", page.to_s)
+      response.set_header("X-Per-Page", per_page.to_s)
+      response.set_header("X-Total-Pages", (total.to_f / per_page).ceil.to_s)
 
       render json: posts.map { |p| planned_post_response(p) }
     end
