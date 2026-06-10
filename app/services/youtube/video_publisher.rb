@@ -128,14 +128,15 @@ module YouTube
     end
 
     def upload!(asset, video_resource)
-      ext      = File.extname(asset.file.filename.to_s).presence || ".mp4"
-      tempfile = Tempfile.new([ "yt_upload", ext ], binmode: true)
+      ext          = asset.file.attached? ? File.extname(asset.file.filename.to_s) : ""
+      ext          = ".mp4" if ext.blank?
+      content_type = asset.mime_type.presence || "video/mp4"
+      tempfile     = Tempfile.new([ "yt_upload", ext ], binmode: true)
 
       Rails.logger.debug("[YouTube::VideoPublisher] Downloading MediaAsset##{asset.id} from #{asset.public_url}")
       URI.open(asset.public_url, "rb") { |src| IO.copy_stream(src, tempfile) }
       tempfile.rewind
 
-      content_type = asset.file.content_type.presence || "video/mp4"
       Rails.logger.debug("[YouTube::VideoPublisher] Uploading to YouTube (content_type=#{content_type})")
 
       result = @client.upload_video(tempfile.path, video_resource, content_type:)

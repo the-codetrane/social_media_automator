@@ -83,6 +83,23 @@ url_encoded_name:
   created_at: <%= Time.current %>
   updated_at: <%= Time.current %>
 
+sample_long_video:
+  id: <%= ActiveRecord::FixtureSet.identify(:sample_long_video) %>
+  external_id: "gdrive_file_006"
+  external_name: "feature.mp4"
+  mime_type: "video/mp4"
+  file_size: 209715200
+  media_type: 1
+  width: 1920
+  height: 1080
+  duration_seconds: 120.0
+  raw_metadata: '{"public_url": "https://cdn.example.com/feature.mp4"}'
+  status: 1
+  first_seen_at: <%= 2.days.ago %>
+  last_processed_at: <%= 1.day.ago %>
+  created_at: <%= Time.current %>
+  updated_at: <%= Time.current %>
+
 geocoded_image:
   id: <%= ActiveRecord::FixtureSet.identify(:geocoded_image) %>
   external_id: "gdrive_file_geo_001"

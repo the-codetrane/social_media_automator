@@ -110,6 +110,38 @@ carousel_post:
   created_at: <%= Time.current %>
   updated_at: <%= Time.current %>
 
+youtube_draft_post:
+  id: <%= ActiveRecord::FixtureSet.identify(:youtube_draft_post) %>
+  media_asset_id: <%= ActiveRecord::FixtureSet.identify(:sample_video) %>
+  social_template_id: ~
+  platform: 1
+  caption: "Watch this Short!"
+  hashtags: "#shorts #viral"
+  platform_payload: ~
+  status: 0
+  scheduled_at: ~
+  published_at: ~
+  external_post_id: ~
+  user_id: <%= ActiveRecord::FixtureSet.identify(:one) %>
+  created_at: <%= Time.current %>
+  updated_at: <%= Time.current %>
+
+due_youtube_post:
+  id: <%= ActiveRecord::FixtureSet.identify(:due_youtube_post) %>
+  media_asset_id: <%= ActiveRecord::FixtureSet.identify(:sample_video) %>
+  social_template_id: ~
+  platform: 1
+  caption: "Live now!"
+  hashtags: "#shorts"
+  platform_payload: ~
+  status: 1
+  scheduled_at: <%= 5.minutes.ago %>
+  published_at: ~
+  external_post_id: ~
+  user_id: <%= ActiveRecord::FixtureSet.identify(:one) %>
+  created_at: <%= 1.hour.ago %>
+  updated_at: <%= 1.hour.ago %>
+
 url_encoded_asset_post:
   id: <%= ActiveRecord::FixtureSet.identify(:url_encoded_asset_post) %>
   media_asset_id: <%= ActiveRecord::FixtureSet.identify(:url_encoded_name) %>

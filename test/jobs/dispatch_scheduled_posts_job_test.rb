@@ -17,6 +17,12 @@ class DispatchScheduledPostsJobTest < ActiveSupport::TestCase
     end
   end
 
+  test "enqueues PublishYouTubePostJob for a due youtube post" do
+    assert_enqueued_with(job: PublishYouTubePostJob, args: [ planned_posts(:due_youtube_post).id ]) do
+      DispatchScheduledPostsJob.perform_now
+    end
+  end
+
   test "does not enqueue jobs for draft or published posts" do
     draft = planned_posts(:draft_post)
     pub   = planned_posts(:published_post)
