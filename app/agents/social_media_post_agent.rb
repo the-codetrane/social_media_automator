@@ -2,9 +2,10 @@ class SocialMediaPostAgent < RubyLLM::Agent
   chat_model "Chat"
   model "claude-sonnet-4-6", assume_model_exists: true, provider: "anthropic"
   inputs :user
-  tools ListMediaAssets, SyncMediaAssetsFromSpaces, FindSocialTemplate, ResolveMediaAsset,
-        CreatePlannedPost, ListPlannedPosts, GetPlannedPost, UpdatePlannedPost, DeletePlannedPost,
-        IdentifyPeopleInAsset, CheckCarouselForDuplicates, FindStaleMediaAssets
+  tools ListMediaAssets, SyncMediaAssetsFromSpaces, EnrichMediaAssets, FindSocialTemplate,
+        ResolveMediaAsset, CreatePlannedPost, CreateVarietyPosts, ListPlannedPosts, GetPlannedPost,
+        UpdatePlannedPost, DeletePlannedPost, IdentifyPeopleInAsset, CheckCarouselForDuplicates,
+        FindStaleMediaAssets
 
   class << self
     private
@@ -57,6 +58,46 @@ class SocialMediaPostAgent < RubyLLM::Agent
       To register all discovered files as MediaAsset records in one shot, call
       sync_media_assets_from_spaces. Run this before bulk-creating posts from a new directory.
       Use dry_run: true first to preview how many new records would be created.
+
+      ## ENRICHING MEDIA
+
+      After syncing, call enrich_media_assets to add venue location and face data to assets.
+      This is required before create_variety_posts can make meaningful variety decisions.
+
+      What enrichment does:
+      - Extracts GPS coordinates from JPEG EXIF metadata, then reverse-geocodes to city/address
+      - Runs face identification against the user's registered known people
+      - Marks each asset as "processed" so it's eligible for variety post selection
+
+      When to enrich:
+      - After any sync_media_assets_from_spaces run on new content
+      - When an asset has no venue or people data and the user wants variety-aware posts
+      - Pass force_refresh: true only when the user explicitly asks to re-analyze faces
+
+      Enrichment is slow (vision API per image) — default limit is 20. For large batches,
+      tell the user how many assets remain unprocessed and offer to run again.
+
+      ## VARIETY POSTS (BULK)
+
+      Use create_variety_posts when the user wants to generate multiple posts at once with
+      diversity across venues, featured people, and recently-used content.
+
+      Selection logic:
+      - Skips assets used in posts within the last recency_days (default 30)
+      - Picks assets greedily: each round chooses the candidate with the fewest venue and
+        people repeats — venue diversity is weighted 3× more than people diversity
+      - Only considers assets with status "processed" (enriched)
+
+      When to use create_variety_posts vs create_planned_post:
+      - create_variety_posts: user wants 3+ posts, cares about diversity, or has a batch to schedule
+      - create_planned_post: user has a specific asset or moment in mind (single curated post)
+
+      Always confirm with the user before calling create_variety_posts:
+      - Show count, platform, status, and schedule range (if scheduled)
+      - Mention that assets without GPS/face data will still be included but with no variety weighting
+
+      Pass check_similarity: true when the user specifically asks to avoid visually similar images.
+      If similar_pairs are returned after creation, surface them and offer to swap the flagged assets.
 
       ## CREATING A NEW POST
 
