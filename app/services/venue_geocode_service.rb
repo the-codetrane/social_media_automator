@@ -10,7 +10,7 @@ require "cgi"
 #   - lib/tasks/geocode.rake (geocode:venue)
 #   - EnhanceMediaAssets tool
 class VenueGeocodeService
-  Result = Data.define(:geocoded, :skipped, :errors, :latitude, :longitude, :resolved_address)
+  Result = Data.define(:geocoded, :errors, :latitude, :longitude, :resolved_address)
 
   def initialize(venue:, address:, force: false)
     @venue   = venue
@@ -20,17 +20,29 @@ class VenueGeocodeService
 
   # @return [Result]
   def call
-    geo_results = Geocoder.search(@address)
-    return failure("Could not geocode address: '#{@address}'") if geo_results.empty?
+    geo = resolve_geo
+    return failure("Could not geocode address: '#{@address}'") unless geo
 
-    geo     = geo_results.first
-    lat     = geo.latitude
-    lon     = geo.longitude
-    return failure("Geocoder returned nil coordinates for: '#{@address}'") if lat.nil? || lon.nil?
+    geocoded, errors = apply_coordinates(matching_assets, geo.latitude, geo.longitude)
 
-    assets = matching_assets
+    Result.new(
+      geocoded:         geocoded,
+      errors:           errors.first(10),
+      latitude:         geo.latitude,
+      longitude:        geo.longitude,
+      resolved_address: geo.address
+    )
+  end
+
+  private
+
+  def resolve_geo
+    geo = Geocoder.search(@address).first
+    geo if geo&.latitude && geo&.longitude
+  end
+
+  def apply_coordinates(assets, lat, lon)
     geocoded = 0
-    skipped  = 0
     errors   = []
 
     assets.find_each do |asset|
@@ -45,17 +57,8 @@ class VenueGeocodeService
       end
     end
 
-    Result.new(
-      geocoded:          geocoded,
-      skipped:           skipped,
-      errors:            errors.first(10),
-      latitude:          lat,
-      longitude:         lon,
-      resolved_address:  geo.address
-    )
+    [ geocoded, errors ]
   end
-
-  private
 
   def matching_assets
     encoded = CGI.escape(@venue).gsub("+", "%20")
@@ -64,11 +67,10 @@ class VenueGeocodeService
       "%#{@venue.downcase}%",
       "%#{encoded.downcase}%"
     )
-    scope = scope.where(latitude: nil) unless @force
-    scope
+    @force ? scope : scope.where(latitude: nil)
   end
 
   def failure(message)
-    Result.new(geocoded: 0, skipped: 0, errors: [ message ], latitude: nil, longitude: nil, resolved_address: nil)
+    Result.new(geocoded: 0, errors: [ message ], latitude: nil, longitude: nil, resolved_address: nil)
   end
 end

@@ -61,7 +61,6 @@ class EnhanceMediaAssets < RubyLLM::Tool
       r   = svc.call
       results[:geocode] = {
         geocoded:         r.geocoded,
-        skipped:          r.skipped,
         errors:           r.errors,
         latitude:         r.latitude,
         longitude:        r.longitude,
