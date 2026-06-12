@@ -2,18 +2,15 @@
 
 class LlmCostsController < ApplicationController
   def index
-    result = AnthropicUsageService.fetch
+    result = LocalLlmUsageService.fetch
 
     @daily_rows   = result[:daily_rows]
     @by_model     = result[:by_model]
     @totals       = result[:totals]
     @monthly_cost = result[:monthly_cost]
     @monthly_rows = result[:monthly_rows]
-  rescue AnthropicUsageService::MissingKeyError => e
+  rescue => e
     @error = e.message
-    set_empty_state
-  rescue AnthropicUsageService::ApiError => e
-    @error = "Anthropic API error: #{e.message}"
     set_empty_state
   end
 
