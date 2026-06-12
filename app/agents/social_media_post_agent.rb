@@ -3,9 +3,9 @@ class SocialMediaPostAgent < RubyLLM::Agent
   model "claude-sonnet-4-6", assume_model_exists: true, provider: "anthropic"
   inputs :user
   tools ListMediaAssets, SyncMediaAssetsFromSpaces, EnrichMediaAssets, EnhanceMediaAssets,
-        FindSocialTemplate, ResolveMediaAsset, CreatePlannedPost, CreateVarietyPosts,
-        ListPlannedPosts, GetPlannedPost, UpdatePlannedPost, DeletePlannedPost,
-        IdentifyPeopleInAsset, CheckCarouselForDuplicates, FindStaleMediaAssets
+        SearchMediaAssets, FindSocialTemplate, ResolveMediaAsset, CreatePlannedPost,
+        CreateVarietyPosts, ListPlannedPosts, GetPlannedPost, UpdatePlannedPost,
+        DeletePlannedPost, IdentifyPeopleInAsset, CheckCarouselForDuplicates, FindStaleMediaAssets
 
   class << self
     private
