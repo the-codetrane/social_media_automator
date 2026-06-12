@@ -78,7 +78,7 @@
       <div data-view-toggle-target="cardView">
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           <% @media_assets.each do |asset| %>
-            <%= link_to media_asset_path(asset), class: "bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col hover:shadow-md hover:border-gray-300 transition-all duration-200 cursor-pointer" do %>
+            <%= link_to media_asset_path(asset), class: "bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col hover:shadow-md hover:border-gray-300 transition-all duration-200 cursor-pointer", data: { turbo_frame: "_top" } do %>
 
               <%# Media Preview Thumbnail %>
               <% if asset.public_url? %>
@@ -278,7 +278,7 @@
                     <%= asset.first_seen_at.strftime("%b %-d, %Y") %>
                   </td>
                   <td class="px-4 py-3">
-                    <%= link_to media_asset_path(asset), class: "text-gray-400 hover:text-indigo-600 transition-colors" do %>
+                    <%= link_to media_asset_path(asset), class: "text-gray-400 hover:text-indigo-600 transition-colors", data: { turbo_frame: "_top" } do %>
                       <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
                       </svg>
