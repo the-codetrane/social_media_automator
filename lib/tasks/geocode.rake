@@ -85,35 +85,15 @@ namespace :geocode do
     address = ENV["ADDRESS"].presence || abort("Usage: bin/rails geocode:venue VENUE='...' ADDRESS='...'")
     force   = ENV["FORCE"] == "true"
 
-    results = Geocoder.search(address)
-    abort "Could not geocode address: #{address}" if results.empty?
+    result = VenueGeocodeService.new(venue: venue, address: address, force: force).call
 
-    geo = results.first
-    lat = geo.latitude
-    lon = geo.longitude
-    puts "Resolved: #{address} → #{lat}, #{lon}"
-
-    encoded_venue = CGI.escape(venue).gsub("+", "%20")
-    candidates = MediaAsset.where(
-      "LOWER(external_name) LIKE ? OR LOWER(external_name) LIKE ?",
-      "%#{venue.downcase}%",
-      "%#{encoded_venue.downcase}%"
-    )
-    candidates = candidates.where(latitude: nil) unless force
-
-    puts "#{candidates.count} asset(s) matching \"#{venue}\"#{force ? "" : " without existing coordinates"}"
-
-    updated = 0
-    candidates.find_each do |asset|
-      asset.latitude  = lat
-      asset.longitude = lon
-      asset.save!
-      updated += 1
-      puts "  [#{asset.id}] #{asset.external_name} → #{asset.city}, #{asset.country}"
-      sleep 1  # Nominatim rate limit: 1 req/sec
+    if result.errors.any? && result.geocoded.zero?
+      abort result.errors.first
     end
 
-    puts "\nDone. #{updated} asset(s) geocoded."
+    puts "Resolved: #{address} → #{result.latitude}, #{result.longitude}"
+    puts "\nDone. #{result.geocoded} asset(s) geocoded."
+    result.errors.each { |e| puts "  Error: #{e}" }
   end
 
   desc "Fetch and cache static map images for geocoded assets that don't have one yet"
