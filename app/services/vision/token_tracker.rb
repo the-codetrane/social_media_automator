@@ -8,7 +8,7 @@ module Vision
       model_record = Model.find_by(model_id: Vision::MODEL)
       return unless model_record
 
-      chat = Chat.find_or_create_by!(user_id: nil, model_id: model_record.id)
+      chat = Chat.find_or_create_by!(user_id: nil, model: model_record)
 
       now = Time.current
       Message.insert({
