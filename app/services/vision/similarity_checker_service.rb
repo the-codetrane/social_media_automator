@@ -21,6 +21,7 @@ module Vision
 
       response = RubyLLM.chat(model: Vision::MODEL)
         .ask(prompt, with: image_urls)
+      Vision::TokenTracker.record(response)
 
       JSON.parse(response.content.strip.delete_prefix("```json").delete_suffix("```").strip)
     rescue JSON::ParserError
