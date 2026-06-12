@@ -3,10 +3,12 @@
 module Vision
   module TokenTracker
     def self.record(response)
-      return unless response.input_tokens.present?
+      return unless response&.input_tokens.present?
 
-      model_record = Model.find_by(model_id: Vision::MODEL)
-      return unless model_record
+      model_record = Model.find_or_create_by!(model_id: Vision::MODEL) do |m|
+        m.name     = Vision::MODEL
+        m.provider = "anthropic"
+      end
 
       chat = Chat.find_or_create_by!(user_id: nil, model: model_record)
 
@@ -23,6 +25,8 @@ module Vision
         created_at: now,
         updated_at: now
       })
+    rescue => e
+      Rails.logger.error("[Vision::TokenTracker] Failed to record usage: #{e.message}")
     end
   end
 end

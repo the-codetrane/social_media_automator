@@ -25,15 +25,17 @@ module Vision
         Do not include any explanation or markdown — raw JSON only.
       PROMPT
 
+      response = nil
       response = RubyLLM.chat(model: Vision::MODEL)
         .ask(prompt, with: ref_urls + [ target_url ])
-      Vision::TokenTracker.record(response)
 
       JSON.parse(response.content.strip.delete_prefix("```json").delete_suffix("```").strip)
     rescue JSON::ParserError
       { error: "Unparseable vision response", raw: response&.content }
     rescue => e
       { error: e.message }
+    ensure
+      Vision::TokenTracker.record(response) if response
     end
   end
 end
