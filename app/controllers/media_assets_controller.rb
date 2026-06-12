@@ -3,8 +3,17 @@
 class MediaAssetsController < ApplicationController
   before_action :set_media_asset, only: %i[show edit update]
 
+  SORT_COLUMNS = %w[external_name media_type status file_size first_seen_at created_at].freeze
+
   def index
-    @media_assets = MediaAsset.order(created_at: :desc)
+    @query     = params[:q].to_s.strip
+    @sort      = SORT_COLUMNS.include?(params[:sort]) ? params[:sort] : "created_at"
+    @direction = params[:direction] == "asc" ? "asc" : "desc"
+
+    scope = MediaAsset.all
+    scope = scope.where("external_name LIKE ?", "%#{@query}%") if @query.length >= 3
+
+    @pagy, @media_assets = pagy(scope.order(@sort => @direction))
   end
 
   def show

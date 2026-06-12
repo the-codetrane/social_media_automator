@@ -71,6 +71,9 @@ gem "geocoder", "~> 1.8"
 # EXIF metadata extraction (GPS coordinates from JPEG images)
 gem "exifr", "~> 1.3"
 
+# Pagination
+gem "pagy", "~> 9.3"
+
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"
