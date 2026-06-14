@@ -15,7 +15,7 @@ class EnhanceMediaAssets < RubyLLM::Tool
 
   param :search_term,
     type: :string,
-    desc: "Case-insensitive substring to match against external_name for renaming.",
+    desc: "Case-insensitive substring to match agai nst external_name for renaming.",
     required: false
 
   param :new_name,
