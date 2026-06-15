@@ -20,8 +20,8 @@ module Vision
         model_id: model_record.id,
         input_tokens: response.input_tokens,
         output_tokens: response.output_tokens,
-        cached_tokens: response.cached_tokens,
-        cache_creation_tokens: response.cache_creation_tokens,
+        cached_tokens: response.cache_read_tokens,
+        cache_creation_tokens: response.cache_write_tokens,
         created_at: now,
         updated_at: now
       })
