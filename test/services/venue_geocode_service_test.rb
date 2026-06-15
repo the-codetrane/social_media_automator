@@ -110,6 +110,45 @@ class VenueGeocodeServiceTest < ActiveSupport::TestCase
   end
 
   # ---------------------------------------------------------------------------
+  # asset_ids targeting
+  # ---------------------------------------------------------------------------
+  test "geocodes specific asset_ids even when external_name does not match venue" do
+    asset = MediaAsset.create!(
+      external_id: "svc_test_id_001", external_name: "some-random-filename.jpg",
+      media_type: :image, status: :processed, first_seen_at: Time.current
+    )
+
+    Geocoder.stub(:search, [ GEO_RESULT ]) do
+      VenueGeocodeService.new(venue: "Fillmore", address: "1805 Geary Blvd, San Francisco, CA",
+                              asset_ids: [ asset.id ]).call
+    end
+
+    asset.reload
+    assert_in_delta 37.7849, asset.latitude, 0.0001
+  end
+
+  test "does not touch other assets when asset_ids are specified" do
+    target = MediaAsset.create!(
+      external_id: "svc_test_id_002", external_name: "The Fillmore Night.jpg",
+      media_type: :image, status: :processed, first_seen_at: Time.current
+    )
+    bystander = MediaAsset.create!(
+      external_id: "svc_test_id_003", external_name: "The Fillmore Day.jpg",
+      media_type: :image, status: :processed, first_seen_at: Time.current
+    )
+
+    Geocoder.stub(:search, [ GEO_RESULT ]) do
+      VenueGeocodeService.new(venue: "Fillmore", address: "1805 Geary Blvd, San Francisco, CA",
+                              asset_ids: [ target.id ]).call
+    end
+
+    target.reload
+    bystander.reload
+    assert_not_nil target.latitude
+    assert_nil bystander.latitude
+  end
+
+  # ---------------------------------------------------------------------------
   # Result fields
   # ---------------------------------------------------------------------------
   test "returns geocoded count and resolved coordinates in result" do

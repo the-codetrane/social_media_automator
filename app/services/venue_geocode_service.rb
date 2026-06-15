@@ -12,10 +12,11 @@ require "cgi"
 class VenueGeocodeService
   Result = Data.define(:geocoded, :errors, :latitude, :longitude, :resolved_address)
 
-  def initialize(venue:, address:, force: false)
-    @venue   = venue
-    @address = address
-    @force   = force
+  def initialize(venue:, address:, force: false, asset_ids: nil)
+    @venue     = venue
+    @address   = address
+    @force     = force
+    @asset_ids = Array(asset_ids).map(&:to_i).presence
   end
 
   # @return [Result]
@@ -61,12 +62,17 @@ class VenueGeocodeService
   end
 
   def matching_assets
-    encoded = CGI.escape(@venue).gsub("+", "%20")
-    scope = MediaAsset.where(
-      "LOWER(external_name) LIKE ? OR LOWER(external_name) LIKE ?",
-      "%#{@venue.downcase}%",
-      "%#{encoded.downcase}%"
-    )
+    scope = if @asset_ids
+      MediaAsset.where(id: @asset_ids)
+    else
+      encoded = CGI.escape(@venue).gsub("+", "%20")
+      plain   = @venue.downcase.gsub("\\", "\\\\").gsub("%", "\\%").gsub("_", "\\_")
+      MediaAsset.where(
+        "LOWER(external_name) LIKE ? ESCAPE '\\' OR LOWER(external_name) LIKE ? ESCAPE '\\'",
+        "%#{plain}%",
+        "%#{encoded.downcase}%"
+      )
+    end
     @force ? scope : scope.where(latitude: nil)
   end
 
