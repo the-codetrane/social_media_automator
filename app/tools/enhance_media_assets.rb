@@ -15,7 +15,7 @@ class EnhanceMediaAssets < RubyLLM::Tool
 
   param :search_term,
     type: :string,
-    desc: "Case-insensitive substring to match agai nst external_name for renaming.",
+    desc: "Case-insensitive substring to match against external_name for renaming.",
     required: false
 
   param :new_name,
@@ -57,8 +57,13 @@ class EnhanceMediaAssets < RubyLLM::Tool
 
     if geocoding
       geocode_address = address.presence || venue
-      svc = VenueGeocodeService.new(venue: venue, address: geocode_address, force: force_geocode)
-      r   = svc.call
+      svc = VenueGeocodeService.new(
+        venue:     venue,
+        address:   geocode_address,
+        force:     force_geocode,
+        asset_ids: asset_ids.presence
+      )
+      r = svc.call
       results[:geocode] = {
         geocoded:         r.geocoded,
         errors:           r.errors,
