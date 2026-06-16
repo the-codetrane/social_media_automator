@@ -1,6 +1,4 @@
 module ApplicationHelper
-  include Pagy::Frontend
-
   def decode_name(name)
     return name if name.blank?
     CGI.unescape(name)
