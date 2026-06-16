@@ -6,8 +6,8 @@
       of <span class="font-medium"><%= pagy.count %></span>
     </p>
     <div class="flex items-center gap-1">
-      <% if pagy.prev %>
-        <%= link_to "‹ Prev", pagy_url_for(pagy, pagy.prev),
+      <% if pagy.previous %>
+        <%= link_to "‹ Prev", pagy.page_url(pagy.previous),
             class: "px-3 py-1.5 text-sm text-gray-600 rounded-md hover:bg-gray-100 border border-gray-200 transition-colors",
             data: { turbo_frame: frame, turbo_action: "advance" } %>
       <% else %>
@@ -19,7 +19,7 @@
       </span>
 
       <% if pagy.next %>
-        <%= link_to "Next ›", pagy_url_for(pagy, pagy.next),
+        <%= link_to "Next ›", pagy.page_url(pagy.next),
             class: "px-3 py-1.5 text-sm text-gray-600 rounded-md hover:bg-gray-100 border border-gray-200 transition-colors",
             data: { turbo_frame: frame, turbo_action: "advance" } %>
       <% else %>
