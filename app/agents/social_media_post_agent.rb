@@ -97,9 +97,20 @@ class SocialMediaPostAgent < RubyLLM::Agent
 
       Selection logic:
       - Skips assets used in posts within the last recency_days (default 30)
+      - Excludes assets that are too close to an already-picked asset by BOTH of two signals:
+        upload time (within min_spacing_minutes, default 30) and filename sequence (adjacent
+        camera-numbered files like IMG_1234/IMG_1235). Either signal alone is enough to count
+        as spaced out — a whole shoot uploaded in one batch can collapse upload-time gaps to
+        nothing, so filename order is what catches bursts in that case. Only relaxed for a round
+        if there aren't enough spaced-out candidates left to fill the count
       - Picks assets greedily: each round chooses the candidate with the fewest venue and
         people repeats — venue diversity is weighted 3× more than people diversity
       - Only considers assets with status "processed" (enriched)
+
+      If the user says results still look too similar/sequential, raise min_spacing_minutes
+      (e.g. 60–120) rather than just re-running with the same settings — but if the assets were
+      bulk-uploaded together, the filename-sequence check is likely doing the real work and a
+      bigger minutes value won't change much.
 
       When to use create_variety_posts vs create_planned_post:
       - create_variety_posts: user wants 3+ posts, cares about diversity, or has a batch to schedule
