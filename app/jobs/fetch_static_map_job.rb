@@ -24,7 +24,8 @@ class FetchStaticMapJob < ApplicationJob
       asset.static_map_image.attach(
         io: image,
         filename: "static_map_#{asset.id}.png",
-        content_type: "image/png"
+        content_type: "image/png",
+        key: "Map Images/#{SecureRandom.base36}"
       )
     end
   end
