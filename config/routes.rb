@@ -11,6 +11,11 @@ Rails.application.routes.draw do
         patch :update_password
       end
     end
+    namespace :youtube do
+      get    "connect",    to: "auth#connect",    as: :connect
+      get    "callback",   to: "auth#callback",   as: :callback
+      delete "disconnect", to: "auth#disconnect", as: :disconnect
+    end
   end
 
   # Model index pages

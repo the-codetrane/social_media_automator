@@ -47,10 +47,13 @@ module YouTube
     private
 
     def build_credentials
+      refresh_token = AppSetting.get("youtube_refresh_token") ||
+                      Rails.application.credentials.dig(:google, :refresh_token)
+
       Google::Auth::UserRefreshCredentials.new(
         client_id:     Rails.application.credentials.dig(:google, :client_id),
         client_secret: Rails.application.credentials.dig(:google, :client_secret),
-        refresh_token: Rails.application.credentials.dig(:google, :refresh_token),
+        refresh_token: refresh_token,
         scope:         UPLOAD_SCOPE
       )
     end
