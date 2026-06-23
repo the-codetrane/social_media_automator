@@ -39,6 +39,9 @@ class PlannedPostsController < ApplicationController
     when "facebook"
       PublishFacebookPostJob.perform_later(@planned_post.id)
       redirect_to @planned_post, notice: "Publishing to Facebook has been queued."
+    when "youtube"
+      PublishYoutubePostJob.perform_later(@planned_post.id)
+      redirect_to @planned_post, notice: "Publishing to YouTube has been queued."
     else
       redirect_to @planned_post, alert: "Publishing is not supported for #{@planned_post.platform} yet."
     end
