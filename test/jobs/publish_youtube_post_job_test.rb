@@ -25,15 +25,15 @@ class PublishYouTubePostJobTest < ActiveSupport::TestCase
     mock_publisher.expect(:publish, video_id, [ PlannedPost ])
 
     YouTube::VideoPublisher.stub(:new, mock_publisher) do
-      PublishYoutubePostJob.perform_now(@post.id)
+      PublishYouTubePostJob.perform_now(@post.id)
     end
 
     assert_mock mock_publisher
   end
 
   test "perform enqueues on the default queue" do
-    assert_enqueued_with(job: PublishYoutubePostJob, queue: "default") do
-      PublishYoutubePostJob.perform_later(@post.id)
+    assert_enqueued_with(job: PublishYouTubePostJob, queue: "default") do
+      PublishYouTubePostJob.perform_later(@post.id)
     end
   end
 
@@ -45,7 +45,7 @@ class PublishYouTubePostJobTest < ActiveSupport::TestCase
     mock_publisher.expect(:publish, "yt_job_002", [ PlannedPost ])
 
     YouTube::VideoPublisher.stub(:new, mock_publisher) do
-      PublishYoutubePostJob.perform_now(scheduled_post.id)
+      PublishYouTubePostJob.perform_now(scheduled_post.id)
     end
 
     assert_mock mock_publisher
@@ -60,7 +60,7 @@ class PublishYouTubePostJobTest < ActiveSupport::TestCase
     assert instagram_post.instagram?
 
     YouTube::VideoPublisher.stub(:new, ->(_) { raise "should not be called" }) do
-      assert_nothing_raised { PublishYoutubePostJob.perform_now(instagram_post.id) }
+      assert_nothing_raised { PublishYouTubePostJob.perform_now(instagram_post.id) }
     end
   end
 
@@ -68,7 +68,7 @@ class PublishYouTubePostJobTest < ActiveSupport::TestCase
     @post.update!(status: :published)
 
     YouTube::VideoPublisher.stub(:new, ->(_) { raise "should not be called" }) do
-      assert_nothing_raised { PublishYoutubePostJob.perform_now(@post.id) }
+      assert_nothing_raised { PublishYouTubePostJob.perform_now(@post.id) }
     end
   end
 
@@ -82,7 +82,7 @@ class PublishYouTubePostJobTest < ActiveSupport::TestCase
       obj.define_singleton_method(:publish) { |_| raise YouTube::ApiError, "Permanent failure" }
       obj
     }) do
-      assert_nothing_raised { PublishYoutubePostJob.perform_now(@post.id) }
+      assert_nothing_raised { PublishYouTubePostJob.perform_now(@post.id) }
     end
 
     assert @post.reload.failed?
@@ -95,7 +95,7 @@ class PublishYouTubePostJobTest < ActiveSupport::TestCase
       obj
     }) do
       # retry_on exhausts attempts then discard_on swallows — nothing escapes
-      assert_nothing_raised { PublishYoutubePostJob.perform_now(@post.id) }
+      assert_nothing_raised { PublishYouTubePostJob.perform_now(@post.id) }
     end
 
     assert @post.reload.failed?
@@ -107,7 +107,7 @@ class PublishYouTubePostJobTest < ActiveSupport::TestCase
       obj.define_singleton_method(:publish) { |_| raise YouTube::UploadError, "Transfer failed" }
       obj
     }) do
-      assert_nothing_raised { PublishYoutubePostJob.perform_now(@post.id) }
+      assert_nothing_raised { PublishYouTubePostJob.perform_now(@post.id) }
     end
 
     assert @post.reload.failed?

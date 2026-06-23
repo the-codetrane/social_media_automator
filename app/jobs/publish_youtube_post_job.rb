@@ -12,7 +12,7 @@
 # Retries:
 # - YouTube::RateLimitError → retried after 1 hour (daily quota resets at midnight PT)
 # - Other YouTube::Error    → retried 3× with exponential back-off then marked failed
-class PublishYoutubePostJob < ApplicationJob
+class PublishYouTubePostJob < ApplicationJob
   queue_as :default
 
   retry_on YouTube::RateLimitError, wait: 1.hour,              attempts: 5
