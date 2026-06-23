@@ -13,11 +13,21 @@ module PlannedPostsHelper
     "facebook"  => "bg-blue-100 text-blue-700"
   }.freeze
 
+  PLATFORM_DISPLAY_NAMES = {
+    "instagram" => "Instagram",
+    "youtube"   => "YouTube",
+    "facebook"  => "Facebook"
+  }.freeze
+
   def status_color_classes(status)
     STATUS_COLORS[status] || "bg-gray-100 text-gray-600"
   end
 
   def platform_color_classes(platform)
     PLATFORM_COLORS[platform] || "bg-gray-100 text-gray-600"
+  end
+
+  def platform_display_name(platform)
+    PLATFORM_DISPLAY_NAMES[platform.to_s] || platform.to_s.capitalize
   end
 end

@@ -30,13 +30,13 @@
           Re-verify
         <% end %>
       <% end %>
-      <% if (@planned_post.instagram? || @planned_post.facebook?) && !@planned_post.published? && !@planned_post.canceled? %>
+      <% if (@planned_post.instagram? || @planned_post.facebook? || @planned_post.youtube?) && !@planned_post.published? && !@planned_post.canceled? %>
         <%= button_to publish_planned_post_path(@planned_post), method: :post,
             class: "inline-flex items-center gap-2 px-4 py-2 bg-pink-600 text-white text-sm font-medium rounded-lg hover:bg-pink-700 transition-colors" do %>
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
           </svg>
-          Publish to <%= @planned_post.platform.capitalize %>
+          Publish to <%= platform_display_name(@planned_post.platform) %>
         <% end %>
       <% end %>
       <%= link_to edit_planned_post_path(@planned_post), class: "inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors" do %>
@@ -72,8 +72,8 @@
     <div class="p-6">
       <%# Badges row %>
       <div class="flex flex-wrap gap-2 mb-6">
-        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium <%= platform_color_classes(@planned_post.platform) %> capitalize">
-          <%= @planned_post.platform %>
+        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium <%= platform_color_classes(@planned_post.platform) %>">
+          <%= platform_display_name(@planned_post.platform) %>
         </span>
         <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium <%= status_color_classes(@planned_post.status) %> capitalize">
           <%= @planned_post.status %>
@@ -181,7 +181,7 @@
           <div>
             <dt class="text-xs text-gray-400 uppercase tracking-wide mb-1">Live Post</dt>
             <dd class="text-lg">
-              <%= link_to "View on #{@planned_post.platform.capitalize}", permalink,
+              <%= link_to "View on #{platform_display_name(@planned_post.platform)}", permalink,
                   target: "_blank", rel: "noopener",
                   class: "text-indigo-600 hover:text-indigo-800 hover:underline" %>
             </dd>
