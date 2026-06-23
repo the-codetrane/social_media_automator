@@ -36,7 +36,7 @@ module YouTube
         upload_source: file_path,
         content_type:  content_type
       )
-    rescue Google::Apis::AuthorizationError => e
+    rescue Signet::AuthorizationError, Google::Apis::AuthorizationError => e
       raise YouTube::TokenExpiredError, "YouTube authorization failed: #{e.message}"
     rescue Google::Apis::RateLimitError => e
       raise YouTube::RateLimitError, "YouTube quota exceeded: #{e.message}"
