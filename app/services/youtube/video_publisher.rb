@@ -54,7 +54,7 @@ module YouTube
       description = build_description(planned_post, short:)
       privacy     = payload.fetch("privacy_status", DEFAULT_PRIVACY_STATUS)
       category    = payload.fetch("category_id", DEFAULT_CATEGORY_ID)
-      tags        = payload["tags"].presence
+      tags        = Array(payload["tags"])
 
       video_resource = build_video_resource(title, description, privacy, category, tags)
       video_id       = upload!(asset, video_resource)
