@@ -1,5 +1,19 @@
 <% password_digest = BCrypt::Password.create("password") %>
 
+admin:
+  id: <%= ActiveRecord::FixtureSet.identify(:admin) %>
+  email_address: "admin@example.com"
+  password_digest: <%= password_digest %>
+  name: "Admin User"
+  admin: true
+  instagram_user_id: "17841400000000001"
+  instagram_access_token: "EAAtest_valid_token"
+  instagram_token_expires_at: <%= 50.days.from_now %>
+  instagram_page_id: "123456789"
+  instagram_username: "cainandco"
+  created_at: <%= Time.current %>
+  updated_at: <%= Time.current %>
+
 one:
   id: <%= ActiveRecord::FixtureSet.identify(:one) %>
   email_address: "user1@example.com"

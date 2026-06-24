@@ -16,6 +16,13 @@ Rails.application.routes.draw do
       get    "callback",   to: "auth#callback",   as: :callback
       delete "disconnect", to: "auth#disconnect", as: :disconnect
     end
+    namespace :instagram do
+      get    "connect",        to: "auth#connect",        as: :connect
+      get    "callback",       to: "auth#callback",       as: :callback
+      post   "select_account", to: "auth#select_account", as: :select_account
+      post   "refresh_token",  to: "auth#refresh_token",  as: :refresh_token
+      delete "disconnect",     to: "auth#disconnect",     as: :disconnect
+    end
   end
 
   # Model index pages
@@ -50,14 +57,6 @@ Rails.application.routes.draw do
   # Render dynamic PWA files from app/views/pwa/* (remember to link manifest in application.html.erb)
   # get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
   # get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
-
-  # Instagram OAuth
-  namespace :instagram do
-    get  "connect",        to: "auth#connect",        as: :connect
-    get  "callback",       to: "auth#callback",        as: :callback
-    post "select_account", to: "auth#select_account",  as: :select_account
-    post "refresh_token",  to: "auth#refresh_token",   as: :refresh_token
-  end
 
   # API endpoints
   namespace :api do
