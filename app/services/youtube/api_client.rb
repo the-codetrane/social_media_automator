@@ -6,13 +6,9 @@ require "googleauth"
 module YouTube
   # Low-level wrapper around the Google::Apis::YoutubeV3::YouTubeService.
   #
-  # Reads app-level OAuth 2.0 credentials from Rails encrypted credentials:
-  #   google:
-  #     client_id:     "…"
-  #     client_secret: "…"
-  #     refresh_token: "…"
-  #
-  # The google-apis-youtube_v3 gem handles token refresh automatically via
+  # Reads OAuth 2.0 credentials from Rails encrypted credentials (client_id,
+  # client_secret) and the refresh token from AppSetting ("youtube_refresh_token"),
+  # set via Admin > YouTube. Token refresh is handled automatically by
   # Google::Auth::UserRefreshCredentials.
   class ApiClient
     UPLOAD_SCOPE = "https://www.googleapis.com/auth/youtube.upload"
@@ -37,9 +33,12 @@ module YouTube
         content_type:  content_type
       )
     rescue Signet::AuthorizationError, Google::Apis::AuthorizationError => e
-      body = e.respond_to?(:body) ? e.body : nil
-      Rails.logger.error("[YouTube::ApiClient] AuthorizationError body: #{body}")
-      raise YouTube::TokenExpiredError, "YouTube authorization failed: #{e.message}"
+      body = e.respond_to?(:body) ? e.body : "{}"
+      reason = JSON.parse(body).dig("error", "errors", 0, "reason") rescue nil
+      message = reason == "youtubeSignupRequired" ?
+        "The authorized Google account has no YouTube channel. Reconnect via Admin > YouTube with the correct account." :
+        "YouTube authorization failed: #{e.message}"
+      raise YouTube::TokenExpiredError, message
     rescue Google::Apis::RateLimitError => e
       raise YouTube::RateLimitError, "YouTube quota exceeded: #{e.message}"
     rescue Google::Apis::Error => e
