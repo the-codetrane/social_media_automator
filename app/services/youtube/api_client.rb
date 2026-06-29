@@ -37,6 +37,8 @@ module YouTube
         content_type:  content_type
       )
     rescue Signet::AuthorizationError, Google::Apis::AuthorizationError => e
+      body = e.respond_to?(:body) ? e.body : nil
+      Rails.logger.error("[YouTube::ApiClient] AuthorizationError body: #{body}")
       raise YouTube::TokenExpiredError, "YouTube authorization failed: #{e.message}"
     rescue Google::Apis::RateLimitError => e
       raise YouTube::RateLimitError, "YouTube quota exceeded: #{e.message}"
