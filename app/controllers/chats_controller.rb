@@ -113,7 +113,7 @@ class ChatsController < ApplicationController
       mime_type: upload.content_type,
       file_size: upload.size
     )
-    asset.file.attach(upload)
+    asset.file.attach(io: upload, filename: upload.original_filename, content_type: upload.content_type, key: "Images From Chat/#{SecureRandom.base36}")
     asset
   end
 
