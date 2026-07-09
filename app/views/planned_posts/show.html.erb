@@ -83,14 +83,21 @@
       <%# Media Preview %>
       <% if @carousel_assets&.any? %>
         <div class="mb-6">
-          <p class="text-xs text-gray-400 uppercase tracking-wide mb-2">Media (<%= @carousel_assets.size %> photos)</p>
+          <p class="text-xs text-gray-400 uppercase tracking-wide mb-2">Media (<%= @carousel_assets.size %> items)</p>
           <div class="relative w-full sm:max-w-md rounded-lg overflow-hidden bg-gray-100" data-controller="carousel">
             <% @carousel_assets.each_with_index do |asset, i| %>
               <div data-carousel-target="slide" class="<%= i > 0 ? 'hidden' : '' %>">
                 <% if asset.public_url? %>
-                  <%= image_tag asset.public_url,
-                      class: "w-full h-auto object-contain",
-                      alt: decode_name(asset.external_name.presence || "Photo #{i + 1}") %>
+                  <% if asset.video? %>
+                    <video controls class="w-full h-auto" preload="metadata">
+                      <source src="<%= asset.public_url %>" type="<%= asset.mime_type || 'video/mp4' %>">
+                      Your browser does not support the video tag.
+                    </video>
+                  <% else %>
+                    <%= image_tag asset.public_url,
+                        class: "w-full h-auto object-contain",
+                        alt: decode_name(asset.external_name.presence || "Media #{i + 1}") %>
+                  <% end %>
                 <% else %>
                   <div class="flex items-center justify-center h-48 text-gray-400 text-sm">No preview</div>
                 <% end %>
