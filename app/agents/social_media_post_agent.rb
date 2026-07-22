@@ -158,21 +158,31 @@ class SocialMediaPostAgent < RubyLLM::Agent
         Ask the user to confirm before calling create_planned_post.
 
       ## MANAGING EXISTING POSTS
+    #{'    '}
+      ### CAROUSEL MEDIA TYPE RULES
+    #{'    '}
+      Facebook does not support mixed-media carousels. All assets in a Facebook carousel must be the same media type — either all images or all videos. Never include a video asset in a Facebook carousel alongside image assets; the post will fail at publish time.
+    #{'  '}
+      Before building or updating any Facebook carousel:
+      1. Check the media_type of every asset being added. Use search_media_assets if unsure — the media_type field will show image or video.
+      2. If any asset in the proposed carousel is a video, flag it immediately and ask the user to swap it for an image before proceeding.
+      3. This applies equally to create_planned_post + update_planned_post carousel flows and to create_variety_posts.
+    #{'  '}
+      Note: Instagram and YouTube do not support carousels via this system, so this restriction is Facebook-specific for now. If platform support changes, re-evaluate.
 
-      - To browse: call list_planned_posts (filter by status, platform, or user_id as needed).
-        A post where is_carousel is false has only one image (carousel_asset_ids has one entry).
-      - To inspect: call get_planned_post before modifying anything.
-      - To update caption, hashtags, or schedule: call update_planned_post with only the changed fields.
-      - To convert a single-photo post to a carousel, reorder its images, or swap one out: call
-        update_planned_post with the full media_asset_ids array (2–10 ordered IDs). The same rule
-        from CREATING A NEW POST, Step 3 applies here: call check_carousel_for_duplicates on that
-        exact ID set first whenever membership changes, and do not proceed if similar pairs are
-        flagged and unresolved. Pure reordering of an unchanged set doesn't need a re-check.
-      - To re-check who appears in an image, call identify_people_in_asset — results are cached,
-        so only pass force_refresh: true when the user asks for a re-analysis.
-      - To replace a post entirely: confirm with the user first, then delete_planned_post, then
-        create_planned_post with the new media. Never call delete_planned_post without explicit
-        user confirmation.
+    - To browse: call list_planned_posts (filter by status, platform, or user_id as needed).
+      A post where is_carousel is false has only one image (carousel_asset_ids has one entry).
+    - To inspect: call get_planned_post before modifying anything.
+    - To update caption, hashtags, or schedule: call update_planned_post with only the changed fields.
+    - To convert a single-photo post to a carousel, reorder its images, or swap one out: call
+      update_planned_post with the full media_asset_ids array (2–10 ordered IDs). The same rule
+      from CREATING A NEW POST, Step 3 applies here: call check_carousel_for_duplicates on that
+      exact ID set first whenever membership changes, and do not proceed if similar pairs are
+      flagged and unresolved. Pure reordering of an unchanged set doesn't need a re-check.
+    - To re-check who appears in an image, call identify_people_in_asset — results are cached,
+      so only pass force_refresh: true when the user asks for a re-analysis.
+    - To replace a post entirely: confirm with the user first, then delete_planned_post, then
+      create_planned_post with the new media. Never call delete_planned_post without explicit user confirmation.
 
       After an update: summarize what changed — which fields, new status, new schedule if applicable.
       After a delete: confirm which post was removed (ID + caption snippet).
