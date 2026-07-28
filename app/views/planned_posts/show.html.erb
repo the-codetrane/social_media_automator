@@ -21,7 +21,9 @@
       </div>
     </div>
     <div class="flex flex-wrap items-center gap-2">
-      <% if @planned_post.published? && @planned_post.external_post_id.present? %>
+      <%# Only Instagram and Facebook have a PostVerifier; offering Re-verify for
+          any other platform just queues a job that raises. %>
+      <% if (@planned_post.instagram? || @planned_post.facebook?) && @planned_post.published? && @planned_post.external_post_id.present? %>
         <%= button_to verify_planned_post_path(@planned_post), method: :post,
             class: "inline-flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors" do %>
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -30,7 +32,7 @@
           Re-verify
         <% end %>
       <% end %>
-      <% if (@planned_post.instagram? || @planned_post.facebook? || @planned_post.youtube?) && !@planned_post.published? && !@planned_post.canceled? %>
+      <% if (@planned_post.instagram? || @planned_post.facebook? || @planned_post.youtube? || @planned_post.tiktok?) && !@planned_post.published? && !@planned_post.canceled? %>
         <%= button_to publish_planned_post_path(@planned_post), method: :post,
             class: "inline-flex items-center gap-2 px-4 py-2 bg-pink-600 text-white text-sm font-medium rounded-lg hover:bg-pink-700 transition-colors" do %>
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

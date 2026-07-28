@@ -9,7 +9,7 @@ class ListPlannedPosts < RubyLLM::Tool
     required: false
   param :platform,
     type: :string,
-    desc: "Filter by platform: instagram, youtube, or facebook",
+    desc: "Filter by platform: instagram, youtube, facebook, or tiktok",
     required: false
   param :user_id,
     type: :integer,

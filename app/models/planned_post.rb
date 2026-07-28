@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class PlannedPost < ApplicationRecord
-  enum :platform, { instagram: 0, youtube: 1, facebook: 2 }
+  enum :platform, { instagram: 0, youtube: 1, facebook: 2, tiktok: 3 }
   enum :status, { draft: 0, scheduled: 1, published: 2, failed: 3, canceled: 4 }
 
   belongs_to :media_asset

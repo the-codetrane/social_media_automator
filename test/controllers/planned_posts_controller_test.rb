@@ -273,6 +273,32 @@ class PlannedPostsControllerTest < ActionDispatch::IntegrationTest
     assert flash[:alert].present?
   end
 
+  test "show has publish button for tiktok draft post" do
+    sign_in_as(@user)
+    get planned_post_path(planned_posts(:tiktok_draft_post))
+    assert_select "form[action=?]", publish_planned_post_path(planned_posts(:tiktok_draft_post))
+  end
+
+  test "publish queues PublishTikTokPostJob for a tiktok post" do
+    sign_in_as(@user)
+    tiktok_post = planned_posts(:tiktok_draft_post)
+
+    assert_enqueued_with(job: PublishTikTokPostJob) do
+      post publish_planned_post_path(tiktok_post)
+    end
+    assert_redirected_to planned_post_path(tiktok_post)
+    assert_match "TikTok", flash[:notice]
+  end
+
+  test "show hides the re-verify button for platforms with no verifier" do
+    sign_in_as(@user)
+    tiktok_post = planned_posts(:tiktok_draft_post)
+    tiktok_post.update!(status: :published, published_at: 1.hour.ago, external_post_id: "v_pub_001")
+
+    get planned_post_path(tiktok_post)
+    assert_select "form[action=?]", verify_planned_post_path(tiktok_post), count: 0
+  end
+
   test "show has publish button for instagram draft post" do
     sign_in_as(@user)
     get planned_post_path(@planned_post)

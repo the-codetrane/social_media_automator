@@ -23,6 +23,12 @@ class DispatchScheduledPostsJobTest < ActiveSupport::TestCase
     end
   end
 
+  test "enqueues PublishTikTokPostJob for a due tiktok post" do
+    assert_enqueued_with(job: PublishTikTokPostJob, args: [ planned_posts(:due_tiktok_post).id ]) do
+      DispatchScheduledPostsJob.perform_now
+    end
+  end
+
   test "does not enqueue jobs for draft or published posts" do
     draft = planned_posts(:draft_post)
     pub   = planned_posts(:published_post)

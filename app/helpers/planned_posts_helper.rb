@@ -10,13 +10,15 @@ module PlannedPostsHelper
   PLATFORM_COLORS = {
     "instagram" => "bg-pink-100 text-pink-800",
     "youtube"   => "bg-red-100 text-red-700",
-    "facebook"  => "bg-blue-100 text-blue-700"
+    "facebook"  => "bg-blue-100 text-blue-700",
+    "tiktok"    => "bg-gray-900 text-white"
   }.freeze
 
   PLATFORM_DISPLAY_NAMES = {
     "instagram" => "Instagram",
     "youtube"   => "YouTube",
-    "facebook"  => "Facebook"
+    "facebook"  => "Facebook",
+    "tiktok"    => "TikTok"
   }.freeze
 
   def status_color_classes(status)

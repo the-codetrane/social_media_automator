@@ -3,7 +3,7 @@ class FindSocialTemplate < RubyLLM::Tool
 
   param :platform,
     type: :string,
-    desc: "Platform: instagram, youtube, or facebook"
+    desc: "Platform: instagram, youtube, facebook, or tiktok"
   param :user_id,
     type: :integer,
     desc: "The current user's ID"

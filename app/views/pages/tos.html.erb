@@ -1,0 +1,136 @@
+<%# Generic starting-point Terms of Service. Reviewed by no lawyer — have counsel
+    read this before relying on it. Update PagesController::LAST_UPDATED on edit. %>
+<% content_for :title, "Terms of Service — #{@service_name}" %>
+
+<article class="max-w-3xl mx-auto py-10 sm:py-14">
+  <header class="mb-10">
+    <h1 class="text-3xl font-bold text-gray-900">Terms of Service</h1>
+    <p class="text-sm text-gray-500 mt-2">
+      Last updated <%= @last_updated.strftime("%B %-d, %Y") %>
+    </p>
+  </header>
+
+  <div class="space-y-8 text-gray-700 leading-relaxed">
+    <section>
+      <h2 class="text-lg font-semibold text-gray-900 mb-2">1. Agreement</h2>
+      <p>
+        These Terms of Service ("Terms") govern your use of <%= @service_name %> (the "Service"),
+        operated by <%= @operator %> ("we", "us"). By creating an account or using the Service you
+        agree to these Terms. If you do not agree, do not use the Service.
+      </p>
+    </section>
+
+    <section>
+      <h2 class="text-lg font-semibold text-gray-900 mb-2">2. What the Service does</h2>
+      <p>
+        The Service helps you plan, schedule, and publish content to third-party social media
+        platforms, including Instagram and Facebook (Meta), YouTube (Google), and TikTok. You connect
+        your own accounts on those platforms, and the Service publishes content on your behalf at
+        your direction.
+      </p>
+    </section>
+
+    <section>
+      <h2 class="text-lg font-semibold text-gray-900 mb-2">3. Accounts</h2>
+      <p>
+        You must provide accurate registration information and keep your credentials secure. You are
+        responsible for all activity under your account. Accounts are issued by invitation, and we may
+        decline, suspend, or remove an account at our discretion.
+      </p>
+    </section>
+
+    <section>
+      <h2 class="text-lg font-semibold text-gray-900 mb-2">4. Third-party platforms</h2>
+      <p>
+        When you connect a social media account, you authorize the Service to act on your behalf
+        through that platform's API using the permissions you grant. Your use of each platform remains
+        governed by that platform's own terms and policies, and we are not responsible for their
+        availability, decisions, or actions — including content moderation, rate limits, account
+        restrictions, or removal of published posts. You may disconnect any platform at any time from
+        the admin area, which revokes the stored authorization.
+      </p>
+    </section>
+
+    <section>
+      <h2 class="text-lg font-semibold text-gray-900 mb-2">5. Your content</h2>
+      <p>
+        You retain all ownership of the images, video, captions, and other material you upload or
+        publish ("Your Content"). You grant us a limited license to store, process, transmit, and
+        display Your Content solely to operate the Service for you. You represent that you hold the
+        rights necessary to publish Your Content, including rights to any music, footage, or likeness
+        it contains.
+      </p>
+    </section>
+
+    <section>
+      <h2 class="text-lg font-semibold text-gray-900 mb-2">6. Acceptable use</h2>
+      <p>You agree not to use the Service to:</p>
+      <ul class="list-disc pl-6 mt-2 space-y-1">
+        <li>publish unlawful, infringing, deceptive, or harassing content;</li>
+        <li>violate the terms, policies, or rate limits of any connected platform;</li>
+        <li>send spam or artificially inflate engagement;</li>
+        <li>publish content on behalf of accounts you do not own or are not authorized to manage;</li>
+        <li>attempt to gain unauthorized access to the Service or interfere with its operation.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2 class="text-lg font-semibold text-gray-900 mb-2">7. Automated and AI-assisted features</h2>
+      <p>
+        The Service includes features that use automated and machine-learning systems to draft
+        captions, describe media, and organize your library. These outputs may be inaccurate. You are
+        responsible for reviewing anything before it is published.
+      </p>
+    </section>
+
+    <section>
+      <h2 class="text-lg font-semibold text-gray-900 mb-2">8. Availability and disclaimer</h2>
+      <p>
+        The Service is provided "as is" and "as available", without warranties of any kind, express or
+        implied, including merchantability, fitness for a particular purpose, and non-infringement. We
+        do not warrant that publishing will succeed, that scheduled posts will go out on time, or that
+        the Service will be uninterrupted or error-free.
+      </p>
+    </section>
+
+    <section>
+      <h2 class="text-lg font-semibold text-gray-900 mb-2">9. Limitation of liability</h2>
+      <p>
+        To the fullest extent permitted by law, <%= @operator %> will not be liable for any indirect,
+        incidental, special, consequential, or punitive damages, or for lost profits, revenue, data,
+        or goodwill, arising out of or relating to your use of the Service. Our total aggregate
+        liability for any claim relating to the Service will not exceed one hundred U.S. dollars
+        ($100).
+      </p>
+    </section>
+
+    <section>
+      <h2 class="text-lg font-semibold text-gray-900 mb-2">10. Termination</h2>
+      <p>
+        You may stop using the Service and request deletion of your account at any time. We may
+        suspend or terminate access if you breach these Terms or if we discontinue the Service.
+        Sections 5 through 9 survive termination.
+      </p>
+    </section>
+
+    <section>
+      <h2 class="text-lg font-semibold text-gray-900 mb-2">11. Changes</h2>
+      <p>
+        We may update these Terms from time to time. Material changes will be reflected in the "Last
+        updated" date above. Continued use of the Service after a change constitutes acceptance.
+      </p>
+    </section>
+
+    <section>
+      <h2 class="text-lg font-semibold text-gray-900 mb-2">12. Contact</h2>
+      <p>
+        Questions about these Terms can be sent to
+        <%= mail_to @contact_email, class: "text-indigo-600 hover:text-indigo-800 hover:underline" %>.
+      </p>
+    </section>
+  </div>
+
+  <footer class="mt-12 pt-6 border-t border-gray-200 text-sm text-gray-500">
+    See also our <%= link_to "Privacy Policy", privacy_path, class: "text-indigo-600 hover:text-indigo-800 hover:underline" %>.
+  </footer>
+</article>

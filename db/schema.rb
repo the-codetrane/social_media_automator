@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_23_180000) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_28_120000) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.bigint "blob_id", null: false
     t.datetime "created_at", null: false
@@ -208,6 +208,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_23_180000) do
     t.string "instagram_username"
     t.string "name"
     t.string "password_digest", null: false
+    t.string "tiktok_access_token"
+    t.string "tiktok_open_id"
+    t.datetime "tiktok_refresh_expires_at"
+    t.string "tiktok_refresh_token"
+    t.string "tiktok_scope"
+    t.datetime "tiktok_token_expires_at"
+    t.string "tiktok_username"
     t.datetime "updated_at", null: false
     t.index [ "email_address" ], name: "index_users_on_email_address", unique: true
   end

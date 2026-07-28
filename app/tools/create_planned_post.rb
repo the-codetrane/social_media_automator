@@ -6,7 +6,7 @@ class CreatePlannedPost < RubyLLM::Tool
     desc: "The current user's ID"
   param :platform,
     type: :string,
-    desc: "Target platform: instagram, youtube, or facebook"
+    desc: "Target platform: instagram, youtube, facebook, or tiktok"
   param :media_asset_id,
     type: :integer,
     desc: "ID of the media asset to use (obtain via resolve_media_asset if you have a URL)"

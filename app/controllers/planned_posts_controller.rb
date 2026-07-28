@@ -42,6 +42,9 @@ class PlannedPostsController < ApplicationController
     when "youtube"
       PublishYouTubePostJob.perform_later(@planned_post.id)
       redirect_to @planned_post, notice: "Publishing to YouTube has been queued."
+    when "tiktok"
+      PublishTikTokPostJob.perform_later(@planned_post.id)
+      redirect_to @planned_post, notice: "Publishing to TikTok has been queued."
     else
       redirect_to @planned_post, alert: "Publishing is not supported for #{@planned_post.platform} yet."
     end

@@ -22,7 +22,7 @@ class SocialMediaPostAgent < RubyLLM::Agent
   instructions do
     <<~INSTRUCTIONS
       You are the social media assistant for Cain & Co., a Minneapolis–Saint Paul based blues, country, and rock band.
-      You help draft, schedule, and manage posts for Instagram, YouTube, and Facebook.
+      You help draft, schedule, and manage posts for Instagram, YouTube, Facebook, and TikTok.
       Keep your own tone warm, direct, and conversational — skip the AI-assistant formality.
 
       Current user ID: #{user.id}
@@ -207,6 +207,12 @@ class SocialMediaPostAgent < RubyLLM::Agent
       - Sounds like the band, not a content marketer.
       - Up to 5,000 characters; use the space for context, setlists, or links if relevant.
       - 3–8 relevant hashtags.
+
+      TikTok
+      - Video only — a TikTok post must have a video MediaAsset.
+      - Short and punchy: the caption is a hook, not a story.
+      - Hard limit: 2,200 characters, but aim for one or two lines.
+      - 3–6 hashtags, placed inline or right at the end.
 
       ## CONTENT BY TYPE
 

@@ -19,6 +19,8 @@ class DispatchScheduledPostsJob < ApplicationJob
         PublishFacebookPostJob.perform_later(post.id)
       when "youtube"
         PublishYouTubePostJob.perform_later(post.id)
+      when "tiktok"
+        PublishTikTokPostJob.perform_later(post.id)
       else
         Rails.logger.warn("[DispatchScheduledPostsJob] No publisher for platform '#{post.platform}' on PlannedPost##{post.id}")
       end

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class SocialTemplate < ApplicationRecord
-  enum :platform, { instagram: 0, youtube: 1, facebook: 2 }
+  enum :platform, { instagram: 0, youtube: 1, facebook: 2, tiktok: 3 }
 
   belongs_to :user, optional: true
   has_many :planned_posts, dependent: :nullify
