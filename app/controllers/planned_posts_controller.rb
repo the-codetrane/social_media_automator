@@ -5,6 +5,13 @@ class PlannedPostsController < ApplicationController
 
   SORT_COLUMNS = %w[platform scheduled_at published_at created_at].freeze
 
+  PUBLISH_JOBS = {
+    "instagram" => PublishInstagramPostJob,
+    "facebook"  => PublishFacebookPostJob,
+    "youtube"   => PublishYouTubePostJob,
+    "tiktok"    => PublishTikTokPostJob
+  }.freeze
+
   def index
     @platforms = Array(params[:platforms]).map(&:to_s).select { |p| PlannedPost.platforms.key?(p) }
     @status    = PlannedPost.statuses.key?(params[:status]) ? params[:status] : "scheduled"
@@ -32,22 +39,23 @@ class PlannedPostsController < ApplicationController
   end
 
   def publish
-    case @planned_post.platform
-    when "instagram"
-      PublishInstagramPostJob.perform_later(@planned_post.id)
-      redirect_to @planned_post, notice: "Publishing to Instagram has been queued."
-    when "facebook"
-      PublishFacebookPostJob.perform_later(@planned_post.id)
-      redirect_to @planned_post, notice: "Publishing to Facebook has been queued."
-    when "youtube"
-      PublishYouTubePostJob.perform_later(@planned_post.id)
-      redirect_to @planned_post, notice: "Publishing to YouTube has been queued."
-    when "tiktok"
-      PublishTikTokPostJob.perform_later(@planned_post.id)
-      redirect_to @planned_post, notice: "Publishing to TikTok has been queued."
-    else
-      redirect_to @planned_post, alert: "Publishing is not supported for #{@planned_post.platform} yet."
+    job = PUBLISH_JOBS[@planned_post.platform]
+
+    if job.nil?
+      return redirect_to @planned_post,
+        alert: "Publishing is not supported for #{@planned_post.platform} yet."
     end
+
+    # Checked before enqueuing: otherwise the job runs, the API client raises on
+    # the missing token, and the post is discarded as failed with the reason
+    # visible only in the server log.
+    unless @planned_post.platform_connected?
+      return redirect_to @planned_post,
+        alert: "#{platform_name} is not connected. Connect the account in Admin, then publish again."
+    end
+
+    job.perform_later(@planned_post.id)
+    redirect_to @planned_post, notice: "Publishing to #{platform_name} has been queued."
   end
 
   def verify
@@ -112,6 +120,10 @@ class PlannedPostsController < ApplicationController
 
   def set_planned_post
     @planned_post = PlannedPost.find(params[:id])
+  end
+
+  def platform_name
+    helpers.platform_display_name(@planned_post.platform)
   end
 
   def load_form_data

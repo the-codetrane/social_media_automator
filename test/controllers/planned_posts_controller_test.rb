@@ -307,6 +307,45 @@ class PlannedPostsControllerTest < ActionDispatch::IntegrationTest
     assert_select "form[action=?]", publish_planned_post_path(planned_posts(:tiktok_draft_post))
   end
 
+  # Reproduces the production failure: publishing to an unconnected TikTok
+  # account enqueued a job that immediately discarded the post as failed, with
+  # the reason visible only in the server log.
+  test "publish refuses when the platform is not connected" do
+    sign_in_as(@user)
+    tiktok_post = planned_posts(:tiktok_draft_post)
+    @user.update!(tiktok_access_token: nil, tiktok_open_id: nil)
+
+    assert_no_enqueued_jobs only: PublishTikTokPostJob do
+      post publish_planned_post_path(tiktok_post)
+    end
+
+    assert_redirected_to planned_post_path(tiktok_post)
+    assert_match(/TikTok is not connected/, flash[:alert])
+    assert tiktok_post.reload.draft?, "the post must not be burned"
+  end
+
+  test "publish still works when the platform is connected" do
+    sign_in_as(@user)
+    tiktok_post = planned_posts(:tiktok_draft_post)
+    assert @user.reload.tiktok_connected?
+
+    assert_enqueued_with(job: PublishTikTokPostJob) do
+      post publish_planned_post_path(tiktok_post)
+    end
+  end
+
+  test "show surfaces the failure reason for a failed post" do
+    sign_in_as(@user)
+    tiktok_post = planned_posts(:tiktok_draft_post)
+    tiktok_post.mark_failed!("User 1 has no TikTok access token")
+
+    get planned_post_path(tiktok_post)
+
+    assert_response :success
+    assert_match "Publish failed", response.body
+    assert_match "User 1 has no TikTok access token", response.body
+  end
+
   test "publish queues PublishTikTokPostJob for a tiktok post" do
     sign_in_as(@user)
     tiktok_post = planned_posts(:tiktok_draft_post)

@@ -18,6 +18,41 @@ class PlannedPost < ApplicationRecord
   scope :upcoming, -> { where(status: :scheduled).where("scheduled_at > ?", Time.current).order(:scheduled_at) }
   scope :for_platform, ->(platform) { where(platform: platform) }
 
+  # True when the account this post publishes to has completed its OAuth
+  # connection.  Publishing without one burns the post: the API client raises
+  # immediately and the job discards it as failed.
+  def platform_connected?
+    case platform
+    when "instagram", "facebook" then user.instagram_connected?
+    when "tiktok"                then user.tiktok_connected?
+    when "youtube"               then YouTube::AuthService.new.connected?
+    else false
+    end
+  end
+
+  # Record a failure without validating, keeping the reason on the record.
+  #
+  # validate: false matters because the post may be invalid for the very reason
+  # it failed (a TikTok post whose asset is not a video) — update! would raise
+  # and update would silently no-op, stranding it in its previous status.
+  def mark_failed!(reason = nil)
+    self.status = :failed
+
+    if reason.present?
+      self.platform_payload = platform_payload.to_h.merge(
+        "failure_reason" => reason.to_s.truncate(500),
+        "failed_at"      => Time.current.iso8601
+      )
+    end
+
+    save(validate: false)
+  end
+
+  # The last recorded reason this post failed to publish, if any.
+  def failure_reason
+    platform_payload&.dig("failure_reason")
+  end
+
   def post_type
     return "carousel" if platform_payload&.dig("carousel_asset_ids")&.size.to_i >= 2
     return "carousel" if social_template&.name&.match?(/carousel/i)

@@ -62,6 +62,55 @@ class PlannedPostTest < ActiveSupport::TestCase
   end
 
   # ------------------------------------------------------------------
+  # Connection state and failure recording
+  # ------------------------------------------------------------------
+
+  test "platform_connected? reflects the user's stored credentials" do
+    post = planned_posts(:tiktok_draft_post)
+    assert post.platform_connected?
+
+    post.user.update!(tiktok_access_token: nil)
+    assert_not post.reload.platform_connected?
+  end
+
+  test "platform_connected? uses the instagram token for facebook posts" do
+    post = planned_posts(:facebook_draft_post)
+    assert post.platform_connected?
+
+    post.user.update!(instagram_access_token: nil)
+    assert_not post.reload.platform_connected?
+  end
+
+  test "mark_failed! records the reason and the timestamp" do
+    post = planned_posts(:tiktok_draft_post)
+    post.mark_failed!("quota exhausted")
+
+    post.reload
+    assert post.failed?
+    assert_equal "quota exhausted", post.failure_reason
+    assert post.platform_payload["failed_at"].present?
+  end
+
+  test "mark_failed! works on a post that is itself invalid" do
+    post = planned_posts(:tiktok_draft_post)
+    post.update_column(:media_asset_id, media_assets(:sample_image).id)
+    assert_not post.reload.valid?
+
+    assert_nothing_raised { post.mark_failed!("not a video") }
+    assert post.reload.failed?
+  end
+
+  test "mark_failed! preserves existing platform_payload keys" do
+    post = planned_posts(:tiktok_draft_post)
+    post.update!(platform_payload: { "privacy_level" => "SELF_ONLY" })
+
+    post.mark_failed!("boom")
+
+    assert_equal "SELF_ONLY", post.reload.platform_payload["privacy_level"]
+    assert_equal "boom", post.failure_reason
+  end
+
+  # ------------------------------------------------------------------
   # TikTok is video-only
   # ------------------------------------------------------------------
 
