@@ -533,7 +533,7 @@ DEPENDENCIES
   rails-controller-testing
   redcarpet (~> 3.6)
   rubocop-rails-omakase
-  ruby-vips (~> 2.3)
+  ruby-vips (~> 2.2)
   ruby_llm
   selenium-webdriver
   solid_cable
