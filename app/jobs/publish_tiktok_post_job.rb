@@ -23,8 +23,14 @@ class PublishTikTokPostJob < ApplicationJob
 
   # Marks the post failed, whether that is because retries ran out or because
   # the error was never retryable in the first place.
+  # save(validate: false) rather than update: a TikTok post whose asset is not a
+  # video fails its own validation, and update would silently return false and
+  # leave the post stuck in draft/scheduled forever.
   MARK_FAILED = proc do |job, error|
-    PlannedPost.find_by(id: job.arguments.first)&.update(status: :failed)
+    if (planned_post = PlannedPost.find_by(id: job.arguments.first))
+      planned_post.status = :failed
+      planned_post.save(validate: false)
+    end
     Rails.logger.error("[PublishTikTokPostJob] Permanently failed for PlannedPost##{job.arguments.first}: #{error.message}")
   end
 

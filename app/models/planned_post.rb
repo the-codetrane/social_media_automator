@@ -13,6 +13,7 @@ class PlannedPost < ApplicationRecord
   validates :scheduled_at, presence: true, if: :scheduled?
   validate :published_at_not_in_future, if: :published?
   validate :scheduled_at_in_future, if: :scheduled?
+  validate :tiktok_requires_video_asset, if: :tiktok?
 
   scope :upcoming, -> { where(status: :scheduled).where("scheduled_at > ?", Time.current).order(:scheduled_at) }
   scope :for_platform, ->(platform) { where(platform: platform) }
@@ -35,5 +36,14 @@ class PlannedPost < ApplicationRecord
     if scheduled_at.present? && scheduled_at <= Time.current
       errors.add(:scheduled_at, "must be in the future")
     end
+  end
+
+  # TikTok's Content Posting API only accepts video for direct posts, so catch an
+  # image here rather than letting it fail hours later when the post is published.
+  def tiktok_requires_video_asset
+    return if media_asset.blank?
+    return if media_asset.video?
+
+    errors.add(:media_asset, "must be a video — TikTok does not support image posts")
   end
 end

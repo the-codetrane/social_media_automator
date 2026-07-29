@@ -61,6 +61,52 @@ class PlannedPostTest < ActiveSupport::TestCase
     assert_equal 3, PlannedPost.platforms[:tiktok]
   end
 
+  # ------------------------------------------------------------------
+  # TikTok is video-only
+  # ------------------------------------------------------------------
+
+  test "a tiktok post is invalid with an image media asset" do
+    post = PlannedPost.new(
+      user:         users(:one),
+      media_asset:  media_assets(:sample_image),
+      platform:     :tiktok,
+      status:       :draft
+    )
+
+    assert_not post.valid?
+    assert_includes post.errors[:media_asset], "must be a video — TikTok does not support image posts"
+  end
+
+  test "a tiktok post is valid with a video media asset" do
+    post = PlannedPost.new(
+      user:         users(:one),
+      media_asset:  media_assets(:sample_video),
+      platform:     :tiktok,
+      status:       :draft
+    )
+
+    assert post.valid?, post.errors.full_messages.to_sentence
+  end
+
+  test "other platforms still accept image media assets" do
+    %i[instagram facebook youtube].each do |platform|
+      post = PlannedPost.new(
+        user:        users(:one),
+        media_asset: media_assets(:sample_image),
+        platform:    platform,
+        status:      :draft
+      )
+      assert post.valid?, "#{platform} should accept an image: #{post.errors.full_messages.to_sentence}"
+    end
+  end
+
+  test "switching an existing tiktok post to an image asset is rejected" do
+    post = planned_posts(:tiktok_draft_post)
+    post.media_asset = media_assets(:sample_image)
+
+    assert_not post.valid?
+  end
+
   test "status enum has correct values" do
     assert_equal 0, PlannedPost.statuses[:draft]
     assert_equal 1, PlannedPost.statuses[:scheduled]

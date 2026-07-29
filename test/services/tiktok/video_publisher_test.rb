@@ -352,19 +352,26 @@ module TikTok
     # Validation and error handling
     # -------------------------------------------------------------------------
 
-    test "publish rejects a non-video asset" do
-      post = new_tiktok_post(asset: @image_asset)
+    # PlannedPost blocks this at save time, so reaching the publisher means the
+    # post predates that validation or had its asset swapped. It must fail the
+    # post rather than crash the job, hence PermanentError over ArgumentError.
+    test "publish rejects a non-video asset as a permanent failure" do
+      post = new_tiktok_post(asset: @video_asset)
+      post.update_column(:media_asset_id, @image_asset.id)
+      post.reload
 
       with_stubs do
-        error = assert_raises(ArgumentError) { @publisher.publish(post) }
+        error = assert_raises(TikTok::PermanentError) { @publisher.publish(post) }
         assert_match(/requires a video MediaAsset/, error.message)
       end
+
+      assert post.reload.failed?
     end
 
     test "publish raises PermanentError when the asset has no public URL" do
       asset = media_assets(:sample_image_no_url)
       asset.update!(media_type: :video, mime_type: "video/mp4")
-      post  = new_tiktok_post(asset: asset)
+      post  = new_tiktok_post(asset: asset)  # valid: media_type is now :video
 
       with_stubs do
         assert_raises(TikTok::PermanentError) { @publisher.publish(post) }

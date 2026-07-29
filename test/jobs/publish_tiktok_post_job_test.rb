@@ -132,6 +132,19 @@ class PublishTikTokPostJobTest < ActiveSupport::TestCase
     assert @post.reload.failed?
   end
 
+  # A TikTok post pointing at an image fails its own model validation, so a
+  # plain update(status: :failed) would silently no-op and strand the post.
+  test "perform still marks an invalid post failed" do
+    @post.update_column(:media_asset_id, media_assets(:sample_image).id)
+    assert_not @post.reload.valid?
+
+    TikTok::VideoPublisher.stub(:new, failing_publisher(TikTok::PermanentError, "not a video")) do
+      assert_nothing_raised { PublishTikTokPostJob.perform_now(@post.id) }
+    end
+
+    assert @post.reload.failed?, "an invalid post must still be recorded as failed"
+  end
+
   test "perform does not swallow errors from outside the TikTok namespace" do
     TikTok::VideoPublisher.stub(:new, failing_publisher(ArgumentError, "not a video")) do
       assert_raises(ArgumentError) { PublishTikTokPostJob.perform_now(@post.id) }
