@@ -116,8 +116,8 @@ module TikTok
       )
 
       publish_id
-    rescue TikTok::Error
-      mark_failed!(planned_post)
+    rescue TikTok::Error => e
+      planned_post.mark_failed!(e.message)
       raise
     ensure
       tempfile&.close
@@ -125,15 +125,6 @@ module TikTok
     end
 
     private
-
-    # Record the failure without validating.  The most common reason to land
-    # here is a post that is itself invalid — a TikTok post whose asset is not a
-    # video — and update! would raise RecordInvalid, masking the real error and
-    # leaving the post stuck in its old status.
-    def mark_failed!(planned_post)
-      planned_post.status = :failed
-      planned_post.save(validate: false)
-    end
 
     # ------------------------------------------------------------------
     # Validation

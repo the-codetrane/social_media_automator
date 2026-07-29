@@ -82,6 +82,20 @@
         </span>
       </div>
 
+      <%# Why a publish failed, so diagnosing it doesn't mean reading server logs. %>
+      <% if @planned_post.failed? && @planned_post.failure_reason.present? %>
+        <div class="mb-6 rounded-lg bg-red-50 border border-red-200 p-4">
+          <p class="text-xs font-semibold text-red-800 uppercase tracking-wide mb-1">Publish failed</p>
+          <p class="text-sm text-red-700"><%= @planned_post.failure_reason %></p>
+          <% unless @planned_post.platform_connected? %>
+            <p class="text-sm text-red-700 mt-2">
+              <%= platform_display_name(@planned_post.platform) %> is not connected.
+              Connect the account in Admin, then publish again.
+            </p>
+          <% end %>
+        </div>
+      <% end %>
+
       <%# Media Preview %>
       <% if @carousel_assets&.any? %>
         <div class="mb-6">
