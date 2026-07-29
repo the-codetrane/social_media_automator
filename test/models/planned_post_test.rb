@@ -58,6 +58,7 @@ class PlannedPostTest < ActiveSupport::TestCase
     assert_equal 0, PlannedPost.platforms[:instagram]
     assert_equal 1, PlannedPost.platforms[:youtube]
     assert_equal 2, PlannedPost.platforms[:facebook]
+    assert_equal 3, PlannedPost.platforms[:tiktok]
   end
 
   test "status enum has correct values" do

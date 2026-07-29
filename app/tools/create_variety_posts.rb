@@ -11,7 +11,7 @@ class CreateVarietyPosts < RubyLLM::Tool
 
   param :platform,
     type: :string,
-    desc: "Target platform: instagram, youtube, or facebook"
+    desc: "Target platform: instagram, youtube, facebook, or tiktok"
 
   param :count,
     type: :integer,

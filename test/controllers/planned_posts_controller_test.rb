@@ -94,7 +94,8 @@ class PlannedPostsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(@user)
     get planned_post_path(@planned_post)
     assert_match @planned_post.caption, response.body
-    assert_match @planned_post.platform, response.body
+    # The badge renders the display name ("Instagram"), not the enum key.
+    assert_match(/#{@planned_post.platform}/i, response.body)
   end
 
   test "show has edit link" do
@@ -157,7 +158,7 @@ class PlannedPostsControllerTest < ActionDispatch::IntegrationTest
     get planned_post_path(planned_posts(:carousel_post))
     assert_select "img[src=?]", media_assets(:sample_image).public_url
     assert_select "img[src=?]", media_assets(:sample_image_2).public_url
-    assert_match "2 photos", response.body
+    assert_match "2 items", response.body
   end
 
   test "show renders carousel navigation controls for a carousel post" do
@@ -264,13 +265,46 @@ class PlannedPostsControllerTest < ActionDispatch::IntegrationTest
     assert_match "Facebook", flash[:notice]
   end
 
+  # Every platform in the enum now has a publisher, so the controller's defensive
+  # `else` branch can only be reached with a platform value the enum doesn't map.
+  # Writing one straight to the column is the only way to exercise it.
   test "publish shows alert for unsupported platform" do
     sign_in_as(@user)
-    youtube_post = planned_posts(:scheduled_post)
-    assert youtube_post.youtube?
-    post publish_planned_post_path(youtube_post)
-    assert_redirected_to planned_post_path(youtube_post)
+    orphan_post = planned_posts(:draft_post)
+    orphan_post.update_column(:platform, 99)
+    assert_nil PlannedPost.find(orphan_post.id).platform
+
+    post publish_planned_post_path(orphan_post)
+
+    assert_redirected_to planned_post_path(orphan_post)
     assert flash[:alert].present?
+    assert_match(/not supported/i, flash[:alert])
+  end
+
+  test "show has publish button for tiktok draft post" do
+    sign_in_as(@user)
+    get planned_post_path(planned_posts(:tiktok_draft_post))
+    assert_select "form[action=?]", publish_planned_post_path(planned_posts(:tiktok_draft_post))
+  end
+
+  test "publish queues PublishTikTokPostJob for a tiktok post" do
+    sign_in_as(@user)
+    tiktok_post = planned_posts(:tiktok_draft_post)
+
+    assert_enqueued_with(job: PublishTikTokPostJob) do
+      post publish_planned_post_path(tiktok_post)
+    end
+    assert_redirected_to planned_post_path(tiktok_post)
+    assert_match "TikTok", flash[:notice]
+  end
+
+  test "show hides the re-verify button for platforms with no verifier" do
+    sign_in_as(@user)
+    tiktok_post = planned_posts(:tiktok_draft_post)
+    tiktok_post.update!(status: :published, published_at: 1.hour.ago, external_post_id: "v_pub_001")
+
+    get planned_post_path(tiktok_post)
+    assert_select "form[action=?]", verify_planned_post_path(tiktok_post), count: 0
   end
 
   test "show has publish button for instagram draft post" do

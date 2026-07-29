@@ -139,7 +139,7 @@ namespace :storage do
       new_key = "#{target_dir}/#{old_key}"
       new_url = "#{cdn_base}/#{new_key}"
 
-      if MediaAsset.exists?(["raw_metadata LIKE ?", "%#{old_key}%"])
+      if MediaAsset.exists?([ "raw_metadata LIKE ?", "%#{old_key}%" ])
         puts "  #{old_key}: already has a MediaAsset — skipping"
         skipped += 1
         next

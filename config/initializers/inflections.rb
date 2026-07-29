@@ -17,4 +17,5 @@
 
 ActiveSupport::Inflector.inflections(:en) do |inflect|
   inflect.acronym "YouTube"
+  inflect.acronym "TikTok"
 end

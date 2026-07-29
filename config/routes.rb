@@ -16,6 +16,12 @@ Rails.application.routes.draw do
       get    "callback",   to: "auth#callback",   as: :callback
       delete "disconnect", to: "auth#disconnect", as: :disconnect
     end
+    namespace :tiktok do
+      get    "connect",       to: "auth#connect",       as: :connect
+      get    "callback",      to: "auth#callback",      as: :callback
+      post   "refresh_token", to: "auth#refresh_token", as: :refresh_token
+      delete "disconnect",    to: "auth#disconnect",    as: :disconnect
+    end
     namespace :instagram do
       get    "connect",        to: "auth#connect",        as: :connect
       get    "callback",       to: "auth#callback",       as: :callback
@@ -49,6 +55,11 @@ Rails.application.routes.draw do
   post   "chat/messages", to: "chats#create_message", as: :chat_messages
   post   "chat/model",    to: "chats#select_model",   as: :chat_model
   delete "chat",          to: "chats#destroy",        as: :destroy_chat
+
+  # Public legal pages — must stay reachable without authentication because
+  # Meta, Google and TikTok fetch them during app review.
+  get "tos",     to: "pages#tos",     as: :tos
+  get "privacy", to: "pages#privacy", as: :privacy
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
   # Can be used by load balancers and uptime monitors to verify that the app is live.

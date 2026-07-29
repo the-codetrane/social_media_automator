@@ -11,6 +11,13 @@ admin:
   instagram_token_expires_at: <%= 50.days.from_now %>
   instagram_page_id: "123456789"
   instagram_username: "cainandco"
+  tiktok_open_id: "tiktok_open_id_001"
+  tiktok_access_token: "act.tiktok_test_token"
+  tiktok_token_expires_at: <%= 20.hours.from_now %>
+  tiktok_refresh_token: "rft.tiktok_test_refresh"
+  tiktok_refresh_expires_at: <%= 300.days.from_now %>
+  tiktok_username: "cainandco"
+  tiktok_scope: "user.info.basic,video.publish"
   created_at: <%= Time.current %>
   updated_at: <%= Time.current %>
 
@@ -24,6 +31,13 @@ one:
   instagram_token_expires_at: <%= 50.days.from_now %>
   instagram_page_id: "123456789"
   instagram_username: "cainandco"
+  tiktok_open_id: "tiktok_open_id_002"
+  tiktok_access_token: "act.tiktok_test_token_one"
+  tiktok_token_expires_at: <%= 20.hours.from_now %>
+  tiktok_refresh_token: "rft.tiktok_test_refresh_one"
+  tiktok_refresh_expires_at: <%= 300.days.from_now %>
+  tiktok_username: "cainandco"
+  tiktok_scope: "user.info.basic,video.publish"
   created_at: <%= Time.current %>
   updated_at: <%= Time.current %>
 
