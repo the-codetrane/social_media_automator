@@ -117,7 +117,7 @@ module TikTok
 
       publish_id
     rescue TikTok::Error
-      planned_post.update!(status: :failed)
+      mark_failed!(planned_post)
       raise
     ensure
       tempfile&.close
@@ -126,13 +126,26 @@ module TikTok
 
     private
 
+    # Record the failure without validating.  The most common reason to land
+    # here is a post that is itself invalid — a TikTok post whose asset is not a
+    # video — and update! would raise RecordInvalid, masking the real error and
+    # leaving the post stuck in its old status.
+    def mark_failed!(planned_post)
+      planned_post.status = :failed
+      planned_post.save(validate: false)
+    end
+
     # ------------------------------------------------------------------
     # Validation
     # ------------------------------------------------------------------
 
+    # PlannedPost validates this too, but a post created before that validation
+    # existed — or one whose asset was swapped — can still reach here.  It is a
+    # PermanentError rather than an ArgumentError so the publish job marks the
+    # post failed instead of letting the job crash with nothing recorded.
     def validate_video_asset!(asset)
       unless asset.video?
-        raise ArgumentError,
+        raise TikTok::PermanentError,
               "TikTok::VideoPublisher requires a video MediaAsset " \
               "(got media_type=#{asset.media_type} for MediaAsset##{asset.id})"
       end

@@ -281,6 +281,26 @@ class PlannedPostsControllerTest < ActionDispatch::IntegrationTest
     assert_match(/not supported/i, flash[:alert])
   end
 
+  test "index offers a filter chip for every platform" do
+    sign_in_as(@user)
+    get planned_posts_path
+
+    # A third argument to assert_select is read as an equality test, not a
+    # message, so assert the count explicitly instead.
+    PlannedPost.platforms.keys.each do |platform|
+      assert_select "input[name='platforms[]'][value=?]", platform, count: 1
+    end
+  end
+
+  test "index filters down to tiktok posts only" do
+    sign_in_as(@user)
+    get planned_posts_path(platforms: [ "tiktok" ], status: "scheduled")
+
+    assert_response :success
+    assert assigns(:planned_posts).all?(&:tiktok?), "expected only tiktok posts"
+    assert_includes assigns(:planned_posts).map(&:id), planned_posts(:due_tiktok_post).id
+  end
+
   test "show has publish button for tiktok draft post" do
     sign_in_as(@user)
     get planned_post_path(planned_posts(:tiktok_draft_post))

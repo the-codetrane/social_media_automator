@@ -42,7 +42,8 @@ class CreateVarietyPosts < RubyLLM::Tool
 
   param :media_type,
     type: :string,
-    desc: "Restrict to 'image' or 'video'. Leave blank for both.",
+    desc: "Restrict to 'image' or 'video'. Leave blank for both. Ignored for tiktok, " \
+          "which is always restricted to video.",
     required: false
 
   param :exclude_asset_ids,
@@ -79,8 +80,15 @@ class CreateVarietyPosts < RubyLLM::Tool
     recency_days = [ [ recency_days.to_i, 1 ].max, 365 ].min
     min_spacing_minutes = min_spacing_minutes.to_i.clamp(0, 1440)
 
+    # TikTok rejects image posts, and PlannedPost validates that — so selecting
+    # images here would just produce a batch of save failures.
+    media_type = "video" if platform.to_s == "tiktok"
+
     candidates = load_candidates(user_id, media_type, exclude_asset_ids, recency_days)
-    return { error: "No eligible processed assets found. Run enrich_media_assets first." } if candidates.empty?
+    if candidates.empty?
+      return { error: "No eligible processed video assets found for TikTok." } if platform.to_s == "tiktok"
+      return { error: "No eligible processed assets found. Run enrich_media_assets first." }
+    end
 
     selected = select_varied(candidates, count, min_spacing_minutes)
 

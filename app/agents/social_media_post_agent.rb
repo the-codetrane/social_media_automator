@@ -168,7 +168,7 @@ class SocialMediaPostAgent < RubyLLM::Agent
       2. If any asset in the proposed carousel is a video, flag it immediately and ask the user to swap it for an image before proceeding.
       3. This applies equally to create_planned_post + update_planned_post carousel flows and to create_variety_posts.
     #{'  '}
-      Note: Instagram and YouTube do not support carousels via this system, so this restriction is Facebook-specific for now. If platform support changes, re-evaluate.
+      Note: Instagram, YouTube, and TikTok do not support carousels via this system, so this restriction is Facebook-specific for now. If platform support changes, re-evaluate.
 
     - To browse: call list_planned_posts (filter by status, platform, or user_id as needed).
       A post where is_carousel is false has only one image (carousel_asset_ids has one entry).
@@ -209,7 +209,9 @@ class SocialMediaPostAgent < RubyLLM::Agent
       - 3–8 relevant hashtags.
 
       TikTok
-      - Video only — a TikTok post must have a video MediaAsset.
+      - Video only. A TikTok post is REJECTED at save time unless its MediaAsset is a
+        video, so pick a video asset before creating one. When using create_variety_posts
+        with platform "tiktok", selection is restricted to video automatically.
       - Short and punchy: the caption is a hook, not a story.
       - Hard limit: 2,200 characters, but aim for one or two lines.
       - 3–6 hashtags, placed inline or right at the end.

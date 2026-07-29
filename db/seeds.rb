@@ -60,32 +60,34 @@ puts "  Created #{session_count} sessions"
 puts "Creating social templates..."
 
 # Create some global templates (no user)
-template_names = [
-  "Instagram Story Default",
-  "Instagram Feed Post",
-  "Instagram Reel Template",
-  "YouTube Short Format",
-  "YouTube Standard Video",
-  "Facebook Story Template",
-  "Facebook Feed Post",
-  "Instagram Carousel",
-  "YouTube Premiere",
-  "Facebook Live Replay"
+# Name and platform are paired explicitly so a template called "Instagram Feed
+# Post" is actually on the instagram platform.
+template_specs = [
+  [ "Instagram Story Default",  :instagram ],
+  [ "Instagram Feed Post",      :instagram ],
+  [ "Instagram Reel Template",  :instagram ],
+  [ "YouTube Short Format",     :youtube   ],
+  [ "YouTube Standard Video",   :youtube   ],
+  [ "Facebook Story Template",  :facebook  ],
+  [ "Facebook Feed Post",       :facebook  ],
+  [ "Instagram Carousel",       :instagram ],
+  [ "YouTube Premiere",         :youtube   ],
+  [ "Facebook Live Replay",     :facebook  ],
+  [ "TikTok Video Default",     :tiktok    ]
 ]
 
-platforms = [ :instagram, :youtube, :facebook ]
+platforms = [ :instagram, :youtube, :facebook, :tiktok ]
 aspect_ratios = [ "1:1", "9:16", "16:9", "4:5", "1.91:1" ]
 
 templates = []
-template_names.each_with_index do |name, i|
-  platform = platforms[i % 3]
+template_specs.each_with_index do |(name, platform), i|
   templates << SocialTemplate.create!(
     name: name,
     platform: platform,
     user: i < 5 ? nil : users.sample, # First 5 are global, rest belong to users
     default_caption: Faker::Lorem.sentence(word_count: rand(5..15)),
-    max_caption_length: [ 2200, 5000, 63206 ].sample,
-    recommended_aspect_ratio: aspect_ratios.sample,
+    max_caption_length: platform == :tiktok ? 2200 : [ 2200, 5000, 63206 ].sample,
+    recommended_aspect_ratio: platform == :tiktok ? "9:16" : aspect_ratios.sample,
     settings: {
       auto_hashtags: [ true, false ].sample,
       schedule_time: [ "morning", "afternoon", "evening", "night" ].sample,
@@ -159,11 +161,16 @@ end
 
 users.each do |user|
   5.times do |j|
-    # Get a random processed media asset
-    asset = processed_assets.sample
-    next unless asset
+    platform = platforms.sample
 
-    platform = [ :instagram, :youtube, :facebook ].sample
+    # TikTok only accepts video, so draw from the video assets for it — and fall
+    # back to another platform when this seed run happened to generate none.
+    if platform == :tiktok
+      asset = processed_assets.select(&:video?).sample
+      platform = [ :instagram, :youtube, :facebook ].sample if asset.nil?
+    end
+    asset ||= processed_assets.sample
+    next unless asset
     status = [ :draft, :scheduled, :published, :failed, :canceled ].sample
 
     # Handle time constraints based on status
