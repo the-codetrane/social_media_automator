@@ -7,19 +7,11 @@ module TikTok
   # accepts.  TikTok's sandbox is a separate app with its own key pair, so the
   # only thing that changes between modes is which pair we send.
   class ModeTest < ActiveSupport::TestCase
+    include TikTokCredentialsHelper
+
     def teardown
       AppSetting.find_by(key: TikTok::MODE_SETTING)&.destroy
       ENV.delete("TIKTOK_MODE")
-    end
-
-    # Swap in a credentials hash for the duration of the block.
-    def with_credentials(tiktok_hash, &block)
-      creds = Rails.application.credentials
-      creds.stub(:tiktok, tiktok_hash) do
-        creds.stub(:dig, ->(*keys) {
-          keys.first == :tiktok ? tiktok_hash.dig(*keys[1..]) : nil
-        }, &block)
-      end
     end
 
     # -------------------------------------------------------------------------
@@ -71,7 +63,7 @@ module TikTok
         sandbox:    { client_key: "sbaw_sand", client_secret: "sand_secret" }
       }
 
-      with_credentials(creds) do
+      with_tiktok_credentials(creds) do
         assert_equal "aw_prod",   TikTok.client_key(for_mode: "production")
         assert_equal "sbaw_sand", TikTok.client_key(for_mode: "sandbox")
         assert_equal "sand_secret", TikTok.client_secret(for_mode: "sandbox")
@@ -84,14 +76,14 @@ module TikTok
         sandbox_client_key: "sbaw_sand", sandbox_client_secret: "sand_secret"
       }
 
-      with_credentials(creds) do
+      with_tiktok_credentials(creds) do
         assert_equal "aw_prod",   TikTok.client_key(for_mode: "production")
         assert_equal "sbaw_sand", TikTok.client_key(for_mode: "sandbox")
       end
     end
 
     test "treats a legacy flat pair as production so existing setups keep working" do
-      with_credentials({ client_key: "aw_prod", client_secret: "prod_secret" }) do
+      with_tiktok_credentials({ client_key: "aw_prod", client_secret: "prod_secret" }) do
         assert_equal "aw_prod", TikTok.client_key(for_mode: "production")
         assert TikTok.configured?(for_mode: "production")
         assert_not TikTok.configured?(for_mode: "sandbox")
@@ -99,7 +91,7 @@ module TikTok
     end
 
     test "raises a ConfigurationError naming the missing key" do
-      with_credentials({ client_key: "aw_prod", client_secret: "prod_secret" }) do
+      with_tiktok_credentials({ client_key: "aw_prod", client_secret: "prod_secret" }) do
         error = assert_raises(TikTok::ConfigurationError) { TikTok.client_key(for_mode: "sandbox") }
         assert_match(/sandbox/, error.message)
         assert_match(/credentials:edit/, error.message)
@@ -107,7 +99,7 @@ module TikTok
     end
 
     test "configured? requires both halves of the pair" do
-      with_credentials({ sandbox: { client_key: "sbaw_sand" } }) do
+      with_tiktok_credentials({ sandbox: { client_key: "sbaw_sand" } }) do
         assert_not TikTok.configured?(for_mode: "sandbox")
       end
     end
@@ -122,7 +114,7 @@ module TikTok
         sandbox:    { client_key: "sbaw_sand", client_secret: "s" }
       }
 
-      with_credentials(creds) do
+      with_tiktok_credentials(creds) do
         TikTok.mode = "sandbox"
         url = TikTok::AuthService.new(users(:two)).build_auth_url(redirect_uri: "https://example.com/cb")
         assert_equal "sbaw_sand", URI.decode_www_form(URI(url).query).to_h["client_key"]
@@ -139,7 +131,7 @@ module TikTok
         sandbox:    { client_key: "sbaw_sand", client_secret: "s" }
       }
 
-      with_credentials(creds) do
+      with_tiktok_credentials(creds) do
         TikTok.mode = "production"
         url = TikTok::AuthService.new(users(:two), mode: "sandbox")
                                  .build_auth_url(redirect_uri: "https://example.com/cb")
@@ -148,7 +140,7 @@ module TikTok
     end
 
     test "building the service does not raise when the other mode is unconfigured" do
-      with_credentials({ client_key: "aw_prod", client_secret: "s" }) do
+      with_tiktok_credentials({ client_key: "aw_prod", client_secret: "s" }) do
         assert_nothing_raised { TikTok::AuthService.new(users(:two), mode: "sandbox") }
       end
     end
