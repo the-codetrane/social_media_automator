@@ -43,6 +43,8 @@ gem "image_processing", "~> 2.0"
 # libvips backend for Active Storage variants. Rails 8.1.3.1 requires the
 # configured variant processor at boot, so this has to be in the bundle even
 # though image_processing declares it only as an optional dependency.
+# Being in the Gemfile means Bundler.require loads it for anything that reaches
+# config/application, so every CI job that does needs the system library too.
 # The runtime library is installed in the Docker image (see Dockerfile).
 gem "ruby-vips", "~> 2.2"
 
