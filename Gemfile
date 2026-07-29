@@ -111,3 +111,5 @@ group :test do
   gem "minitest-mock"
   gem "rails-controller-testing"
 end
+
+gem "ruby-vips", "~> 2.3"
