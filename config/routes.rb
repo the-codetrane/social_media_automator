@@ -20,6 +20,7 @@ Rails.application.routes.draw do
       get    "connect",       to: "auth#connect",       as: :connect
       get    "callback",      to: "auth#callback",      as: :callback
       post   "refresh_token", to: "auth#refresh_token", as: :refresh_token
+      post   "mode",          to: "auth#set_mode",      as: :mode
       delete "disconnect",    to: "auth#disconnect",    as: :disconnect
     end
     namespace :instagram do

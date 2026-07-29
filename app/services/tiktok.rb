@@ -45,6 +45,129 @@ module TikTok
   # Raised when a publish stays in a non-terminal status for too long.
   class PublishTimeoutError < Error; end
 
+  # Raised when the credentials for the selected mode are missing.
+  class ConfigurationError < Error; end
+
+  # ------------------------------------------------------------------
+  # Sandbox / production mode
+  #
+  # A TikTok app has a separate sandbox with its own client key and secret.
+  # Both flows use the same endpoints — only the credential pair differs — so
+  # switching modes is purely a matter of which pair we hand to the OAuth and
+  # API calls.
+  #
+  # The mode is resolved in this order, first match wins:
+  #   1. AppSetting "tiktok_mode"  — toggled from Admin > TikTok, no redeploy
+  #   2. ENV["TIKTOK_MODE"]        — pin a whole deployment
+  #   3. credentials tiktok:mode   — a committed default
+  #   4. DEFAULT_MODE ("production")
+  #
+  # Tokens are NOT interchangeable between modes: one issued by the sandbox app
+  # is meaningless to the production app. User#tiktok_environment records which
+  # mode minted the stored token, and TikTok::ApiClient refuses to use a token
+  # from the wrong one.
+  # ------------------------------------------------------------------
+
+  MODES        = %w[production sandbox].freeze
+  DEFAULT_MODE = "production"
+  MODE_SETTING = "tiktok_mode"
+
+  # @return [String] "production" or "sandbox"
+  def self.mode
+    raw = stored_mode.presence ||
+      ENV["TIKTOK_MODE"].presence ||
+      Rails.application.credentials.dig(:tiktok, :mode).presence ||
+      DEFAULT_MODE
+
+    MODES.include?(raw.to_s) ? raw.to_s : DEFAULT_MODE
+  end
+
+  def self.sandbox?
+    mode == "sandbox"
+  end
+
+  # Persist the active mode.  Returns the mode that was set.
+  #
+  # @param new_mode [String]
+  # @raise [ArgumentError] for anything outside MODES
+  def self.mode=(new_mode)
+    unless MODES.include?(new_mode.to_s)
+      raise ArgumentError, "Unknown TikTok mode #{new_mode.inspect} (expected one of #{MODES.join(', ')})"
+    end
+
+    AppSetting.set(MODE_SETTING, new_mode.to_s)
+    new_mode.to_s
+  end
+
+  # @return [String] the client key for the active (or given) mode
+  def self.client_key(for_mode: mode)
+    credentials_for(for_mode)[:client_key].presence ||
+      raise(ConfigurationError, missing_credentials_message(for_mode, "client_key"))
+  end
+
+  # @return [String] the client secret for the active (or given) mode
+  def self.client_secret(for_mode: mode)
+    credentials_for(for_mode)[:client_secret].presence ||
+      raise(ConfigurationError, missing_credentials_message(for_mode, "client_secret"))
+  end
+
+  # True when both halves of the credential pair are present for a mode.
+  def self.configured?(for_mode: mode)
+    creds = credentials_for(for_mode)
+    creds[:client_key].present? && creds[:client_secret].present?
+  end
+
+  # Resolve a mode's credential pair.
+  #
+  # Three layouts are accepted so this works whichever way the keys were added:
+  #
+  #   tiktok:                     tiktok:                      tiktok:
+  #     production:                 client_key: ...              client_key: ...
+  #       client_key: ...           client_secret: ...           client_secret: ...
+  #       client_secret: ...        sandbox_client_key: ...
+  #     sandbox:                    sandbox_client_secret: ...
+  #       client_key: ...
+  #       client_secret: ...
+  #
+  # The flat `client_key` / `client_secret` pair is treated as production, so an
+  # existing configuration keeps working untouched.
+  #
+  # @return [Hash] { client_key:, client_secret: }
+  def self.credentials_for(for_mode)
+    tiktok = Rails.application.credentials.tiktok || {}
+    nested = tiktok[for_mode.to_sym]
+
+    if nested.is_a?(Hash)
+      return { client_key: nested[:client_key], client_secret: nested[:client_secret] }
+    end
+
+    if for_mode.to_s == "sandbox"
+      { client_key:    tiktok[:sandbox_client_key],
+        client_secret: tiktok[:sandbox_client_secret] }
+    else
+      { client_key:    tiktok[:client_key].presence    || tiktok[:production_client_key],
+        client_secret: tiktok[:client_secret].presence || tiktok[:production_client_secret] }
+    end
+  end
+
+  # AppSetting lives in the database, which is not guaranteed to be reachable
+  # (asset precompile, a boot before migrations have run), so never let a
+  # lookup failure take down credential resolution.
+  def self.stored_mode
+    AppSetting.get(MODE_SETTING)
+  rescue ActiveRecord::ActiveRecordError => e
+    Rails.logger.debug("[TikTok] Could not read #{MODE_SETTING} from AppSetting: #{e.message}")
+    nil
+  end
+  private_class_method :stored_mode
+
+  def self.missing_credentials_message(for_mode, field)
+    "No TikTok #{field} configured for #{for_mode} mode. " \
+    "Add it with bin/rails credentials:edit under tiktok:#{for_mode}:#{field} " \
+    "(or tiktok:#{field} for production)."
+  end
+  private_class_method :missing_credentials_message
+
   # Error codes that mean "try again later".
   RATE_LIMIT_CODES = %w[
     rate_limit_exceeded

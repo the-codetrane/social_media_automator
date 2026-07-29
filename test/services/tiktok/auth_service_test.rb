@@ -4,6 +4,8 @@ require "test_helper"
 
 module TikTok
   class AuthServiceTest < ActiveSupport::TestCase
+    include TikTokCredentialsHelper
+
     # -------------------------------------------------------------------------
     # Setup
     # -------------------------------------------------------------------------
@@ -24,7 +26,9 @@ module TikTok
         f.adapter :test, stubs
       end
 
-      @service.stub(:token_connection, conn, &block)
+      with_tiktok_credentials do
+        @service.stub(:token_connection, conn, &block)
+      end
     end
 
     # exchange_code labels the connection via creator_info; keep it off the network.
@@ -51,7 +55,7 @@ module TikTok
     # -------------------------------------------------------------------------
 
     test "build_auth_url targets TikTok with the scopes, redirect and state" do
-      url    = @service.build_auth_url(redirect_uri: "https://example.com/admin/tiktok/callback", state: "abc123")
+      url    = with_tiktok_credentials { @service.build_auth_url(redirect_uri: "https://example.com/admin/tiktok/callback", state: "abc123") }
       params = URI.decode_www_form(URI(url).query).to_h
 
       assert url.start_with?(TikTok::AuthService::AUTH_URL)
@@ -62,7 +66,7 @@ module TikTok
     end
 
     test "build_auth_url generates a state when none is supplied" do
-      url    = @service.build_auth_url(redirect_uri: "https://example.com/cb")
+      url    = with_tiktok_credentials { @service.build_auth_url(redirect_uri: "https://example.com/cb") }
       params = URI.decode_www_form(URI(url).query).to_h
 
       assert params["state"].present?
@@ -153,7 +157,7 @@ module TikTok
       end
       conn = Faraday.new { |f| f.response :json, content_type: /\bjson$/; f.adapter :test, stubs }
 
-      service.stub(:token_connection, conn) { service.refresh_access_token! }
+      with_tiktok_credentials { service.stub(:token_connection, conn) { service.refresh_access_token! } }
 
       user.reload
       assert_equal "act.refreshed", user.tiktok_access_token
@@ -174,7 +178,7 @@ module TikTok
       end
       conn = Faraday.new { |f| f.response :json, content_type: /\bjson$/; f.adapter :test, stubs }
 
-      service.stub(:token_connection, conn) { service.refresh_access_token! }
+      with_tiktok_credentials { service.stub(:token_connection, conn) { service.refresh_access_token! } }
 
       assert_equal existing_refresh, user.reload.tiktok_refresh_token
     end
@@ -196,7 +200,7 @@ module TikTok
       end
       conn = Faraday.new { |f| f.response :json, content_type: /\bjson$/; f.adapter :test, stubs }
 
-      service.stub(:token_connection, conn) { service.disconnect }
+      with_tiktok_credentials { service.stub(:token_connection, conn) { service.disconnect } }
 
       user.reload
       assert_nil user.tiktok_access_token
@@ -214,7 +218,7 @@ module TikTok
       failing = Object.new
       failing.define_singleton_method(:post) { |*_, &_blk| raise Faraday::ConnectionFailed, "network down" }
 
-      service.stub(:token_connection, failing) { service.disconnect }
+      with_tiktok_credentials { service.stub(:token_connection, failing) { service.disconnect } }
 
       assert_not user.reload.tiktok_connected?
     end

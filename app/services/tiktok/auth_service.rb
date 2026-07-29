@@ -24,11 +24,24 @@ module TikTok
     SCOPES = %w[user.info.basic video.publish].freeze
 
     # @param user [User]
-    def initialize(user)
-      @user          = user
-      @client_key    = Rails.application.credentials.dig(:tiktok, :client_key)
-      @client_secret = Rails.application.credentials.dig(:tiktok, :client_secret)
+    # @param mode [String] "production" or "sandbox"; defaults to the active mode
+    def initialize(user, mode: TikTok.mode)
+      @user = user
+      @mode = mode
     end
+
+    # Resolved lazily so building the service never raises on a mode whose
+    # credentials are absent — callers that only need #connected? or #disconnect
+    # should not blow up because the other mode is unconfigured.
+    def client_key
+      @client_key ||= TikTok.client_key(for_mode: @mode)
+    end
+
+    def client_secret
+      @client_secret ||= TikTok.client_secret(for_mode: @mode)
+    end
+
+    attr_reader :mode
 
     # Build the TikTok consent-screen URL.
     #
@@ -39,7 +52,7 @@ module TikTok
     def build_auth_url(redirect_uri:, state: SecureRandom.hex(16))
       uri       = URI(AUTH_URL)
       uri.query = URI.encode_www_form(
-        client_key:    @client_key,
+        client_key:    client_key,
         scope:         SCOPES.join(","),
         response_type: "code",
         redirect_uri:  redirect_uri,
@@ -55,8 +68,8 @@ module TikTok
     # @return [User] the updated user
     def exchange_code(code, redirect_uri:)
       result = token_request(
-        client_key:    @client_key,
-        client_secret: @client_secret,
+        client_key:    client_key,
+        client_secret: client_secret,
         code:          CGI.unescape(code.to_s),
         grant_type:    "authorization_code",
         redirect_uri:  redirect_uri
@@ -80,8 +93,8 @@ module TikTok
       end
 
       result = token_request(
-        client_key:    @client_key,
-        client_secret: @client_secret,
+        client_key:    client_key,
+        client_secret: client_secret,
         grant_type:    "refresh_token",
         refresh_token: @user.tiktok_refresh_token
       )
@@ -106,8 +119,8 @@ module TikTok
       token_connection.post(REVOKE_URL) do |req|
         req.headers["Content-Type"] = "application/x-www-form-urlencoded"
         req.body = URI.encode_www_form(
-          client_key:    @client_key,
-          client_secret: @client_secret,
+          client_key:    client_key,
+          client_secret: client_secret,
           token:         @user.tiktok_access_token
         )
       end
@@ -123,7 +136,8 @@ module TikTok
         tiktok_refresh_token:      nil,
         tiktok_refresh_expires_at: nil,
         tiktok_username:           nil,
-        tiktok_scope:              nil
+        tiktok_scope:              nil,
+        tiktok_environment:        nil
       )
     end
 
@@ -134,7 +148,8 @@ module TikTok
         tiktok_token_expires_at:   Time.current + result["expires_in"].to_i.seconds,
         tiktok_refresh_token:      result["refresh_token"].presence || @user.tiktok_refresh_token,
         tiktok_refresh_expires_at: refresh_expires_at(result),
-        tiktok_scope:              result["scope"].presence || @user.tiktok_scope
+        tiktok_scope:              result["scope"].presence || @user.tiktok_scope,
+        tiktok_environment:        @mode
       )
     end
 

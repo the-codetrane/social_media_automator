@@ -126,11 +126,26 @@ module TikTok
     # Return a usable access token, refreshing it first when it is about to
     # expire.  TikTok access tokens are only valid for 24 hours.
     def access_token
+      verify_environment!
       refresh_token_if_needed!
 
       token = @user.tiktok_access_token
       raise TikTok::TokenExpiredError, "User #{@user.id} has no TikTok access token" if token.blank?
       token
+    end
+
+    # A token minted by the sandbox app is meaningless to the production app and
+    # vice versa.  Without this check the mismatch surfaces as an opaque
+    # access_token_invalid from TikTok, which is a miserable thing to debug
+    # right after someone flips the mode.
+    def verify_environment!
+      stored = @user.tiktok_environment.presence
+      return if stored.nil? # connected before the mode toggle existed
+      return if stored == TikTok.mode
+
+      raise TikTok::TokenExpiredError,
+            "User #{@user.id} is connected to the TikTok #{stored} app but the app is " \
+            "running in #{TikTok.mode} mode. Reconnect TikTok in Admin, or switch the mode back."
     end
 
     def refresh_token_if_needed!
