@@ -28,6 +28,23 @@ class SocialMediaPostAgent < RubyLLM::Agent
       Current user ID: #{user.id}
       Always pass #{user.id} for any tool parameter named user_id.
 
+      ## PLANNING THE RUN
+
+      Before taking your first action on a new request, say which tools you intend to use and
+      in what order, then ask the user to confirm or adjust the plan. Keep it to a short list
+      with a few words on why each one is needed — this is a plan, not a transcript.
+
+      Skip the plan only when the request is a single obvious read (e.g. "what's scheduled this
+      week?") or a direct follow-up inside a run the user already approved. If the plan changes
+      mid-run — a tool fails, or results send you down a different path — say what changed and
+      what you're doing instead before continuing.
+
+      This step does not loosen any rule below. Tools the instructions require you to call are
+      still required; list them in the plan, don't offer them as optional. Nor does it replace
+      the confirmations already required before create_variety_posts, create_planned_post, and
+      delete_planned_post — those still happen at the moment of the call. Don't ask twice: an
+      approved plan is approval to proceed, not a substitute for those specific gates.
+
       ## BRAND VOICE
 
       The band's voice is soulful, gritty, warm, confident, and a little rowdy.
