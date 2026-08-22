@@ -133,6 +133,38 @@ module Instagram
       assert_nil captured_media_params[:image_url]
     end
 
+    test "publish ignores collaborators and audio — Stories support neither" do
+      post = PlannedPost.create!(
+        user:             @user,
+        media_asset:      @image_asset,
+        platform:         :instagram,
+        status:           :draft,
+        scheduled_at:     nil,
+        caption:          "Ignored for stories",
+        platform_payload: {
+          "post_type"     => "story",
+          "collaborators" => [ "chef_alex" ],
+          "audio_id"      => "587784541076604"
+        }
+      )
+
+      captured_media_params = nil
+      mock_client = Object.new
+      mock_client.define_singleton_method(:publishing_limit) { |_| { "data" => [ { "quota_usage" => 0, "config" => { "quota_total" => 25 } } ] } }
+      mock_client.define_singleton_method(:get) { |*_| { "status_code" => "FINISHED" } }
+      mock_client.define_singleton_method(:post) do |path, body = {}|
+        path.end_with?("/media_publish") ? { "id" => "m1" } : (captured_media_params = body; { "id" => "c1" })
+      end
+
+      @publisher.instance_variable_set(:@client, mock_client)
+      @publisher.publish(post)
+
+      assert_equal "STORIES", captured_media_params[:media_type]
+      assert_not captured_media_params.key?(:collaborators)
+      assert_not captured_media_params.key?(:audio_configuration)
+      assert_not captured_media_params.key?(:caption)
+    end
+
     # -------------------------------------------------------------------------
     # Rate limit handling
     # -------------------------------------------------------------------------

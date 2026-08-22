@@ -191,7 +191,34 @@ module Instagram
       end
     end
 
-    test "raises ArgumentError when a non-image asset is included" do
+    test "raises ArgumentError when an asset is neither image nor video" do
+      audio = MediaAsset.create!(
+        external_id:   "gdrive_file_audio_001",
+        external_name: "podcast.mp3",
+        mime_type:     "audio/mpeg",
+        media_type:    :audio,
+        status:        :processed,
+        first_seen_at: 1.day.ago,
+        raw_metadata:  { "public_url" => "https://cdn.example.com/podcast.mp3" }
+      )
+
+      post = PlannedPost.create!(
+        user:             @user,
+        media_asset:      @image_1,
+        platform:         :instagram,
+        status:           :draft,
+        scheduled_at:     nil,
+        platform_payload: { "carousel_asset_ids" => [ @image_1.id, audio.id ] }
+      )
+
+      @publisher.stub(:check_quota!, nil) do
+        err = assert_raises(ArgumentError) { @publisher.publish(post) }
+        assert_match(/must be images or videos/i, err.message)
+        assert_match(audio.id.to_s, err.message)
+      end
+    end
+
+    test "publishes a mixed carousel of images and videos" do
       video = media_assets(:sample_video)
 
       post = PlannedPost.create!(
@@ -200,14 +227,44 @@ module Instagram
         platform:         :instagram,
         status:           :draft,
         scheduled_at:     nil,
+        caption:          "Mixed carousel",
         platform_payload: { "carousel_asset_ids" => [ @image_1.id, video.id ] }
       )
 
-      @publisher.stub(:check_quota!, nil) do
-        err = assert_raises(ArgumentError) { @publisher.publish(post) }
-        assert_match(/must be images/i, err.message)
-        assert_match(video.id.to_s, err.message)
+      captured = []
+      mock_client = Object.new
+      mock_client.define_singleton_method(:publishing_limit) { |_| { "data" => [ { "quota_usage" => 0, "config" => { "quota_total" => 25 } } ] } }
+      mock_client.define_singleton_method(:get) { |*_| { "status_code" => "FINISHED" } }
+      mock_client.define_singleton_method(:post) do |path, body = {}|
+        if path.end_with?("/media_publish")
+          { "id" => "ig_media_mixed_001" }
+        else
+          captured << body
+          { "id" => "cont_#{captured.size}" }
+        end
       end
+
+      @publisher.instance_variable_set(:@client, mock_client)
+      result = @publisher.publish(post)
+
+      assert_equal "ig_media_mixed_001", result
+      assert post.reload.published?
+
+      image_child, video_child, parent = captured
+
+      # Image children carry image_url and no media_type…
+      assert_equal "true", image_child[:is_carousel_item]
+      assert_equal @image_1.public_url, image_child[:image_url]
+      assert_nil image_child[:media_type]
+
+      # …while video children must declare media_type=VIDEO.
+      assert_equal "true", video_child[:is_carousel_item]
+      assert_equal "https://cdn.example.com/reel.mp4", video_child[:video_url]
+      assert_equal "VIDEO", video_child[:media_type]
+      assert_nil video_child[:image_url]
+
+      assert_equal "CAROUSEL", parent[:media_type]
+      assert_equal "cont_1,cont_2", parent[:children]
     end
 
     test "raises ApiError when an asset has no public URL" do
@@ -300,6 +357,47 @@ module Instagram
       end
 
       assert post.reload.failed?
+    end
+
+    # -------------------------------------------------------------------------
+    # Collaborators
+    # -------------------------------------------------------------------------
+
+    test "collaborators are sent on the parent container but not on children" do
+      post = PlannedPost.create!(
+        user:             @user,
+        media_asset:      @image_1,
+        platform:         :instagram,
+        status:           :draft,
+        scheduled_at:     nil,
+        caption:          "Co-authored carousel",
+        platform_payload: {
+          "carousel_asset_ids" => [ @image_1.id, @image_2.id ],
+          "collaborators"      => [ "@chef_alex", "bakery_co" ]
+        }
+      )
+
+      captured = []
+      mock_client = Object.new
+      mock_client.define_singleton_method(:publishing_limit) { |_| { "data" => [ { "quota_usage" => 0, "config" => { "quota_total" => 25 } } ] } }
+      mock_client.define_singleton_method(:get) { |*_| { "status_code" => "FINISHED" } }
+      mock_client.define_singleton_method(:post) do |path, body = {}|
+        if path.end_with?("/media_publish")
+          { "id" => "ig_media_001" }
+        else
+          captured << body
+          { "id" => "cont_#{captured.size}" }
+        end
+      end
+
+      @publisher.instance_variable_set(:@client, mock_client)
+      @publisher.publish(post)
+
+      parent = captured.last
+      assert_equal "CAROUSEL", parent[:media_type]
+      assert_equal [ "chef_alex", "bakery_co" ], JSON.parse(parent[:collaborators])
+
+      captured[0..1].each { |child| assert_not child.key?(:collaborators) }
     end
   end
 end

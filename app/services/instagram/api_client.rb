@@ -12,8 +12,11 @@ module Instagram
   #   client.get("me/accounts")
   #   client.post("#{ig_id}/media", image_url: "...", caption: "...")
   class ApiClient
-    BASE_URL     = "https://graph.facebook.com/v25.0/"
-    MAX_RETRIES  = 3
+    # Graph API version. v26.0 is required for the Instagram Audio API
+    # (GET /ig_audio, audio_configuration) and the IG Media collaborators edge.
+    GRAPH_VERSION = "v26.0"
+    BASE_URL      = "https://graph.facebook.com/#{GRAPH_VERSION}/"
+    MAX_RETRIES   = 3
 
     # @param user [User] must have instagram_access_token present
     # @param access_token [String, nil] override the user's stored token (e.g. a Page access token)
