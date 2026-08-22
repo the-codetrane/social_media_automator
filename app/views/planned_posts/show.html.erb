@@ -236,6 +236,27 @@
             </dd>
           </div>
         <% end %>
+        <% if (collaborators = @planned_post.platform_payload&.dig("collaborators")).present? %>
+          <div>
+            <dt class="text-xs text-gray-400 uppercase tracking-wide mb-1">Collaborators</dt>
+            <dd class="flex flex-wrap gap-1.5 mt-1">
+              <% collaborators.each do |username| %>
+                <span class="inline-flex items-center px-2 py-0.5 bg-indigo-50 text-indigo-700 text-sm rounded-md">@<%= username %></span>
+              <% end %>
+            </dd>
+          </div>
+        <% end %>
+        <% if (audio_id = @planned_post.platform_payload&.dig("audio_id")).present? %>
+          <div>
+            <dt class="text-xs text-gray-400 uppercase tracking-wide mb-1">Audio</dt>
+            <dd class="text-lg text-gray-900">
+              <%= @planned_post.platform_payload["audio_title"].presence || audio_id %>
+              <% if (artist = @planned_post.platform_payload["audio_artist"]).present? %>
+                <span class="block text-sm text-gray-500"><%= artist %></span>
+              <% end %>
+            </dd>
+          </div>
+        <% end %>
         <div>
           <dt class="text-xs text-gray-400 uppercase tracking-wide mb-1">Created</dt>
           <dd class="text-lg text-gray-900"><%= @planned_post.created_at.strftime("%B %-d, %Y") %></dd>

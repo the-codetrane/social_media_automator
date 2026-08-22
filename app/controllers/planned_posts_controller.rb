@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class PlannedPostsController < ApplicationController
-  before_action :set_planned_post, only: %i[show edit update publish verify]
+  before_action :set_planned_post, only: %i[show edit update publish verify audio_search collaborator_search]
 
   SORT_COLUMNS = %w[platform scheduled_at published_at created_at].freeze
 
@@ -67,6 +67,30 @@ class PlannedPostsController < ApplicationController
     end
   end
 
+  # JSON — powers the Reels audio picker on the edit form.
+  # Searches Instagram's audio catalogue on behalf of the post's owner.
+  def audio_search
+    audio_type = Instagram::AudioService::AUDIO_TYPES.include?(params[:audio_type]) ? params[:audio_type] : "music"
+
+    tracks = Instagram::AudioService.new(@planned_post.user)
+      .search(audio_type: audio_type, query: params[:q])
+
+    render json: { tracks: tracks.map { |track| audio_track_json(track) } }
+  rescue Instagram::Error => e
+    # A missing/expired token or an unconnected account surfaces here — the
+    # picker shows the message rather than silently returning no results.
+    render json: { error: e.message }, status: :bad_gateway
+  end
+
+  # JSON — powers the collaborator typeahead on the edit form.
+  # Instagram has no username search endpoint, so suggestions come from the
+  # usernames this user has collaborated with before.
+  def collaborator_search
+    render json: {
+      collaborators: PlannedPost.collaborator_suggestions(@planned_post.user, query: params[:q])
+    }
+  end
+
   def bulk_reschedule
     amount = params[:amount].to_i.clamp(1, 10)
     unit   = %w[hours days weeks].include?(params[:unit]) ? params[:unit] : "days"
@@ -108,6 +132,17 @@ class PlannedPostsController < ApplicationController
       @planned_post.platform_payload = (@planned_post.platform_payload || {}).except("carousel_asset_ids")
     end
 
+    if @planned_post.instagram?
+      begin
+        apply_instagram_options!
+      rescue ArgumentError => e
+        @planned_post.errors.add(:base, e.message)
+        load_form_data
+        render :edit, status: :unprocessable_entity
+        return
+      end
+    end
+
     if @planned_post.save
       redirect_to @planned_post, notice: "Planned post was successfully updated."
     else
@@ -130,6 +165,71 @@ class PlannedPostsController < ApplicationController
     @media_assets = MediaAsset.where(status: [ :discovered, :processed ]).order(:external_name)
     @social_templates = SocialTemplate.order(:name)
     @carousel_asset_ids = @planned_post.platform_payload&.dig("carousel_asset_ids") || []
+    @collaborators = @planned_post.platform_payload&.dig("collaborators") || []
+    @selected_audio = selected_audio_for(@planned_post)
+  end
+
+  # The currently attached track, as the audio picker renders it.
+  # Title/artist are stored alongside the ID purely so the form and show page
+  # can name the track without a round-trip to Meta.
+  def selected_audio_for(planned_post)
+    payload = planned_post.platform_payload.to_h
+    return nil if payload["audio_id"].blank?
+
+    {
+      "audio_id" => payload["audio_id"],
+      "title"    => payload["audio_title"],
+      "artist"   => payload["audio_artist"]
+    }
+  end
+
+  # Merge the Instagram-only options (collaborators, attached audio) from the
+  # form into platform_payload.
+  #
+  # Collaborators are normalized by the same code the publisher uses, so the
+  # form rejects a 4th collaborator instead of failing at publish time.
+  def apply_instagram_options!
+    payload = @planned_post.platform_payload.to_h
+
+    collaborators = Instagram::PublishOptions.normalize_collaborators(
+      params.dig(:planned_post, :collaborators)
+    )
+
+    payload = collaborators.any? ? payload.merge("collaborators" => collaborators) : payload.except("collaborators")
+
+    audio_id = params.dig(:planned_post, :audio_id).presence
+
+    payload =
+      if audio_id
+        payload.merge(
+          "audio_id"     => audio_id,
+          "audio_title"  => params.dig(:planned_post, :audio_title).presence,
+          "audio_artist" => params.dig(:planned_post, :audio_artist).presence
+        ).compact
+      else
+        payload.except("audio_id", "audio_title", "audio_artist")
+      end
+
+    @planned_post.platform_payload = payload
+  end
+
+  # Compact JSON shape for one track from the Instagram Audio API.
+  def audio_track_json(track)
+    {
+      audio_id:   track["audio_id"],
+      title:      track["title"],
+      artist:     track["display_artist"] || track["ig_username"],
+      audio_type: track["audio_type"],
+      duration:   format_duration(track["duration_in_ms"]),
+      thumbnail:  track["cover_artwork_thumbnail_uri"] || track["profile_picture_url"]
+    }
+  end
+
+  def format_duration(milliseconds)
+    return nil if milliseconds.blank?
+
+    total_seconds = milliseconds.to_i / 1000
+    format("%d:%02d", total_seconds / 60, total_seconds % 60)
   end
 
   def planned_post_params

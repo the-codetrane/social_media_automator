@@ -32,15 +32,25 @@ module Instagram
     # @return [String, nil] JSON array of usernames, or nil when unset
     # @raise [ArgumentError] when more than MAX_COLLABORATORS are given
     def collaborators(payload)
-      raw = payload.to_h["collaborators"]
-      return nil if raw.blank?
+      usernames = normalize_collaborators(payload.to_h["collaborators"])
+      return nil if usernames.empty?
 
-      usernames = Array(raw)
+      usernames.to_json
+    end
+
+    # Clean a raw collaborators value into the usernames Instagram expects:
+    # no "@" prefix, no surrounding whitespace, no blanks, no duplicates.
+    #
+    # Shared with the UI so the edit form validates exactly like the publisher.
+    #
+    # @param value [Array<String>, String, nil]
+    # @return [Array<String>]
+    # @raise [ArgumentError] when more than MAX_COLLABORATORS remain
+    def normalize_collaborators(value)
+      usernames = Array(value)
         .map { |name| name.to_s.strip.delete_prefix("@") }
         .reject(&:blank?)
         .uniq
-
-      return nil if usernames.empty?
 
       if usernames.size > MAX_COLLABORATORS
         raise ArgumentError,
@@ -48,7 +58,7 @@ module Instagram
               "(#{usernames.size} provided: #{usernames.join(", ")})"
       end
 
-      usernames.to_json
+      usernames
     end
 
     # @param payload [Hash, nil] a PlannedPost#platform_payload

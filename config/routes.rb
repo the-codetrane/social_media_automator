@@ -39,6 +39,8 @@ Rails.application.routes.draw do
     member do
       post :publish
       post :verify
+      get :audio_search
+      get :collaborator_search
     end
     collection do
       patch :bulk_reschedule
