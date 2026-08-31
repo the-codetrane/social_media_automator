@@ -66,8 +66,9 @@ module Instagram
     # @raise [ArgumentError] when audio_id is missing or a volume is out of range
     def audio_configuration(payload)
       payload = payload.to_h
-      config  = payload["audio_configuration"].presence || {}
-      config  = config.to_h.stringify_keys
+      raw = payload["audio_configuration"]
+      config = raw.blank? ? {} : (raw.respond_to?(:to_h) ? raw.to_h : raise(ArgumentError, "audio_configuration must be a hash (got #{raw.class})"))
+      config = config.stringify_keys
 
       audio_id = (config["audio_id"] || payload["audio_id"]).presence
       return nil if audio_id.blank?
