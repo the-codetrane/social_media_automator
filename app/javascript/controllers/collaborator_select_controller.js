@@ -17,6 +17,7 @@ export default class extends Controller {
   connect() {
     this._selected = [...this.initialValue]
     this._timer = null
+    this._lastQuery = null
     this.render()
   }
 
