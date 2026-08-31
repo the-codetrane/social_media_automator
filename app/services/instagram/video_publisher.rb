@@ -23,10 +23,17 @@ module Instagram
   #   #     "share_to_feed"  => true,          # also appear in main feed (default: true)
   #   #     "cover_url"      => "https://…",   # custom thumbnail image URL
   #   #     "thumb_offset"   => 1000,          # ms into video to use as thumbnail
-  #   #     "audio_name"     => "My Track",    # custom audio track name
+  #   #     "audio_name"     => "My Track",    # renames YOUR original audio
   #   #     "collaborators"  => ["ig_user_1"], # up to 3 collaborator usernames
-  #   #     "location_id"    => "123456789"    # Facebook Page ID for a location tag
+  #   #     "location_id"    => "123456789",   # Facebook Page ID for a location tag
+  #   #     "audio_id"       => "5877845410",  # attach a track (Instagram::AudioService)
+  #   #     "audio_configuration" => {         # …or the long form with volumes
+  #   #       "audio_id" => "5877845410", "audio_volume" => 80, "video_volume" => 50
+  #   #     }
   #   #   }
+  #
+  #   # Note: audio_name only renames a Reel's own original audio. To attach a
+  #   # track from Instagram's catalogue use audio_id / audio_configuration.
   #
   # The service updates the PlannedPost record on success (status: published,
   # external_post_id, published_at) and on failure (status: failed).
@@ -37,14 +44,16 @@ module Instagram
     # Videos can take longer to process than images.
     POLL_TIMEOUT_SECONDS  = 600
 
-    # Optional platform_payload keys forwarded to the Meta API.
+    # Optional platform_payload keys forwarded to the Meta API as-is.
     # Keys are mapped from the snake_case payload format to the Meta API param names.
+    #
+    # collaborators and audio_configuration are built separately via
+    # Instagram::PublishOptions because they need JSON encoding and validation.
     OPTIONAL_PARAMS = {
-      "cover_url"     => :cover_url,
-      "thumb_offset"  => :thumb_offset,
-      "audio_name"    => :audio_name,
-      "location_id"   => :location_id,
-      "collaborators" => :collaborators
+      "cover_url"    => :cover_url,
+      "thumb_offset" => :thumb_offset,
+      "audio_name"   => :audio_name,
+      "location_id"  => :location_id
     }.freeze
 
     # @param user [User] must have instagram_user_id + instagram_access_token set
@@ -116,7 +125,7 @@ module Instagram
     #
     # Optional (from platform_payload):
     #   caption, cover_url, thumb_offset, audio_name, location_id,
-    #   collaborators, share_to_feed
+    #   collaborators, audio_configuration, share_to_feed
     #
     # @param asset        [MediaAsset]
     # @param planned_post [PlannedPost]
@@ -138,9 +147,15 @@ module Instagram
         value = payload[payload_key]
         next if value.nil?
 
-        # The Meta API expects collaborators as a JSON array string.
-        params[api_key] = api_key == :collaborators ? value.to_json : value.to_s
+        params[api_key] = value.to_s
       end
+
+      # Collaborators and attached audio are JSON-encoded and validated.
+      collaborators = Instagram::PublishOptions.collaborators(payload)
+      params[:collaborators] = collaborators if collaborators
+
+      audio_configuration = Instagram::PublishOptions.audio_configuration(payload)
+      params[:audio_configuration] = audio_configuration if audio_configuration
 
       Rails.logger.debug("[Instagram::VideoPublisher] Creating video container for MediaAsset##{asset.id}")
 

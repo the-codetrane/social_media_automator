@@ -575,4 +575,198 @@ class PlannedPostsControllerTest < ActionDispatch::IntegrationTest
     assert_equal new_asset.id, @planned_post.media_asset_id
     assert_equal "Updated caption", @planned_post.caption
   end
+
+  # ---------------------------------------------------------------------------
+  # Instagram options — collaborators
+  # ---------------------------------------------------------------------------
+
+  test "edit renders the collaborator and audio pickers for instagram posts" do
+    sign_in_as(@user)
+    get edit_planned_post_path(@planned_post)
+
+    assert_response :success
+    assert_select "[data-controller='collaborator-select']"
+    assert_select "[data-controller='audio-select']"
+  end
+
+  test "update stores normalized collaborators in platform_payload" do
+    sign_in_as(@user)
+
+    patch planned_post_path(@planned_post), params: {
+      planned_post: { collaborators: [ "@chef_alex", " bakery_co ", "" ] }
+    }
+
+    assert_redirected_to planned_post_path(@planned_post)
+    assert_equal [ "chef_alex", "bakery_co" ], @planned_post.reload.platform_payload["collaborators"]
+  end
+
+  test "update clears collaborators when none are submitted" do
+    sign_in_as(@user)
+    @planned_post.update!(platform_payload: { "collaborators" => [ "chef_alex" ] })
+
+    patch planned_post_path(@planned_post), params: { planned_post: { caption: "No collabs" } }
+
+    assert_redirected_to planned_post_path(@planned_post)
+    assert_not @planned_post.reload.platform_payload.key?("collaborators")
+  end
+
+  test "update rejects more collaborators than Instagram allows" do
+    sign_in_as(@user)
+
+    patch planned_post_path(@planned_post), params: {
+      planned_post: { collaborators: %w[one two three four] }
+    }
+
+    assert_response :unprocessable_entity
+    assert_select "li", /at most 3 collaborators/
+    assert_nil @planned_post.reload.platform_payload&.dig("collaborators")
+  end
+
+  test "update leaves platform_payload alone for non-instagram posts" do
+    sign_in_as(@user)
+    post = planned_posts(:youtube_draft_post)
+
+    patch planned_post_path(post), params: {
+      planned_post: { collaborators: [ "chef_alex" ] }
+    }
+
+    assert_redirected_to planned_post_path(post)
+    assert_nil post.reload.platform_payload&.dig("collaborators")
+  end
+
+  # ---------------------------------------------------------------------------
+  # Instagram options — audio
+  # ---------------------------------------------------------------------------
+
+  test "update stores the selected audio track" do
+    sign_in_as(@user)
+
+    patch planned_post_path(@planned_post), params: {
+      planned_post: {
+        audio_id:     "587784541076604",
+        audio_title:  "Birthday Wish",
+        audio_artist: "Shuba"
+      }
+    }
+
+    assert_redirected_to planned_post_path(@planned_post)
+    payload = @planned_post.reload.platform_payload
+    assert_equal "587784541076604", payload["audio_id"]
+    assert_equal "Birthday Wish", payload["audio_title"]
+    assert_equal "Shuba", payload["audio_artist"]
+  end
+
+  test "update clears the audio track when none is submitted" do
+    sign_in_as(@user)
+    @planned_post.update!(platform_payload: {
+      "audio_id" => "587784541076604", "audio_title" => "Birthday Wish", "audio_artist" => "Shuba"
+    })
+
+    patch planned_post_path(@planned_post), params: { planned_post: { caption: "Silent" } }
+
+    assert_redirected_to planned_post_path(@planned_post)
+    payload = @planned_post.reload.platform_payload
+    assert_not payload.key?("audio_id")
+    assert_not payload.key?("audio_title")
+  end
+
+  test "update preserves carousel_asset_ids while setting collaborators" do
+    sign_in_as(@user)
+    image_1 = media_assets(:sample_image)
+    image_2 = media_assets(:sample_image_2)
+
+    patch planned_post_path(@planned_post), params: {
+      planned_post: {
+        post_type:          "carousel",
+        carousel_asset_ids: [ image_1.id, image_2.id ],
+        collaborators:      [ "chef_alex" ]
+      }
+    }
+
+    assert_redirected_to planned_post_path(@planned_post)
+    payload = @planned_post.reload.platform_payload
+    assert_equal [ image_1.id, image_2.id ], payload["carousel_asset_ids"]
+    assert_equal [ "chef_alex" ], payload["collaborators"]
+  end
+
+  # ---------------------------------------------------------------------------
+  # Search endpoints
+  # ---------------------------------------------------------------------------
+
+  test "collaborator_search returns previously used usernames with counts" do
+    sign_in_as(@user)
+    @planned_post.update!(platform_payload: { "collaborators" => [ "chef_alex", "bakery_co" ] })
+
+    get collaborator_search_planned_post_path(@planned_post), params: { q: "chef" }
+
+    assert_response :success
+    body = JSON.parse(response.body)
+    assert_equal [ { "username" => "chef_alex", "count" => 1 } ], body["collaborators"]
+  end
+
+  test "collaborator_search requires a signed-in user" do
+    get collaborator_search_planned_post_path(@planned_post)
+    assert_redirected_to new_session_path
+  end
+
+  test "audio_search returns tracks from the Audio API" do
+    sign_in_as(@user)
+
+    fake_service = Object.new
+    fake_service.define_singleton_method(:search) do |audio_type:, query:|
+      [ {
+        "audio_id"                    => "587784541076604",
+        "title"                       => "Birthday Wish",
+        "display_artist"              => "Shuba",
+        "audio_type"                  => audio_type,
+        "duration_in_ms"              => 153760,
+        "cover_artwork_thumbnail_uri" => "https://cdn.example.com/art.jpg"
+      } ]
+    end
+
+    Instagram::AudioService.stub(:new, fake_service) do
+      get audio_search_planned_post_path(@planned_post), params: { q: "birthday" }
+    end
+
+    assert_response :success
+    track = JSON.parse(response.body)["tracks"].first
+    assert_equal "587784541076604", track["audio_id"]
+    assert_equal "Birthday Wish", track["title"]
+    assert_equal "Shuba", track["artist"]
+    assert_equal "2:33", track["duration"]
+  end
+
+  test "audio_search reports Instagram errors instead of failing silently" do
+    sign_in_as(@user)
+
+    fake_service = Object.new
+    fake_service.define_singleton_method(:search) do |**|
+      raise Instagram::TokenExpiredError, "User has no Instagram access token"
+    end
+
+    Instagram::AudioService.stub(:new, fake_service) do
+      get audio_search_planned_post_path(@planned_post), params: { q: "x" }
+    end
+
+    assert_response :bad_gateway
+    assert_match(/no Instagram access token/, JSON.parse(response.body)["error"])
+  end
+
+  test "audio_search falls back to the music catalogue for an unknown audio_type" do
+    sign_in_as(@user)
+    captured_type = nil
+
+    fake_service = Object.new
+    fake_service.define_singleton_method(:search) do |audio_type:, query:|
+      captured_type = audio_type
+      []
+    end
+
+    Instagram::AudioService.stub(:new, fake_service) do
+      get audio_search_planned_post_path(@planned_post), params: { audio_type: "podcast" }
+    end
+
+    assert_response :success
+    assert_equal "music", captured_type
+  end
 end

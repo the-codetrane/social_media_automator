@@ -61,8 +61,11 @@ class VerifyPublishedPostJob < ApplicationJob
   def verification_data(platform, result)
     permalink = result["permalink"] || result["permalink_url"]
     {
-      "permalink"   => permalink,
-      "verified_at" => Time.current.iso8601
+      "permalink" => permalink,
+      # Instagram only: MUSIC when a catalogue track is attached to the Reel,
+      # ORIGINAL_SOUND otherwise. Absent for non-video and non-Instagram posts.
+      "media_audio_type" => result["media_audio_type"],
+      "verified_at"      => Time.current.iso8601
     }.compact
   end
 end

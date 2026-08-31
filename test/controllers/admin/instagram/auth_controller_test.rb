@@ -17,7 +17,7 @@ class Admin::Instagram::AuthControllerTest < ActionDispatch::IntegrationTest
   test "connect: assigns @auth_url containing the Meta OAuth endpoint" do
     sign_in_as users(:admin)
     get admin_instagram_connect_path
-    assert_match %r{https://www\.facebook\.com/v25\.0/dialog/oauth},
+    assert_match %r{https://www\.facebook\.com/#{Regexp.escape(Instagram::ApiClient::GRAPH_VERSION)}/dialog/oauth},
                  @controller.view_assigns["auth_url"]
   end
 

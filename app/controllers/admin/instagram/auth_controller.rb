@@ -3,7 +3,9 @@
 module Admin
   module Instagram
     class AuthController < Admin::BaseController
-      OAUTH_URL    = "https://www.facebook.com/v25.0/dialog/oauth"
+      # ::Instagram — inside Admin::Instagram a bare Instagram:: would resolve
+      # to this controller's own namespace.
+      OAUTH_URL    = "https://www.facebook.com/#{::Instagram::ApiClient::GRAPH_VERSION}/dialog/oauth"
       OAUTH_SCOPES = %w[
         instagram_basic
         instagram_content_publish

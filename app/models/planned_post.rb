@@ -30,6 +30,42 @@ class PlannedPost < ApplicationRecord
     end
   end
 
+  # Instagram usernames this user has tagged as collaborators before, most
+  # frequently used first.
+  #
+  # Instagram has no username search API, so the edit form's collaborator
+  # typeahead suggests from the user's own history instead. Free-text entry
+  # stays available for handles that have never been used.
+  #
+  # @param user [User]
+  # @param query [String, nil] case-insensitive substring filter
+  # @param limit [Integer]
+  # @return [Array<Hash>] { username:, count: }, most used first
+  def self.collaborator_suggestions(user, query: nil, limit: 10)
+    counts = Hash.new(0)
+
+    instagram
+      .where(user: user)
+      .where.not(platform_payload: nil)
+      .pluck(:platform_payload)
+      .each do |payload|
+        next unless payload.is_a?(Hash)
+
+        Array(payload["collaborators"]).each do |name|
+          username = name.to_s.strip.delete_prefix("@")
+          counts[username] += 1 if username.present?
+        end
+      end
+
+    filter = query.to_s.strip.delete_prefix("@").downcase
+    counts = counts.select { |username, _| username.downcase.include?(filter) } if filter.present?
+
+    counts
+      .sort_by { |username, count| [ -count, username ] }
+      .first(limit)
+      .map { |username, count| { username: username, count: count } }
+  end
+
   # Record a failure without validating, keeping the reason on the record.
   #
   # validate: false matters because the post may be invalid for the very reason

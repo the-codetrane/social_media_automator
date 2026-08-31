@@ -282,5 +282,85 @@ module Instagram
 
       assert post.reload.failed?
     end
+
+    # -------------------------------------------------------------------------
+    # Attached audio
+    # -------------------------------------------------------------------------
+
+    test "forwards audio_configuration when platform_payload requests a track" do
+      post = PlannedPost.create!(
+        user:             @user,
+        media_asset:      @video_asset,
+        platform:         :instagram,
+        status:           :draft,
+        scheduled_at:     nil,
+        platform_payload: {
+          "audio_configuration" => { "audio_id" => "587784541076604", "audio_volume" => 80 }
+        }
+      )
+
+      captured_params = nil
+      mock_client = Object.new
+      mock_client.define_singleton_method(:publishing_limit) { |_| { "data" => [ { "quota_usage" => 0, "config" => { "quota_total" => 25 } } ] } }
+      mock_client.define_singleton_method(:get) { |*_| { "status_code" => "FINISHED" } }
+      mock_client.define_singleton_method(:post) do |path, body = {}|
+        path.end_with?("/media_publish") ? { "id" => "m1" } : (captured_params = body; { "id" => "c1" })
+      end
+
+      @publisher.instance_variable_set(:@client, mock_client)
+      @publisher.publish(post)
+
+      assert_equal(
+        { "audio_id" => "587784541076604", "audio_volume" => 80 },
+        JSON.parse(captured_params[:audio_configuration])
+      )
+    end
+
+    test "accepts a bare audio_id as shorthand for audio_configuration" do
+      post = PlannedPost.create!(
+        user:             @user,
+        media_asset:      @video_asset,
+        platform:         :instagram,
+        status:           :draft,
+        scheduled_at:     nil,
+        platform_payload: { "audio_id" => "587784541076604" }
+      )
+
+      captured_params = nil
+      mock_client = Object.new
+      mock_client.define_singleton_method(:publishing_limit) { |_| { "data" => [ { "quota_usage" => 0, "config" => { "quota_total" => 25 } } ] } }
+      mock_client.define_singleton_method(:get) { |*_| { "status_code" => "FINISHED" } }
+      mock_client.define_singleton_method(:post) do |path, body = {}|
+        path.end_with?("/media_publish") ? { "id" => "m1" } : (captured_params = body; { "id" => "c1" })
+      end
+
+      @publisher.instance_variable_set(:@client, mock_client)
+      @publisher.publish(post)
+
+      assert_equal({ "audio_id" => "587784541076604" }, JSON.parse(captured_params[:audio_configuration]))
+    end
+
+    test "omits audio_configuration when no track is attached" do
+      post = PlannedPost.create!(
+        user:         @user,
+        media_asset:  @video_asset,
+        platform:     :instagram,
+        status:       :draft,
+        scheduled_at: nil
+      )
+
+      captured_params = nil
+      mock_client = Object.new
+      mock_client.define_singleton_method(:publishing_limit) { |_| { "data" => [ { "quota_usage" => 0, "config" => { "quota_total" => 25 } } ] } }
+      mock_client.define_singleton_method(:get) { |*_| { "status_code" => "FINISHED" } }
+      mock_client.define_singleton_method(:post) do |path, body = {}|
+        path.end_with?("/media_publish") ? { "id" => "m1" } : (captured_params = body; { "id" => "c1" })
+      end
+
+      @publisher.instance_variable_set(:@client, mock_client)
+      @publisher.publish(post)
+
+      assert_not captured_params.key?(:audio_configuration)
+    end
   end
 end

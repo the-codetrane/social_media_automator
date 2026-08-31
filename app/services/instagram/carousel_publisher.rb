@@ -1,13 +1,15 @@
 # frozen_string_literal: true
 
 module Instagram
-  # Publishes a carousel of images to Instagram via the Meta Content Publishing API.
+  # Publishes a carousel of images and/or videos to Instagram via the Meta
+  # Content Publishing API.
   #
-  # A carousel post requires a minimum of 2 and a maximum of 10 image items.
-  # Each image asset must expose a public HTTPS URL via its `raw_metadata["public_url"]`.
+  # A carousel post requires a minimum of 2 and a maximum of 10 items. Items may
+  # be images, videos, or a mix of both. Each asset must expose a public HTTPS
+  # URL via its `raw_metadata["public_url"]`.
   #
   # The Meta API flow is:
-  #   1. Create one child media container per image  → returns creation_id per child
+  #   1. Create one child media container per item  → returns creation_id per child
   #   2. Poll each child container until status == FINISHED
   #   3. Create a parent CAROUSEL container referencing the children IDs + caption
   #   4. Poll the parent container until status == FINISHED
@@ -19,6 +21,8 @@ module Instagram
   #
   #   # planned_post.platform_payload must contain:
   #   #   { "carousel_asset_ids" => [id1, id2, ...] }  (ordered array of MediaAsset IDs)
+  #   # and may optionally contain:
+  #   #   { "collaborators" => ["ig_user_1"] }  (up to 3 co-author usernames)
   #   # The primary planned_post.media_asset is treated as the first item when
   #   # carousel_asset_ids is absent (single-asset fallback is rejected — carousels
   #   # need at least 2 items).
@@ -56,7 +60,11 @@ module Instagram
       validate_assets!(assets)
 
       child_ids = create_child_containers(assets)
-      parent_id = create_parent_container(child_ids, caption: build_caption(planned_post))
+      parent_id = create_parent_container(
+        child_ids,
+        caption:       build_caption(planned_post),
+        collaborators: Instagram::PublishOptions.collaborators(planned_post.platform_payload)
+      )
       wait_until_finished!(parent_id)
 
       ig_media_id = publish_container(parent_id)
@@ -109,12 +117,11 @@ module Instagram
               "Carousel supports at most #{MAX_ITEMS} items (#{assets.size} provided)."
       end
 
-      non_images = assets.reject(&:image?)
-      if non_images.any?
-        ids = non_images.map(&:id).join(", ")
+      unsupported = assets.reject { |asset| asset.image? || asset.video? }
+      if unsupported.any?
+        ids = unsupported.map { |asset| "#{asset.id} (#{asset.media_type})" }.join(", ")
         raise ArgumentError,
-              "All carousel items must be images. Non-image asset IDs: #{ids}. " \
-              "Use Instagram::MediaPublisher for mixed-media carousels."
+              "Carousel items must be images or videos. Unsupported asset IDs: #{ids}."
       end
 
       assets.each do |asset|
@@ -126,8 +133,11 @@ module Instagram
     # Meta API calls
     # ------------------------------------------------------------------
 
-    # Step 1 – create a child item container for every image asset.
+    # Step 1 – create a child item container for every asset.
     # Each child container is polled until FINISHED before moving on.
+    #
+    # Video children are declared with media_type=VIDEO; images need no
+    # media_type at all.
     #
     # @param assets [Array<MediaAsset>]
     # @return [Array<String>] creation_ids in the same order as +assets+
@@ -135,13 +145,19 @@ module Instagram
       assets.each_with_index.map do |asset, index|
         Rails.logger.debug(
           "[Instagram::CarouselPublisher] Creating child container #{index + 1}/#{assets.size} " \
-          "for MediaAsset##{asset.id}"
+          "for MediaAsset##{asset.id} (#{asset.media_type})"
         )
 
-        creation_id = create_container(
-          image_url:         resolve_public_url!(asset),
-          is_carousel_item:  "true"
-        )
+        params = { is_carousel_item: "true" }
+
+        if asset.video?
+          params[:video_url]  = resolve_public_url!(asset)
+          params[:media_type] = "VIDEO"
+        else
+          params[:image_url] = resolve_public_url!(asset)
+        end
+
+        creation_id = create_container(params)
 
         Rails.logger.debug(
           "[Instagram::CarouselPublisher] Waiting for child container #{creation_id} to finish…"
@@ -154,10 +170,14 @@ module Instagram
 
     # Step 2 – create the parent CAROUSEL container that groups the children.
     #
-    # @param child_ids [Array<String>] ordered creation_ids of child containers
-    # @param caption   [String, nil]
+    # Collaborators are only accepted on the parent — child item containers
+    # reject them.
+    #
+    # @param child_ids     [Array<String>] ordered creation_ids of child containers
+    # @param caption       [String, nil]
+    # @param collaborators [String, nil] pre-encoded JSON array of usernames
     # @return [String] parent creation_id
-    def create_parent_container(child_ids, caption: nil)
+    def create_parent_container(child_ids, caption: nil, collaborators: nil)
       Rails.logger.debug(
         "[Instagram::CarouselPublisher] Creating parent carousel container " \
         "with #{child_ids.size} children"
@@ -167,7 +187,8 @@ module Instagram
         media_type: "CAROUSEL",
         children:   child_ids.join(",")
       }
-      params[:caption] = caption if caption.present?
+      params[:caption]       = caption       if caption.present?
+      params[:collaborators] = collaborators if collaborators.present?
 
       create_container(params)
     end

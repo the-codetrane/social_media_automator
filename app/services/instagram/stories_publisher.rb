@@ -17,8 +17,9 @@ module Instagram
   #   publisher.publish(planned_post)
   #
   #   # The PlannedPost's media_asset can be an image or video.
-  #   # Note: Stories do NOT support captions via the API, but stickers and other
-  #   # overlays can be added natively in the Instagram app.
+  #   # Note: Stories do NOT support captions, collaborators or attached audio
+  #   # via the API, but stickers and other overlays can be added natively in
+  #   # the Instagram app.
   #
   # The service updates the PlannedPost record on success (status: published,
   # external_post_id, published_at) and on failure (status: failed).

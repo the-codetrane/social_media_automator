@@ -11,7 +11,7 @@ module Instagram
   #   service = Instagram::AuthService.new(user)
   #   service.refresh_long_lived_token             # updates token + expiry in DB
   class AuthService
-    GRAPH_BASE = "https://graph.facebook.com/v25.0/"
+    GRAPH_BASE = Instagram::ApiClient::BASE_URL
     TOKEN_URL  = "#{GRAPH_BASE}oauth/access_token"
 
     # @param user [User]

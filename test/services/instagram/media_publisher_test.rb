@@ -79,7 +79,7 @@ module Instagram
       @publisher.stub(:check_quota!, nil) do
         err = assert_raises(Instagram::ApiError) { @publisher.publish(post) }
         assert_match(/no public URL/i, err.message)
-        assert_not post.reload.failed?
+        assert post.reload.failed?
       end
     end
 
@@ -87,40 +87,43 @@ module Instagram
     # #publish — video / reel
     # -------------------------------------------------------------------------
 
-    test "publish_video creates container with REELS media_type and publishes" do
-      # Use a video planned_post — create one inline
+    # -------------------------------------------------------------------------
+    # #publish — dispatch to the format-specific publishers
+    # -------------------------------------------------------------------------
+
+    # Returns a stand-in publisher that records the post it was handed.
+    def recording_publisher(media_id)
+      calls = []
+
+      publisher = Object.new
+      publisher.define_singleton_method(:publish) do |planned_post|
+        calls << planned_post
+        media_id
+      end
+
+      [ publisher, calls ]
+    end
+
+    test "publish delegates a video post to VideoPublisher" do
       post = PlannedPost.create!(
         user:         @user,
         media_asset:  media_assets(:sample_video),
         platform:     :instagram,
         status:       :draft,
         scheduled_at: nil,
-        caption:      "Great reel!",
-        hashtags:     "#reels"
+        caption:      "Great reel!"
       )
 
-      ig_id        = @user.instagram_user_id
-      container_id = "cont_video_001"
-      media_id     = "ig_media_video_001"
+      delegate, calls = recording_publisher("ig_media_video_001")
 
-      with_stubbed_client(
-        get_responses:  { container_id => @finished_status },
-        post_responses: {
-          "#{ig_id}/media"         => { "id" => container_id },
-          "#{ig_id}/media_publish" => { "id" => media_id }
-        }
-      ) do |publisher|
-        result = publisher.publish(post)
-        assert_equal media_id, result
-        assert post.reload.published?
+      Instagram::VideoPublisher.stub(:new, delegate) do
+        assert_equal "ig_media_video_001", @publisher.publish(post)
       end
+
+      assert_equal [ post ], calls
     end
 
-    # -------------------------------------------------------------------------
-    # #publish — carousel
-    # -------------------------------------------------------------------------
-
-    test "publish_carousel creates sub-containers then a parent and publishes" do
+    test "publish delegates a carousel post to CarouselPublisher" do
       image_asset = media_assets(:sample_image)
       video_asset = media_assets(:sample_video)
 
@@ -134,42 +137,76 @@ module Instagram
         platform_payload: { "carousel_asset_ids" => [ image_asset.id, video_asset.id ] }
       )
 
-      ig_id         = @user.instagram_user_id
-      child_id_1    = "cont_child_001"
-      child_id_2    = "cont_child_002"
-      parent_id     = "cont_parent_001"
-      media_id      = "ig_media_carousel_001"
+      delegate, calls = recording_publisher("ig_media_carousel_001")
 
-      child_post_count  = 0
-      parent_post_count = 0
-
-      mock_client = Object.new
-
-      mock_client.define_singleton_method(:publishing_limit) do |_ig_user_id|
-        { "data" => [ { "quota_usage" => 0, "config" => { "quota_total" => 25 } } ] }
+      Instagram::CarouselPublisher.stub(:new, delegate) do
+        assert_equal "ig_media_carousel_001", @publisher.publish(post)
       end
 
-      mock_client.define_singleton_method(:get) do |path, _params = {}|
-        { "status_code" => "FINISHED" }
+      assert_equal [ post ], calls
+    end
+
+    test "publish delegates a story post to StoriesPublisher" do
+      post = planned_posts(:draft_post)
+      post.update!(platform_payload: { "post_type" => "story" })
+
+      delegate, calls = recording_publisher("ig_story_001")
+
+      Instagram::StoriesPublisher.stub(:new, delegate) do
+        assert_equal "ig_story_001", @publisher.publish(post)
       end
 
-      mock_client.define_singleton_method(:post) do |path, body = {}|
-        if path == "#{ig_id}/media_publish"
-          { "id" => media_id }
-        elsif body[:is_carousel_item] == "true" || body["is_carousel_item"] == "true"
-          child_post_count += 1
-          { "id" => child_post_count == 1 ? child_id_1 : child_id_2 }
-        else
-          # parent carousel container
-          { "id" => parent_id }
+      assert_equal [ post ], calls
+    end
+
+    test "publish prefers the story publisher over the carousel publisher" do
+      image_asset = media_assets(:sample_image)
+      image_2     = media_assets(:sample_image_2)
+
+      post = PlannedPost.create!(
+        user:             @user,
+        media_asset:      image_asset,
+        platform:         :instagram,
+        status:           :draft,
+        scheduled_at:     nil,
+        platform_payload: {
+          "post_type"          => "story",
+          "carousel_asset_ids" => [ image_asset.id, image_2.id ]
+        }
+      )
+
+      delegate, calls = recording_publisher("ig_story_002")
+
+      Instagram::CarouselPublisher.stub(:new, ->(_) { raise "should not be called" }) do
+        Instagram::StoriesPublisher.stub(:new, delegate) do
+          assert_equal "ig_story_002", @publisher.publish(post)
         end
       end
 
-      @publisher.instance_variable_set(:@client, mock_client)
-      result = @publisher.publish(post)
+      assert_equal [ post ], calls
+    end
 
-      assert_equal media_id, result
-      assert post.reload.published?
+    test "publish handles a single photo without delegating" do
+      post = planned_posts(:draft_post)
+      ig_id = @user.instagram_user_id
+
+      Instagram::VideoPublisher.stub(:new, ->(_) { raise "should not be called" }) do
+        Instagram::CarouselPublisher.stub(:new, ->(_) { raise "should not be called" }) do
+          Instagram::StoriesPublisher.stub(:new, ->(_) { raise "should not be called" }) do
+            with_stubbed_client(
+              get_responses:  { "cont_photo_solo" => @finished_status },
+              post_responses: {
+                "#{ig_id}/media"         => { "id" => "cont_photo_solo" },
+                "#{ig_id}/media_publish" => { "id" => "ig_media_photo_solo" }
+              }
+            ) do |publisher|
+              assert_equal "ig_media_photo_solo", publisher.publish(post)
+            end
+          end
+        end
+      end
+
+      assert_equal "IMAGE", post.reload.platform_payload["media_type"]
     end
 
     test "publish_carousel raises ArgumentError with fewer than 2 assets" do
@@ -252,44 +289,6 @@ module Instagram
     end
 
     # -------------------------------------------------------------------------
-    # Story publishing via publish()
-    # -------------------------------------------------------------------------
-
-    test "publish dispatches to publish_story when platform_payload contains post_type story" do
-      post  = planned_posts(:draft_post)
-      post.update!(platform_payload: { "post_type" => "story" })
-
-      ig_id = @user.instagram_user_id
-      container_id = "cont_story_001"
-      media_id     = "ig_story_001"
-
-      captured_params = nil
-      mock_client = Object.new
-      mock_client.define_singleton_method(:publishing_limit) { |_| { "data" => [ { "quota_usage" => 0, "config" => { "quota_total" => 25 } } ] } }
-      mock_client.define_singleton_method(:get) { |*_| { "status_code" => "FINISHED" } }
-      mock_client.define_singleton_method(:post) do |path, body = {}|
-        if path.end_with?("/media_publish")
-          { "id" => media_id }
-        else
-          captured_params = body
-          { "id" => container_id }
-        end
-      end
-
-      @publisher.instance_variable_set(:@client, mock_client)
-
-      result = @publisher.publish(post)
-
-      assert_equal media_id, result
-      # Verify STORIES media_type was used
-      assert_equal "STORIES", captured_params[:media_type]
-      # Stories should use image_url (since the fixture is an image)
-      assert_not_nil captured_params[:image_url]
-      # Stories should NOT have a caption
-      assert_nil captured_params[:caption]
-    end
-
-    # -------------------------------------------------------------------------
     # Skipping non-instagram / already-published posts (via the job)
     # -------------------------------------------------------------------------
 
@@ -299,6 +298,59 @@ module Instagram
       # calling publisher.publish directly would still try. Verify the status
       # guard logic in the job by checking the post's current state.
       assert post.published?
+    end
+
+    # -------------------------------------------------------------------------
+    # Collaborators and attached audio
+    # -------------------------------------------------------------------------
+
+    # Stubs the client and records the params of every container-creation POST.
+    def capture_container_params
+      captured = []
+
+      mock_client = Object.new
+      mock_client.define_singleton_method(:publishing_limit) { |_| { "data" => [ { "quota_usage" => 0, "config" => { "quota_total" => 25 } } ] } }
+      mock_client.define_singleton_method(:get) { |*_| { "status_code" => "FINISHED" } }
+      mock_client.define_singleton_method(:post) do |path, body = {}|
+        if path.end_with?("/media_publish")
+          { "id" => "ig_media_001" }
+        else
+          captured << body
+          { "id" => "cont_#{captured.size}" }
+        end
+      end
+
+      @publisher.instance_variable_set(:@client, mock_client)
+      captured
+    end
+
+    test "publish_photo forwards collaborators to the Meta API" do
+      post = planned_posts(:draft_post)
+      post.update!(platform_payload: { "collaborators" => [ "chef_alex", "@bakery_co" ] })
+
+      captured = capture_container_params
+      @publisher.publish(post)
+
+      assert_equal [ "chef_alex", "bakery_co" ], JSON.parse(captured.first[:collaborators])
+    end
+
+    test "publish_photo omits collaborators when the payload has none" do
+      post = planned_posts(:draft_post)
+
+      captured = capture_container_params
+      @publisher.publish(post)
+
+      assert_not captured.first.key?(:collaborators)
+    end
+
+    test "publish_photo raises before calling the API when too many collaborators are given" do
+      post = planned_posts(:draft_post)
+      post.update!(platform_payload: { "collaborators" => %w[a b c d] })
+
+      captured = capture_container_params
+
+      assert_raises(ArgumentError) { @publisher.publish(post) }
+      assert_empty captured
     end
   end
 end

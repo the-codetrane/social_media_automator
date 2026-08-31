@@ -1,12 +1,20 @@
 # frozen_string_literal: true
 
 module Instagram
-  # Publishes a PlannedPost to Instagram via the Meta Content Publishing API.
+  # Entry point for publishing a PlannedPost to Instagram.
   #
-  # The Meta API uses a two-step flow for all content types:
-  #   1. Create a media container  → returns creation_id
-  #   2. Poll until status == FINISHED (important for videos / reels)
-  #   3. Publish the container     → returns ig_media_id
+  # This class decides *which* kind of post it is looking at and hands the work
+  # to the matching format-specific publisher:
+  #
+  #   story    → Instagram::StoriesPublisher
+  #   carousel → Instagram::CarouselPublisher
+  #   video    → Instagram::VideoPublisher
+  #   image    → published here (single photos need no dedicated class)
+  #
+  # Each specialized publisher owns its own container parameters, polling
+  # timeouts and PlannedPost bookkeeping, so optional features — collaborators,
+  # attached audio, cover images, location tags — are available through this
+  # entry point too.
   #
   # Usage:
   #   publisher = Instagram::MediaPublisher.new(user)
@@ -15,7 +23,7 @@ module Instagram
   # For carousel posts, set planned_post.platform_payload["carousel_asset_ids"]
   # to an ordered array of MediaAsset IDs before calling publish.
   class MediaPublisher
-    # How long to wait between status polling attempts.
+    # How long to wait between status polling attempts for a photo container.
     POLL_INTERVAL_SECONDS = 5
     # Give up after this many total seconds of polling.
     POLL_TIMEOUT_SECONDS  = 300
@@ -31,27 +39,17 @@ module Instagram
     # @param planned_post [PlannedPost]
     # @return [String] the Instagram media ID (ig_media_id)
     def publish(planned_post)
-      check_quota!
       validate_carousel_asset_count!(planned_post)
 
-      ig_media_id =
-        if story_post?(planned_post)
-          publish_story(planned_post)
-        elsif carousel_post?(planned_post)
-          publish_carousel(planned_post)
-        elsif planned_post.media_asset.video?
-          publish_video(planned_post)
-        else
-          publish_photo(planned_post)
-        end
-
-      planned_post.update!(
-        status:           :published,
-        external_post_id: ig_media_id,
-        published_at:     Time.current
-      )
-
-      ig_media_id
+      if story_post?(planned_post)
+        publish_story(planned_post)
+      elsif carousel_post?(planned_post)
+        publish_carousel(planned_post)
+      elsif planned_post.media_asset.video?
+        publish_video(planned_post)
+      else
+        publish_photo(planned_post)
+      end
     end
 
     # ------------------------------------------------------------------
@@ -59,99 +57,76 @@ module Instagram
     # ------------------------------------------------------------------
 
     # Publish a single image or video as an Instagram Story.
-    # Stories do not support captions via the API.
+    # Stories do not support captions, collaborators or attached audio.
     #
     # @param planned_post [PlannedPost]
     # @return [String] ig_media_id
     def publish_story(planned_post)
-      asset = planned_post.media_asset
+      Instagram::StoriesPublisher.new(@user).publish(planned_post)
+    end
 
-      params = { media_type: "STORIES" }
-      if asset.video?
-        params[:video_url] = resolve_public_url!(asset)
-      else
-        params[:image_url] = resolve_public_url!(asset)
-      end
+    # Publish a single video as a Reel.
+    #
+    # Optional platform_payload keys: "collaborators", "audio_id" /
+    # "audio_configuration", "cover_url", "thumb_offset", "audio_name",
+    # "location_id", "share_to_feed".
+    #
+    # @param planned_post [PlannedPost]
+    # @return [String] ig_media_id
+    def publish_video(planned_post)
+      Instagram::VideoPublisher.new(@user).publish(planned_post)
+    end
 
-      creation_id = create_container(params)
-      wait_until_finished!(creation_id)
-      publish_container(creation_id)
+    # Publish a carousel of images and/or videos.
+    # Reads carousel_asset_ids from planned_post.platform_payload.
+    #
+    # Optional platform_payload keys: "collaborators".
+    #
+    # @param planned_post [PlannedPost]
+    # @return [String] ig_media_id
+    def publish_carousel(planned_post)
+      Instagram::CarouselPublisher.new(@user).publish(planned_post)
     end
 
     # Publish a single photo.
     # Requires planned_post.media_asset to be an image with a public_url.
     #
+    # Optional platform_payload keys: "collaborators".
+    #
     # @param planned_post [PlannedPost]
     # @return [String] ig_media_id
     def publish_photo(planned_post)
+      check_quota!
+
       asset = planned_post.media_asset
 
-      creation_id = create_container(
+      params = {
         image_url: resolve_public_url!(asset),
         caption:   build_caption(planned_post)
-      )
+      }
 
+      collaborators = Instagram::PublishOptions.collaborators(planned_post.platform_payload)
+      params[:collaborators] = collaborators if collaborators
+
+      creation_id = create_container(params)
       wait_until_finished!(creation_id)
-      publish_container(creation_id)
-    end
+      ig_media_id = publish_container(creation_id)
 
-    # Publish a single video or Reel.
-    # Requires planned_post.media_asset to be a video with a public_url.
-    #
-    # @param planned_post [PlannedPost]
-    # @return [String] ig_media_id
-    def publish_video(planned_post)
-      asset = planned_post.media_asset
-
-      creation_id = create_container(
-        video_url:     resolve_public_url!(asset),
-        media_type:    "REELS",
-        share_to_feed: "true",
-        caption:       build_caption(planned_post)
+      planned_post.update!(
+        status:           :published,
+        external_post_id: ig_media_id,
+        published_at:     Time.current,
+        platform_payload: planned_post.platform_payload.to_h.merge(
+          "ig_media_id"  => ig_media_id,
+          "container_id" => creation_id,
+          "media_type"   => "IMAGE"
+        )
       )
 
-      wait_until_finished!(creation_id)
-      publish_container(creation_id)
-    end
-
-    # Publish a carousel post.
-    # Reads carousel_asset_ids from planned_post.platform_payload, falling back
-    # to [planned_post.media_asset_id] for single-item convenience.
-    #
-    # @param planned_post [PlannedPost]
-    # @return [String] ig_media_id
-    def publish_carousel(planned_post)
-      asset_ids = carousel_asset_ids(planned_post)
-      raise ArgumentError, "Carousel requires at least 2 items" if asset_ids.size < 2
-
-      # Step 1 – create one sub-container per asset
-      child_ids = asset_ids.map do |asset_id|
-        asset = MediaAsset.find(asset_id)
-        params = { is_carousel_item: "true" }
-
-        if asset.video?
-          params[:video_url]  = resolve_public_url!(asset)
-          params[:media_type] = "VIDEO"
-        else
-          params[:image_url] = resolve_public_url!(asset)
-        end
-
-        container_id = create_container(params)
-        wait_until_finished!(container_id)
-        container_id
-      end
-
-      # Step 2 – create parent carousel container
-      parent_id = create_container(
-        media_type: "CAROUSEL",
-        children:   child_ids.join(","),
-        caption:    build_caption(planned_post)
-      )
-
-      wait_until_finished!(parent_id)
-
-      # Step 3 – publish
-      publish_container(parent_id)
+      ig_media_id
+    rescue Instagram::Error
+      planned_post.update!(status: :failed)
+      raise
     end
 
     private
@@ -196,7 +171,7 @@ module Instagram
       end
     end
 
-    # Check the 25-posts/24 h quota before attempting to publish.
+    # Check the publishing quota before attempting to publish.
     def check_quota!
       data   = @client.publishing_limit(ig_user_id)
       record = Array(data["data"]).first || {}
@@ -219,8 +194,7 @@ module Instagram
     end
 
     def carousel_post?(planned_post)
-      ids = carousel_asset_ids(planned_post)
-      ids.size > 1
+      carousel_asset_ids(planned_post).size > 1
     end
 
     def validate_carousel_asset_count!(planned_post)

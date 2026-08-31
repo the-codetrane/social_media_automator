@@ -206,4 +206,50 @@ class PlannedPostTest < ActiveSupport::TestCase
   test "belongs to user" do
     assert_respond_to planned_posts(:draft_post), :user
   end
+
+  # ---------------------------------------------------------------------------
+  # .collaborator_suggestions
+  # ---------------------------------------------------------------------------
+
+  test "collaborator_suggestions counts usage across the user's instagram posts" do
+    user = users(:one)
+    planned_posts(:draft_post).update!(platform_payload: { "collaborators" => [ "chef_alex", "bakery_co" ] })
+    planned_posts(:carousel_post).update!(
+      platform_payload: planned_posts(:carousel_post).platform_payload.merge("collaborators" => [ "chef_alex" ])
+    )
+
+    suggestions = PlannedPost.collaborator_suggestions(user)
+
+    assert_equal({ username: "chef_alex", count: 2 }, suggestions.first)
+    assert_includes suggestions, { username: "bakery_co", count: 1 }
+  end
+
+  test "collaborator_suggestions filters by a case-insensitive query" do
+    user = users(:one)
+    planned_posts(:draft_post).update!(platform_payload: { "collaborators" => [ "chef_alex", "bakery_co" ] })
+
+    assert_equal [ "chef_alex" ], PlannedPost.collaborator_suggestions(user, query: "CHEF").map { |s| s[:username] }
+    assert_equal [ "chef_alex" ], PlannedPost.collaborator_suggestions(user, query: "@chef").map { |s| s[:username] }
+  end
+
+  test "collaborator_suggestions ignores other users and other platforms" do
+    planned_posts(:draft_post).update!(platform_payload: { "collaborators" => [ "chef_alex" ] })
+    planned_posts(:youtube_draft_post).update!(platform_payload: { "collaborators" => [ "youtube_person" ] })
+
+    usernames = PlannedPost.collaborator_suggestions(users(:one)).map { |s| s[:username] }
+
+    assert_includes usernames, "chef_alex"
+    assert_not_includes usernames, "youtube_person"
+    assert_empty PlannedPost.collaborator_suggestions(users(:admin))
+  end
+
+  test "collaborator_suggestions returns an empty array when there is no history" do
+    assert_empty PlannedPost.collaborator_suggestions(users(:one))
+  end
+
+  test "collaborator_suggestions honours the limit" do
+    planned_posts(:draft_post).update!(platform_payload: { "collaborators" => %w[a b c] })
+
+    assert_equal 2, PlannedPost.collaborator_suggestions(users(:one), limit: 2).size
+  end
 end
