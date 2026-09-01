@@ -77,4 +77,73 @@ class ChatCompletionJobTest < ActiveSupport::TestCase
     assert_equal "chats/error",   append_event.last[:partial]
     assert_equal "boom",          append_event.last.dig(:locals, :message)
   end
+
+  # ---------------------------------------------------------------------------
+  # History repair
+  #
+  # Parallel tool turns used to be deleted here, throwing away completed work,
+  # because the split-message format was rejected by Anthropic. The payload patch
+  # now merges those results, so complete turns must survive untouched.
+  # ---------------------------------------------------------------------------
+
+  # Builds an assistant turn with `call_count` tool calls and `result_count` results.
+  def build_tool_turn(chat, call_count:, result_count:)
+    assistant = chat.messages.create!(role: "assistant", content: "working on it")
+
+    calls = Array.new(call_count) do |i|
+      ToolCall.create!(
+        message_id: assistant.id,
+        tool_call_id: "toolu_#{SecureRandom.hex(6)}_#{i}",
+        name: "search_media_assets",
+        arguments: { q: i }
+      )
+    end
+
+    calls.first(result_count).each_with_index do |call, i|
+      chat.messages.create!(role: "tool", content: "result #{i}", tool_call_id: call.id)
+    end
+
+    assistant
+  end
+
+  def run_repair(chat)
+    ChatCompletionJob.new.send(:repair_orphaned_tool_messages, chat)
+  end
+
+  test "repair keeps a complete parallel tool turn intact" do
+    chat = chats(:empty_chat)
+    assistant = build_tool_turn(chat, call_count: 3, result_count: 3)
+
+    run_repair(chat)
+
+    assert Message.exists?(assistant.id), "a complete parallel turn must not be deleted"
+    assert_equal 3, Message.where(role: "tool", tool_call_id: assistant.tool_calls.map(&:id)).count
+  end
+
+  test "repair still removes an incomplete tool turn" do
+    chat = chats(:empty_chat)
+    assistant = build_tool_turn(chat, call_count: 3, result_count: 2)
+
+    run_repair(chat)
+
+    assert_not Message.exists?(assistant.id), "a turn missing results would be rejected by the API"
+  end
+
+  test "repair still removes an empty assistant placeholder" do
+    chat = chats(:empty_chat)
+    orphan = chat.messages.create!(role: "assistant", content: "")
+
+    run_repair(chat)
+
+    assert_not Message.exists?(orphan.id)
+  end
+
+  test "repair leaves a normal single-tool turn alone" do
+    chat = chats(:empty_chat)
+    assistant = build_tool_turn(chat, call_count: 1, result_count: 1)
+
+    run_repair(chat)
+
+    assert Message.exists?(assistant.id)
+  end
 end

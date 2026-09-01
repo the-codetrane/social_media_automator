@@ -20,15 +20,18 @@ class ChatCompletionJob < ApplicationJob
 
   private
 
-  # Remove incomplete or broken tool-use turns so the chat history is valid before calling the API.
+  # Remove incomplete tool-use turns so the chat history is valid before calling the API.
   #
   # Two cases handled:
-  #   1. Incomplete turns — assistant message with tool_calls but not all results persisted
-  #      (crashed mid-turn). Counts don't match.
-  #   2. Parallel-tool-call turns — assistant message with N>1 tool_calls where all N results
-  #      exist but are stored as N separate :tool messages. Anthropic requires all results for one
-  #      turn in a single user message; the split format always causes a 400. Delete and let the
-  #      agent redo the turn sequentially (parallel tool use is now disabled via calls: :one).
+  #   1. Empty assistant messages — a placeholder persisted when the stream opened but never
+  #      filled in (crashed before any content arrived).
+  #   2. Incomplete turns — assistant message with tool_calls but not all results persisted
+  #      (crashed mid-turn). Counts don't match, so Anthropic would reject the turn.
+  #
+  # Complete parallel turns (N>1 tool_calls with all N results) are valid and left intact.
+  # They are stored as N separate :tool messages, which Anthropic rejects in that split form;
+  # the payload patch in config/initializers/ruby_llm.rb merges them back into the single
+  # user message the API requires.
   def repair_orphaned_tool_messages(chat)
     return unless chat.respond_to?(:messages_association)
 
@@ -38,10 +41,6 @@ class ChatCompletionJob < ApplicationJob
       if message.tool_calls.empty? && message.content.blank?
         message.destroy
       elsif message.tool_calls.any? && message.tool_calls.count != message.tool_results.count
-        message.tool_results.each(&:destroy)
-        message.destroy
-      elsif message.tool_calls.count > 1 && message.tool_calls.count == message.tool_results.count
-        # Parallel turn stored as split messages — broken format, must be redone.
         message.tool_results.each(&:destroy)
         message.destroy
       end

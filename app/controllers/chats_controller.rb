@@ -28,6 +28,11 @@ class ChatsController < ApplicationController
     }
   ].freeze
 
+  # A conversation is resent in full on every turn, so its context size is what drives cost.
+  # Past this many tokens we start a fresh chat instead of letting one thread grow without
+  # bound — two runaway threads accounted for roughly 90% of one month's API spend.
+  MAX_CONTEXT_TOKENS = 120_000
+
   before_action :set_chat
 
   # GET /chat
@@ -43,6 +48,8 @@ class ChatsController < ApplicationController
     if content.blank?
       redirect_to chat_path, alert: "Message cannot be blank." and return
     end
+
+    roll_conversation_if_oversized
 
     if upload.present?
       media_asset = create_media_asset_from_upload(upload)
@@ -87,17 +94,45 @@ class ChatsController < ApplicationController
   private
 
   def set_chat
-    chat = Chat.find_by(id: session[:chat_id], user: Current.user)
-    unless chat
-      chat = SocialMediaPostAgent.create!(user: Current.user)
-      chat.update!(user: Current.user)
-      preferred = session[:chat_model]
-      if valid_model?(preferred) && preferred != chat.model_id
-        chat.with_model(preferred, provider: "anthropic", assume_exists: true)
-      end
-    end
+    chat = Chat.find_by(id: session[:chat_id], user: Current.user) || build_chat
     session[:chat_id] = chat.id
     @chat = chat
+  end
+
+  def build_chat
+    chat = SocialMediaPostAgent.create!(user: Current.user)
+    chat.update!(user: Current.user)
+    preferred = session[:chat_model]
+    if valid_model?(preferred) && preferred != chat.model_id
+      chat.with_model(preferred, provider: "anthropic", assume_exists: true)
+    end
+    chat
+  end
+
+  # Start a fresh conversation once the current one's context grows too large.
+  # Rolling happens as a new message is sent, so the thread on screen stays readable
+  # until the user actually continues it.
+  def roll_conversation_if_oversized
+    return if conversation_tokens < MAX_CONTEXT_TOKENS
+
+    @chat = build_chat
+    session[:chat_id] = @chat.id
+    flash[:notice] = "Started a new conversation — the previous one got long enough to slow down and get expensive."
+  end
+
+  # Size of the context the API last saw for this chat. The provider reports it per
+  # response, so the newest assistant message is an exact measure rather than an estimate.
+  # Anthropic splits the prompt across three counters -- uncached input, cache reads and
+  # cache writes -- so all three have to be summed to get the whole context back.
+  def conversation_tokens
+    last = @chat.messages
+                .where(role: "assistant")
+                .where.not(input_tokens: nil)
+                .order(:id)
+                .last
+    return 0 unless last
+
+    last.input_tokens.to_i + last.cached_tokens.to_i + last.cache_creation_tokens.to_i
   end
 
   def valid_model?(model_id)
