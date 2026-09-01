@@ -1,6 +1,6 @@
 class SearchMediaAssets < RubyLLM::Tool
   description "Search MediaAsset database records by name, geocoding status, media type, or processing status. " \
-              "Use this to find assets before renaming or geocoding them with enhance_media_assets. " \
+              "Use this to find the asset to attach to a planned post. " \
               "Returns id, external_name, media_type, status, and location fields for each match."
 
   param :name,
