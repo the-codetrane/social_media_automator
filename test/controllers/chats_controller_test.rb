@@ -139,6 +139,46 @@ class ChatsControllerTest < ActionDispatch::IntegrationTest
   end
 
   # ---------------------------------------------------------------------------
+  # POST /chat/messages — context rollover
+  # ---------------------------------------------------------------------------
+
+  test "create_message rolls to a new chat once the context grows too large" do
+    sign_in_as(@user)
+    get chat_path
+    chat_id = session[:chat_id]
+    record_context(Chat.find(chat_id), input_tokens: ChatsController::MAX_CONTEXT_TOKENS)
+
+    post chat_messages_path, params: { content: "keep going" }
+
+    assert_not_equal chat_id, session[:chat_id]
+    assert_match(/new conversation/i, flash[:notice])
+  end
+
+  test "create_message counts cache write tokens toward the context size" do
+    sign_in_as(@user)
+    get chat_path
+    chat_id = session[:chat_id]
+    record_context(Chat.find(chat_id),
+                   input_tokens: 10,
+                   cache_creation_tokens: ChatsController::MAX_CONTEXT_TOKENS)
+
+    post chat_messages_path, params: { content: "keep going" }
+
+    assert_not_equal chat_id, session[:chat_id]
+  end
+
+  test "create_message stays on the same chat while the context is small" do
+    sign_in_as(@user)
+    get chat_path
+    chat_id = session[:chat_id]
+    record_context(Chat.find(chat_id), input_tokens: 100, cached_tokens: 100, cache_creation_tokens: 100)
+
+    post chat_messages_path, params: { content: "keep going" }
+
+    assert_equal chat_id, session[:chat_id]
+  end
+
+  # ---------------------------------------------------------------------------
   # POST /chat/messages — image attachment
   # ---------------------------------------------------------------------------
 
@@ -286,5 +326,18 @@ class ChatsControllerTest < ActionDispatch::IntegrationTest
     delete destroy_chat_path
     get chat_path
     assert_not_equal original, session[:chat_id]
+  end
+
+  private
+
+  # Stand in for a provider response so the controller can read a context size back.
+  def record_context(chat, input_tokens: 0, cached_tokens: 0, cache_creation_tokens: 0)
+    chat.messages.create!(
+      role: "assistant",
+      content: "ok",
+      input_tokens: input_tokens,
+      cached_tokens: cached_tokens,
+      cache_creation_tokens: cache_creation_tokens
+    )
   end
 end

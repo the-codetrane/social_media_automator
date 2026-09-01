@@ -122,6 +122,8 @@ class ChatsController < ApplicationController
 
   # Size of the context the API last saw for this chat. The provider reports it per
   # response, so the newest assistant message is an exact measure rather than an estimate.
+  # Anthropic splits the prompt across three counters -- uncached input, cache reads and
+  # cache writes -- so all three have to be summed to get the whole context back.
   def conversation_tokens
     last = @chat.messages
                 .where(role: "assistant")
@@ -130,7 +132,7 @@ class ChatsController < ApplicationController
                 .last
     return 0 unless last
 
-    last.input_tokens.to_i + last.cached_tokens.to_i
+    last.input_tokens.to_i + last.cached_tokens.to_i + last.cache_creation_tokens.to_i
   end
 
   def valid_model?(model_id)

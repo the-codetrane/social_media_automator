@@ -34,8 +34,12 @@ class AnthropicCachePatchTest < ActiveSupport::TestCase
     if (last_text = payload[:system]&.reverse&.find { |b| b.is_a?(Hash) && b[:type] == "text" })
       last_text[:cache_control] = { type: "ephemeral" }
     end
-    payload[:messages] = provider.send(:coalesce_tool_results, payload[:messages])
-    provider.send(:mark_message_breakpoints, payload[:messages])
+    # Both return new arrays -- the patch is copy-on-write -- so the result has to be
+    # assigned back, exactly as #render_payload does.
+    payload[:messages] = provider.send(
+      :mark_message_breakpoints,
+      provider.send(:coalesce_tool_results, payload[:messages])
+    )
 
     payload
   end
