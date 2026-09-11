@@ -61,4 +61,24 @@ namespace :spaces do
   rescue => e
     puts "✗ Connection failed: #{e.message}"
   end
-end# frozen_string_literal: true
+
+  desc "Allow browser direct uploads to the bucket (ORIGINS=https://a.example,https://b.example)"
+  task cors: :environment do
+    service = ActiveStorage::Blob.services.fetch(:digitalocean)
+    origins = ENV.fetch("ORIGINS", "https://socialmediaautomator.cainandco.band").split(",").map(&:strip)
+
+    service.client.put_bucket_cors(
+      bucket: service.bucket.name,
+      cors_configuration: {
+        cors_rules: [ {
+          allowed_origins: origins,
+          allowed_methods: %w[PUT],
+          allowed_headers: %w[*],
+          max_age_seconds: 3600
+        } ]
+      }
+    )
+
+    puts "CORS rule set on #{service.bucket.name} for #{origins.join(", ")}"
+  end
+end

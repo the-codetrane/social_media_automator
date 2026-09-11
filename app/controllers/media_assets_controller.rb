@@ -19,6 +19,27 @@ class MediaAssetsController < ApplicationController
   def show
   end
 
+  # Upload form, rendered inside the modal on the index page.
+  def new
+    @folders = MediaAssetFolders.list
+  end
+
+  # Files have already been direct-uploaded to storage by the browser; this
+  # turns the resulting blobs into MediaAsset records.
+  def create
+    blobs = Array(params.dig(:media_asset, :signed_ids)).filter_map { |id| ActiveStorage::Blob.find_signed(id) }
+
+    if blobs.empty?
+      @folders = MediaAssetFolders.list
+      flash.now[:alert] = "Select at least one photo or video to upload."
+      return render :new, status: :unprocessable_entity
+    end
+
+    assets = blobs.map { |blob| create_media_asset_from_blob(blob) }
+
+    redirect_to media_assets_path, notice: "#{assets.size} #{"file".pluralize(assets.size)} uploaded."
+  end
+
   def edit
   end
 
@@ -38,5 +59,27 @@ class MediaAssetsController < ApplicationController
 
   def media_asset_params
     params.require(:media_asset).permit(:external_name, :status)
+  end
+
+  def create_media_asset_from_blob(blob)
+    asset = MediaAsset.create!(
+      external_id:   SecureRandom.uuid,
+      external_name: blob.filename.to_s,
+      media_type:    media_type_for(blob),
+      status:        :processed,
+      first_seen_at: Time.current,
+      mime_type:     blob.content_type,
+      file_size:     blob.byte_size
+    )
+    asset.file.attach(blob)
+    AnalyzeMediaAssetJob.perform_later(asset.id)
+    asset
+  end
+
+  def media_type_for(blob)
+    return :video if blob.video?
+    return :audio if blob.audio?
+
+    :image
   end
 end

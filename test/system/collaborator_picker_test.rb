@@ -81,11 +81,10 @@ class CollaboratorPickerTest < ApplicationSystemTestCase
 
   private
 
-  # fill_in + assert_field so Capybara waits for the value to land before the
+  # Waits for the value to land (and re-types it if it did not) before the
   # next step; a bare set() races the debounced suggestion fetch under load.
   def fill_in_collaborator(value)
-    fill_in "Collaborators", with: value
-    assert_field "Collaborators", with: value
+    fill_in_and_confirm "Collaborators", with: value
   end
 
   def press_enter_in_collaborator_field

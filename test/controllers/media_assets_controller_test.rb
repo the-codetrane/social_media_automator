@@ -1,6 +1,8 @@
 require "test_helper"
 
 class MediaAssetsControllerTest < ActionDispatch::IntegrationTest
+  include ActiveJob::TestHelper
+
   setup do
     @user = users(:one)
     @media_asset = media_assets(:sample_image)
@@ -235,5 +237,67 @@ class MediaAssetsControllerTest < ActionDispatch::IntegrationTest
     )
     get media_asset_path(asset)
     assert_select "img[alt=?]", "Map"
+  end
+
+  # ── Upload modal ────────────────────────────────────────────────────────
+
+  test "index renders the upload CTA and modal frame" do
+    sign_in_as(@user)
+    get media_assets_path
+    assert_select "a[href=?][data-turbo-frame=media-upload-modal]", new_media_asset_path, text: /Upload media/
+    assert_select "dialog[data-controller=modal] turbo-frame#media-upload-modal"
+  end
+
+  test "new renders the upload form inside the modal frame with existing folders" do
+    ActiveStorage::Blob.create_before_direct_upload!(
+      key: "Gigs/abc123", filename: "a.jpg", byte_size: 10, checksum: "x", content_type: "image/jpeg"
+    )
+    sign_in_as(@user)
+    get new_media_asset_path
+    assert_response :success
+    assert_select "turbo-frame#media-upload-modal form[data-controller=media-upload]"
+    assert_select "select[name='media_asset[folder]'] option[value=Gigs]"
+    assert_select "select[name='media_asset[folder]'] option[value=__new__]"
+    assert_select "input[type=file][name='media_asset[files][]'][multiple][accept='image/*,video/*']"
+  end
+
+  test "create builds a media asset per uploaded blob and enqueues analysis" do
+    sign_in_as(@user)
+    image = ActiveStorage::Blob.create_and_upload!(io: file_fixture("test_image.png").open, filename: "gig.png", content_type: "image/png", key: "Gigs/img1")
+    video = ActiveStorage::Blob.create_and_upload!(io: StringIO.new("not really a video"), filename: "gig.mp4", content_type: "video/mp4", key: "Gigs/vid1")
+
+    assert_difference "MediaAsset.count", 2 do
+      assert_enqueued_jobs 2, only: AnalyzeMediaAssetJob do
+        post media_assets_path, params: { media_asset: { signed_ids: [ image.signed_id, video.signed_id ] } }
+      end
+    end
+
+    assert_redirected_to media_assets_path
+    assert_equal "2 files uploaded.", flash[:notice]
+
+    png = MediaAsset.find_by!(external_name: "gig.png")
+    assert png.image?
+    assert png.processed?
+    assert_equal "image/png", png.mime_type
+    assert_equal image.byte_size, png.file_size
+    assert_equal image, png.file.blob
+
+    mp4 = MediaAsset.find_by!(external_name: "gig.mp4")
+    assert mp4.video?
+    assert_equal video, mp4.file.blob
+  end
+
+  test "create ignores invalid signed ids and re-renders the form" do
+    sign_in_as(@user)
+    assert_no_difference "MediaAsset.count" do
+      post media_assets_path, params: { media_asset: { signed_ids: [ "garbage" ] } }
+    end
+    assert_response :unprocessable_entity
+    assert_match "Select at least one photo or video", response.body
+  end
+
+  test "create requires authentication" do
+    post media_assets_path, params: { media_asset: { signed_ids: [ "x" ] } }
+    assert_redirected_to new_session_path
   end
 end
