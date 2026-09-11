@@ -241,6 +241,25 @@ module Instagram
       assert_match(/no public URL/, error.message)
     end
 
+    test "publish rejects an over-long video before creating a container" do
+      # A legacy row: written before PlannedPost checked story media limits.
+      post = planned_posts(:draft_post)
+      post.assign_attributes(media_asset: media_assets(:sample_long_video), platform_payload: { "post_type" => "story" })
+      post.save!(validate: false)
+
+      mock_client = Object.new
+      mock_client.define_singleton_method(:publishing_limit) { |_| { "data" => [ { "quota_usage" => 0, "config" => { "quota_total" => 25 } } ] } }
+      mock_client.define_singleton_method(:post) { |*_| raise "no container should be created" }
+      @publisher.instance_variable_set(:@client, mock_client)
+
+      error = assert_raises(Instagram::ApiError) { @publisher.publish(post) }
+      assert_match(/3–60 seconds/, error.message)
+
+      post.reload
+      assert post.failed?
+      assert_match(/3–60 seconds/, post.failure_reason)
+    end
+
     # -------------------------------------------------------------------------
     # Container timeout
     # -------------------------------------------------------------------------

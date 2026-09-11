@@ -159,11 +159,15 @@ module Instagram
       assert_equal [ post ], calls
     end
 
+    # PlannedPost now rejects this combination, so it can only reach the
+    # publisher as a legacy row written before that validation existed. The
+    # dispatch order still has to favour the story, or such a row publishes as
+    # a carousel that Meta cannot accept.
     test "publish prefers the story publisher over the carousel publisher" do
       image_asset = media_assets(:sample_image)
       image_2     = media_assets(:sample_image_2)
 
-      post = PlannedPost.create!(
+      post = PlannedPost.new(
         user:             @user,
         media_asset:      image_asset,
         platform:         :instagram,
@@ -174,6 +178,7 @@ module Instagram
           "carousel_asset_ids" => [ image_asset.id, image_2.id ]
         }
       )
+      post.save!(validate: false)
 
       delegate, calls = recording_publisher("ig_story_002")
 

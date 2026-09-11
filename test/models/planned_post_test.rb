@@ -156,6 +156,90 @@ class PlannedPostTest < ActiveSupport::TestCase
     assert_not post.valid?
   end
 
+  # ------------------------------------------------------------------
+  # Stories
+  # ------------------------------------------------------------------
+
+  def story_post(overrides = {})
+    PlannedPost.new({
+      user:             users(:one),
+      media_asset:      media_assets(:sample_image),
+      platform:         :instagram,
+      status:           :draft,
+      platform_payload: { "post_type" => "story" }
+    }.merge(overrides))
+  end
+
+  test "post_type reports story when platform_payload says so" do
+    assert_equal "story", story_post.post_type
+    assert story_post.story?
+  end
+
+  test "post_type prefers story over a carousel-named social template" do
+    template = SocialTemplate.create!(name: "IG Carousel", platform: :instagram)
+    post     = story_post(social_template: template)
+
+    assert_equal "story", post.post_type
+  end
+
+  test "a story is valid with a single image or video asset" do
+    assert story_post.valid?, story_post.errors.full_messages.to_sentence
+
+    video_story = story_post(media_asset: media_assets(:sample_video))
+    assert video_story.valid?, video_story.errors.full_messages.to_sentence
+  end
+
+  test "a story is valid on facebook" do
+    post = story_post(platform: :facebook)
+
+    assert post.valid?, post.errors.full_messages.to_sentence
+  end
+
+  test "a story is invalid on a platform without a stories publisher" do
+    post = story_post(platform: :youtube)
+
+    assert_not post.valid?, "youtube should reject a story"
+    assert_includes post.errors[:base], "Stories are only supported on Instagram and Facebook"
+  end
+
+  test "a story is invalid when it also carries carousel assets" do
+    post = story_post(
+      platform_payload: {
+        "post_type"          => "story",
+        "carousel_asset_ids" => [ media_assets(:sample_image).id, media_assets(:sample_image_2).id ]
+      }
+    )
+
+    assert_not post.valid?
+    assert_includes post.errors[:base], "Stories cannot be carousels — a story is a single image or video"
+  end
+
+  test "a story with an over-long video is rejected at save time" do
+    post = story_post(media_asset: media_assets(:sample_long_video))
+
+    assert_not post.valid?
+    assert(post.errors[:media_asset].any? { |m| m.match?(/3–60 seconds/) })
+  end
+
+  test "a story with an over-long video is rejected on facebook too" do
+    post = story_post(platform: :facebook, media_asset: media_assets(:sample_long_video))
+
+    assert_not post.valid?
+    assert(post.errors[:media_asset].any? { |m| m.match?(/3–60 seconds/) })
+  end
+
+  # A feed post has no such limits — only stories are checked.
+  test "the same over-long video is fine as a feed post" do
+    post = PlannedPost.new(
+      user:        users(:one),
+      media_asset: media_assets(:sample_long_video),
+      platform:    :instagram,
+      status:      :draft
+    )
+
+    assert post.valid?, post.errors.full_messages.to_sentence
+  end
+
   test "status enum has correct values" do
     assert_equal 0, PlannedPost.statuses[:draft]
     assert_equal 1, PlannedPost.statuses[:scheduled]

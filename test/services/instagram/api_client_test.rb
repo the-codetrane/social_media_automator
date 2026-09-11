@@ -85,6 +85,57 @@ module Instagram
     end
 
     # -------------------------------------------------------------------------
+    # #post_upload
+    # -------------------------------------------------------------------------
+
+    test "post_upload targets an absolute URL and authenticates with a header" do
+      seen = nil
+      sent_body = :unset
+
+      stubs = Faraday::Adapter::Test::Stubs.new do |stub|
+        stub.post("https://rupload.facebook.com/video-upload/v26.0/vid_001") do |env|
+          seen      = env
+          sent_body = env.body
+          [ 200, { "Content-Type" => "application/json" }, { "success" => true }.to_json ]
+        end
+      end
+      conn = Faraday.new { |f| f.request :url_encoded; f.response :json; f.adapter :test, stubs }
+
+      @client.stub(:connection, conn) do
+        result = @client.post_upload(
+          "https://rupload.facebook.com/video-upload/v26.0/vid_001",
+          "file_url" => "https://cdn.example.com/story.mp4"
+        )
+        assert_equal({ "success" => true }, result)
+      end
+
+      assert_equal "rupload.facebook.com", seen.url.host
+      # The token belongs in the header here — not the query string or the body,
+      # which is where the regular #post puts it.
+      assert_equal "OAuth #{@user.instagram_access_token}", seen.request_headers["Authorization"]
+      assert_equal "https://cdn.example.com/story.mp4", seen.request_headers["file_url"]
+      assert_nil seen.url.query
+      assert_predicate sent_body, :blank?
+    end
+
+    test "post_upload raises ApiError on a Meta error response" do
+      stubs = Faraday::Adapter::Test::Stubs.new do |stub|
+        stub.post("https://rupload.facebook.com/vid_002") do
+          [ 400, { "Content-Type" => "application/json" },
+            { "error" => { "message" => "File not found", "code" => 100 } }.to_json ]
+        end
+      end
+      conn = Faraday.new { |f| f.request :url_encoded; f.response :json; f.adapter :test, stubs }
+
+      @client.stub(:connection, conn) do
+        error = assert_raises(Instagram::ApiError) do
+          @client.post_upload("https://rupload.facebook.com/vid_002", "file_url" => "https://cdn.example.com/gone.mp4")
+        end
+        assert_equal "File not found", error.message
+      end
+    end
+
+    # -------------------------------------------------------------------------
     # Error handling
     # -------------------------------------------------------------------------
 

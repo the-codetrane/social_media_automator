@@ -6,7 +6,9 @@ module Facebook
   # Requires the user to have completed Instagram OAuth with pages_manage_posts
   # permission and have instagram_page_id set.
   #
-  # Three shapes are supported, chosen from the post itself:
+  # The shape is chosen from the post itself:
+  #   * story    — platform_payload["post_type"] == "story"; handed to
+  #                Facebook::StoriesPublisher, which uses a different API
   #   * carousel — platform_payload["carousel_asset_ids"] lists 2+ image assets
   #   * video    — the primary media_asset is a video
   #   * photo    — the primary media_asset is an image
@@ -24,13 +26,16 @@ module Facebook
     # @param user [User] must have instagram_page_id + instagram_access_token set
     def initialize(user)
       @user    = user
-      @page_id = user.instagram_page_id.presence ||
-        raise(Instagram::ApiError, "User #{user.id} has no Facebook page_id set")
+      @page_id = Facebook::PageToken.page_id_for!(user)
     end
 
     # @param planned_post [PlannedPost]
     # @return [String] the Facebook post ID
     def publish(planned_post)
+      # Stories are not a feed post with a flag — they have their own endpoints
+      # and their own bookkeeping, so they leave here entirely.
+      return Facebook::StoriesPublisher.new(@user).publish(planned_post) if planned_post.story?
+
       page_token       = fetch_page_access_token
       post_id, payload = post_content(planned_post, page_token)
 
@@ -50,10 +55,7 @@ module Facebook
 
     # Exchange the stored user token for a Page access token.
     def fetch_page_access_token
-      result = Instagram::ApiClient.new(@user).get(@page_id, fields: "access_token")
-      token  = result["access_token"]
-      raise Instagram::ApiError, "Could not retrieve Page access token for page #{@page_id}" if token.blank?
-      token
+      Facebook::PageToken.fetch(@user, @page_id)
     end
 
     # @return [Array(String, Hash)] the Facebook post ID and any extra

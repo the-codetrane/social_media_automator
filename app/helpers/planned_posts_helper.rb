@@ -32,4 +32,26 @@ module PlannedPostsHelper
   def platform_display_name(platform)
     PLATFORM_DISPLAY_NAMES[platform.to_s] || platform.to_s.capitalize
   end
+
+  # What to say about a story on the show page.
+  #
+  # Before it publishes there is no status; afterwards Facebook reports
+  # PUBLISHED or ARCHIVED, and Facebook::PostVerifier reports UNLISTED once the
+  # story has dropped off the Page. Instagram reports none of these — a verified
+  # IG story is described by its permalink alone.
+  #
+  # @param planned_post [PlannedPost]
+  # @return [String]
+  def story_status_label(planned_post)
+    case planned_post.platform_payload&.dig("story_status")
+    when Facebook::PostVerifier::UNLISTED_STATUS
+      "No longer listed — a story stays live for 24 hours."
+    when "ARCHIVED"
+      "Archived — past its 24 hours, kept in the Page's story archive."
+    when "PUBLISHED"
+      "Live on the Page."
+    else
+      "Publishes as a story: live for 24 hours, with no caption."
+    end
+  end
 end

@@ -70,8 +70,12 @@ module Instagram
       )
 
       ig_media_id
-    rescue Instagram::Error
-      planned_post.update!(status: :failed)
+    rescue Instagram::Error => e
+      # mark_failed! rather than update!: a post can be invalid for the very
+      # reason it failed — an over-long story video trips PlannedPost's own
+      # media limits — and update! would raise from the rescue, hiding the
+      # error that actually explains the failure.
+      planned_post.mark_failed!(e.message)
       raise
     end
 
@@ -82,6 +86,14 @@ module Instagram
     # ------------------------------------------------------------------
 
     def validate_asset!(asset)
+      # PlannedPost checks these too, but a post written before that validation
+      # existed — or a direct call to this publisher — would otherwise burn one
+      # of the 25 daily publishes before Meta rejects the file.
+      violations = StoryMediaSpec.for("instagram").errors_for(asset)
+      if violations.any?
+        raise Instagram::ApiError, "MediaAsset #{asset.id} #{violations.join('; ')}"
+      end
+
       resolve_public_url!(asset) # raises if missing
     end
 

@@ -118,8 +118,10 @@ class PlannedPostsController < ApplicationController
     carousel_ids = Array(params.dig(:planned_post, :carousel_asset_ids)).map(&:to_i).reject(&:zero?)
 
     @planned_post.assign_attributes(planned_post_params)
+    payload = @planned_post.platform_payload || {}
 
-    if post_type == "carousel"
+    case post_type
+    when "carousel"
       if carousel_ids.size < 2
         @planned_post.errors.add(:base, "Carousel posts require at least 2 media assets")
         load_form_data
@@ -127,9 +129,15 @@ class PlannedPostsController < ApplicationController
         return
       end
       @planned_post.media_asset_id = carousel_ids.first
-      @planned_post.platform_payload = (@planned_post.platform_payload || {}).merge("carousel_asset_ids" => carousel_ids)
+      @planned_post.platform_payload = payload.except("post_type").merge("carousel_asset_ids" => carousel_ids)
+    when "story"
+      # Caption, hashtags, collaborators and audio are left on the record even
+      # though Instagram's Stories API accepts none of them: the form still
+      # submits them, and keeping them means switching back to a feed post does
+      # not silently lose the text. Instagram::StoriesPublisher never reads them.
+      @planned_post.platform_payload = payload.except("carousel_asset_ids").merge("post_type" => "story")
     else
-      @planned_post.platform_payload = (@planned_post.platform_payload || {}).except("carousel_asset_ids")
+      @planned_post.platform_payload = payload.except("carousel_asset_ids", "post_type")
     end
 
     if @planned_post.instagram?

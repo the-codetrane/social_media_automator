@@ -30,6 +30,42 @@ module Instagram
       assert_equal "https://www.instagram.com/p/abc123/", result["permalink"]
     end
 
+    test "verify requests media_product_type so a story can be told from a feed post" do
+      captured_params = nil
+
+      mock_client = Object.new
+      mock_client.define_singleton_method(:get) do |_path, params = {}|
+        captured_params = params
+        { "media_product_type" => "FEED" }
+      end
+
+      @verifier.instance_variable_set(:@client, mock_client)
+      @verifier.verify("17846368219941196")
+
+      assert_includes captured_params[:fields], "media_product_type"
+    end
+
+    test "verify with story: true drops the fields a story cannot answer" do
+      captured_params = nil
+
+      mock_client = Object.new
+      mock_client.define_singleton_method(:get) do |_path, params = {}|
+        captured_params = params
+        { "media_product_type" => "STORY" }
+      end
+
+      @verifier.instance_variable_set(:@client, mock_client)
+      @verifier.verify("17846368219941196", story: true)
+
+      fields = captured_params[:fields]
+      assert_includes fields, "permalink"
+      assert_includes fields, "media_product_type"
+      # Asking a story for these is an error, not a null.
+      assert_not_includes fields, "like_count"
+      assert_not_includes fields, "comments_count"
+      assert_not_includes fields, "media_audio_type"
+    end
+
     test "verify requests media_audio_type so attached music is recorded" do
       captured_params = nil
 
