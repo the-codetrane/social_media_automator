@@ -34,7 +34,10 @@ Rails.application.routes.draw do
 
   # Model index pages
   resources :users,            only: [ :index, :show, :edit, :update ]
-  resources :media_assets,     only: [ :index, :show, :edit, :update ]
+  resources :media_assets,     only: [ :index, :show, :new, :create, :edit, :update ]
+  namespace :media_assets do
+    resources :direct_uploads, only: [ :create ]
+  end
   resources :planned_posts,    only: [ :index, :show, :edit, :update ] do
     member do
       post :publish
