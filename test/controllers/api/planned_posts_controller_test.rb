@@ -140,7 +140,7 @@ module Api
              headers: api_headers
 
         json = response.parsed_body
-        expected_keys = %w[id user_id media_asset_id carousel_asset_ids social_template_id platform status caption hashtags scheduled_at platform_payload created_at updated_at]
+        expected_keys = %w[id user_id media_asset_id carousel_asset_ids social_template_id platform post_type status caption hashtags scheduled_at platform_payload created_at updated_at]
         assert_equal expected_keys.sort, json.keys.sort
       end
     end
@@ -594,6 +594,107 @@ module Api
         assert_nil json["created"][0].dig("platform_payload", "carousel_asset_ids")
         # Second post (multiple URLs) should have carousel_asset_ids
         assert_equal 2, json["created"][1]["platform_payload"]["carousel_asset_ids"].length
+      end
+    end
+
+    # ===========================================
+    # post_type Tests
+    # ===========================================
+
+    test "create with post_type story records it in platform_payload" do
+      stub_api_key do
+        post api_planned_posts_path,
+             params: { planned_post: valid_params.merge(post_type: "story") },
+             headers: api_headers
+
+        assert_response :created
+        json = response.parsed_body
+        assert_equal "story", json["post_type"]
+        assert_equal "story", json["platform_payload"]["post_type"]
+      end
+    end
+
+    test "create with post_type single leaves post_type out of platform_payload" do
+      stub_api_key do
+        post api_planned_posts_path,
+             params: { planned_post: valid_params.merge(post_type: "single") },
+             headers: api_headers
+
+        assert_response :created
+        json = response.parsed_body
+        assert_equal "single", json["post_type"]
+        assert_nil json["platform_payload"]["post_type"]
+      end
+    end
+
+    test "create accepts a story on facebook" do
+      stub_api_key do
+        post api_planned_posts_path,
+             params: { planned_post: valid_params.merge(platform: "facebook", post_type: "story") },
+             headers: api_headers
+
+        assert_response :created
+        assert_equal "story", response.parsed_body["post_type"]
+      end
+    end
+
+    test "create rejects a story on a platform without a stories publisher" do
+      stub_api_key do
+        post api_planned_posts_path,
+             params: { planned_post: valid_params.merge(platform: "youtube", post_type: "story") },
+             headers: api_headers
+
+        assert_response :unprocessable_entity
+        assert_includes response.parsed_body["errors"], "Stories are only supported on Instagram and Facebook"
+      end
+    end
+
+    test "update with post_type story preserves the rest of platform_payload" do
+      stub_api_key do
+        planned_post = planned_posts(:draft_post)
+        planned_post.update!(platform_payload: { "collaborators" => [ "chef_alex" ] })
+
+        patch api_planned_post_path(planned_post),
+              params: { planned_post: { post_type: "story" } },
+              headers: api_headers
+
+        assert_response :ok
+        payload = response.parsed_body["platform_payload"]
+        assert_equal "story", payload["post_type"]
+        assert_equal [ "chef_alex" ], payload["collaborators"]
+      end
+    end
+
+    test "update with post_type single removes post_type from platform_payload" do
+      stub_api_key do
+        planned_post = planned_posts(:draft_post)
+        planned_post.update!(platform_payload: { "post_type" => "story" })
+
+        patch api_planned_post_path(planned_post),
+              params: { planned_post: { post_type: "single" } },
+              headers: api_headers
+
+        assert_response :ok
+        assert_nil response.parsed_body["platform_payload"]["post_type"]
+        assert_equal "single", response.parsed_body["post_type"]
+      end
+    end
+
+    test "bulk_create honours post_type per post" do
+      stub_api_key do
+        post bulk_create_api_planned_posts_path,
+             params: {
+               planned_posts: [
+                 valid_params.merge(post_type: "story"),
+                 valid_params
+               ]
+             },
+             headers: api_headers
+
+        assert_response :created
+        created = response.parsed_body["created"]
+        assert_equal "story", created[0]["post_type"]
+        assert_equal "single", created[1]["post_type"]
       end
     end
 

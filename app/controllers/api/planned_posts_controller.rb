@@ -55,6 +55,7 @@ module Api
 
       post_attrs = planned_post_params.merge(media_asset_id: resolved[:primary_id])
       post_attrs = merge_carousel_payload(post_attrs, resolved[:all_ids]) if resolved[:all_ids].size > 1
+      post_attrs = apply_post_type(post_attrs, params.dig(:planned_post, :post_type))
 
       planned_post = PlannedPost.new(post_attrs)
 
@@ -72,8 +73,9 @@ module Api
         resolved = resolve_media_assets_for_bulk(post_params, results, index)
         next if resolved.nil?
 
-        post_attrs = post_params.except(:media_url, :media_urls).merge(media_asset_id: resolved[:primary_id])
+        post_attrs = post_params.except(:media_url, :media_urls, :post_type).merge(media_asset_id: resolved[:primary_id])
         post_attrs = merge_carousel_payload(post_attrs, resolved[:all_ids]) if resolved[:all_ids].size > 1
+        post_attrs = apply_post_type(post_attrs, post_params[:post_type])
 
         planned_post = PlannedPost.new(post_attrs)
 
@@ -114,6 +116,8 @@ module Api
             .merge("carousel_asset_ids" => resolved[:all_ids])
         end
       end
+
+      attrs = apply_post_type(attrs, params.dig(:planned_post, :post_type), existing: @planned_post.platform_payload)
 
       if @planned_post.update(attrs)
         render json: planned_post_response(@planned_post)
@@ -249,6 +253,29 @@ module Api
       )
     end
 
+    # Records an explicit post_type inside platform_payload, which is where
+    # Instagram::MediaPublisher looks for it.  Exposing it as a top-level
+    # attribute saves API clients from having to know that, and from having to
+    # resend the rest of the payload just to set one key.
+    #
+    # Only "story" is stored: "single" and "carousel" are inferred from the
+    # assets, so recording them would let a stale value contradict the media.
+    #
+    # @param attrs [Hash, ActionController::Parameters]
+    # @param post_type [String, nil]
+    # @param existing [Hash, nil] the post's current payload, for updates
+    # @return [Hash, ActionController::Parameters] attrs with platform_payload set
+    def apply_post_type(attrs, post_type, existing: nil)
+      return attrs if post_type.blank?
+
+      payload = attrs[:platform_payload] || existing || {}
+      payload = payload.to_h
+
+      attrs.merge(
+        platform_payload: post_type.to_s == "story" ? payload.merge("post_type" => "story") : payload.except("post_type")
+      )
+    end
+
     def planned_post_params
       params.require(:planned_post).permit(
         :user_id,
@@ -260,9 +287,10 @@ module Api
         :caption,
         :hashtags,
         :scheduled_at,
+        :post_type,
         platform_payload: {},
         media_urls: []
-      ).except(:media_url, :media_urls)
+      ).except(:media_url, :media_urls, :post_type)
     end
 
     def planned_posts_params
@@ -277,6 +305,7 @@ module Api
           :caption,
           :hashtags,
           :scheduled_at,
+          :post_type,
           platform_payload: {},
           media_urls: []
         )
@@ -292,10 +321,11 @@ module Api
         :caption,
         :hashtags,
         :scheduled_at,
+        :post_type,
         platform_payload: {},
         media_urls: [],
         media_asset_ids: []
-      ).except(:media_urls, :media_asset_ids)
+      ).except(:media_urls, :media_asset_ids, :post_type)
     end
 
     def planned_post_response(planned_post)
@@ -307,6 +337,7 @@ module Api
         carousel_asset_ids: carousel_ids || [ planned_post.media_asset_id ],
         social_template_id: planned_post.social_template_id,
         platform: planned_post.platform,
+        post_type: planned_post.post_type,
         status: planned_post.status,
         caption: planned_post.caption,
         hashtags: planned_post.hashtags,

@@ -52,85 +52,107 @@
       </div>
 
       <%# Post type toggle + media selection %>
-      <div data-controller="post-type">
-        <p class="block text-sm font-medium text-gray-700 mb-2">Post Type</p>
-        <div class="flex gap-4 mb-4">
-          <label class="flex items-center gap-2 cursor-pointer">
-            <%= form.radio_button :post_type, "single",
-                  checked: current_post_type == "single",
-                  class: "text-indigo-600 focus:ring-indigo-500",
-                  data: { action: "change->post-type#update" } %>
-            <span class="text-sm text-gray-700">Single</span>
-          </label>
-          <label class="flex items-center gap-2 cursor-pointer">
-            <%= form.radio_button :post_type, "carousel",
-                  checked: current_post_type == "carousel",
-                  class: "text-indigo-600 focus:ring-indigo-500",
-                  data: { action: "change->post-type#update" } %>
-            <span class="text-sm text-gray-700">Carousel</span>
-          </label>
-        </div>
-
-        <%# Single media asset section %>
-        <div data-post-type-target="singleSection" class="<%= 'hidden' if current_post_type == 'carousel' %>">
-          <%= form.label :media_asset_id, "Media Asset", class: "block text-sm font-medium text-gray-700 mb-2" %>
-          <%= form.collection_select :media_asset_id, @media_assets, :id, ->(a) { CGI.unescape(a.external_name.presence || a.external_id) }, {}, class: "w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors bg-white" %>
-        </div>
-
-        <%# Carousel media selection section %>
-        <div data-post-type-target="carouselSection"
-             class="<%= 'hidden' if current_post_type == 'single' %>"
-             data-controller="carousel-select"
-             data-carousel-select-initial-ids-value="<%= @carousel_asset_ids.to_json %>">
-
-          <p class="block text-sm font-medium text-gray-700 mb-2">Carousel Assets <span class="font-normal text-gray-500">(select 2–10, drag to reorder)</span></p>
-
-          <%# Search %>
-          <input type="text"
-                 data-carousel-select-target="search"
-                 data-action="input->carousel-select#filter"
-                 placeholder="Search assets..."
-                 class="w-full px-3 py-2 mb-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors">
-
-          <%# Picker: scrollable checkbox list %>
-          <div class="border border-gray-200 rounded-lg overflow-y-auto max-h-48 mb-3 divide-y divide-gray-100">
-            <% if @media_assets.any? %>
-              <% @media_assets.each do |asset| %>
-                <%
-                  asset_name = CGI.unescape(asset.external_name.presence || asset.external_id)
-                  is_checked = @carousel_asset_ids.include?(asset.id)
-                %>
-                <label data-carousel-select-target="option"
-                       class="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 cursor-pointer">
-                  <input type="checkbox"
-                         data-carousel-select-target="checkbox"
-                         data-action="change->carousel-select#toggle"
-                         data-name="<%= asset_name %>"
-                         value="<%= asset.id %>"
-                         <%= "checked" if is_checked %>
-                         class="rounded text-indigo-600 focus:ring-indigo-500">
-                  <span class="text-sm text-gray-700 truncate"><%= asset_name %></span>
-                </label>
-              <% end %>
-            <% else %>
-              <p class="px-3 py-4 text-sm text-gray-400 text-center">No processed media assets available.</p>
+      <div data-controller="post-type" class="space-y-6">
+        <div>
+          <p class="block text-sm font-medium text-gray-700 mb-2">Post Type</p>
+          <div class="flex gap-4 mb-4">
+            <label class="flex items-center gap-2 cursor-pointer">
+              <%= form.radio_button :post_type, "single",
+                    checked: current_post_type == "single",
+                    class: "text-indigo-600 focus:ring-indigo-500",
+                    data: { action: "change->post-type#update" } %>
+              <span class="text-sm text-gray-700">Single</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <%= form.radio_button :post_type, "carousel",
+                    checked: current_post_type == "carousel",
+                    class: "text-indigo-600 focus:ring-indigo-500",
+                    data: { action: "change->post-type#update" } %>
+              <span class="text-sm text-gray-700">Carousel</span>
+            </label>
+            <%# Instagram and Facebook are the platforms with a Stories publisher. %>
+            <% if @planned_post.instagram? || @planned_post.facebook? %>
+              <label class="flex items-center gap-2 cursor-pointer">
+                <%= form.radio_button :post_type, "story",
+                      checked: current_post_type == "story",
+                      class: "text-indigo-600 focus:ring-indigo-500",
+                      data: { action: "change->post-type#update" } %>
+                <span class="text-sm text-gray-700">Story</span>
+              </label>
             <% end %>
           </div>
 
-          <%# Selected ordered list %>
-          <div data-carousel-select-target="selectedList" class="space-y-1 mb-2"></div>
+          <%# Single media asset section — a story picks one asset the same way %>
+          <div data-post-type-target="singleSection" class="<%= 'hidden' if current_post_type == 'carousel' %>">
+            <%= form.label :media_asset_id, "Media Asset", class: "block text-sm font-medium text-gray-700 mb-2" %>
+            <%= form.collection_select :media_asset_id, @media_assets, :id, ->(a) { CGI.unescape(a.external_name.presence || a.external_id) }, {}, class: "w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors bg-white" %>
+          </div>
 
-          <%# Hidden inputs for ordered IDs %>
-          <div data-carousel-select-target="hiddenInputs"></div>
+          <p data-post-type-target="storyNote"
+             class="<%= 'hidden' unless current_post_type == 'story' %> mt-3 px-3 py-2 text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg">
+            Stories show a single image or video for 24 hours. Meta's Stories API accepts no caption,
+            hashtags, collaborators or audio — those fields stay on this record but are not sent when
+            it publishes, and a published story is not verified afterwards. Use a 9:16 asset
+            (1080×1920); video must be 3–60 seconds.
+          </p>
+
+          <%# Carousel media selection section %>
+          <div data-post-type-target="carouselSection"
+               class="<%= 'hidden' unless current_post_type == 'carousel' %>"
+               data-controller="carousel-select"
+               data-carousel-select-initial-ids-value="<%= @carousel_asset_ids.to_json %>">
+
+            <p class="block text-sm font-medium text-gray-700 mb-2">Carousel Assets <span class="font-normal text-gray-500">(select 2–10, drag to reorder)</span></p>
+
+            <%# Search %>
+            <input type="text"
+                   data-carousel-select-target="search"
+                   data-action="input->carousel-select#filter"
+                   placeholder="Search assets..."
+                   class="w-full px-3 py-2 mb-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors">
+
+            <%# Picker: scrollable checkbox list %>
+            <div class="border border-gray-200 rounded-lg overflow-y-auto max-h-48 mb-3 divide-y divide-gray-100">
+              <% if @media_assets.any? %>
+                <% @media_assets.each do |asset| %>
+                  <%
+                    asset_name = CGI.unescape(asset.external_name.presence || asset.external_id)
+                    is_checked = @carousel_asset_ids.include?(asset.id)
+                  %>
+                  <label data-carousel-select-target="option"
+                         class="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 cursor-pointer">
+                    <input type="checkbox"
+                           data-carousel-select-target="checkbox"
+                           data-action="change->carousel-select#toggle"
+                           data-name="<%= asset_name %>"
+                           value="<%= asset.id %>"
+                           <%= "checked" if is_checked %>
+                           class="rounded text-indigo-600 focus:ring-indigo-500">
+                    <span class="text-sm text-gray-700 truncate"><%= asset_name %></span>
+                  </label>
+                <% end %>
+              <% else %>
+                <p class="px-3 py-4 text-sm text-gray-400 text-center">No processed media assets available.</p>
+              <% end %>
+            </div>
+
+            <%# Selected ordered list %>
+            <div data-carousel-select-target="selectedList" class="space-y-1 mb-2"></div>
+
+            <%# Hidden inputs for ordered IDs %>
+            <div data-carousel-select-target="hiddenInputs"></div>
+          </div>
         </div>
-      </div>
 
-      <% if @planned_post.instagram? %>
-        <%= render "instagram_options",
-              planned_post:   @planned_post,
-              collaborators:  @collaborators,
-              selected_audio: @selected_audio %>
-      <% end %>
+        <% if @planned_post.instagram? %>
+          <div data-post-type-target="feedOptions" class="<%= 'hidden' if current_post_type == 'story' %>">
+            <%= render "instagram_options",
+                  planned_post:   @planned_post,
+                  collaborators:  @collaborators,
+                  selected_audio: @selected_audio %>
+          </div>
+        <% end %>
+      </div>
 
       <div>
         <%= form.label :social_template_id, "Social Template", class: "block text-sm font-medium text-gray-700 mb-2" %>

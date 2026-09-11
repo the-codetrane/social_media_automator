@@ -85,6 +85,33 @@ module Facebook
     end
 
     # -------------------------------------------------------------------------
+    # #publish — story
+    # -------------------------------------------------------------------------
+
+    test "publish hands a story to StoriesPublisher instead of the feed" do
+      story = PlannedPost.new(
+        user:             @user,
+        media_asset:      media_assets(:sample_image),
+        platform:         :facebook,
+        status:           :draft,
+        platform_payload: { "post_type" => "story" }
+      )
+      story.save!(validate: false)
+
+      calls    = []
+      delegate = Object.new
+      delegate.define_singleton_method(:publish) { |post| calls << post; "fb_story_001" }
+
+      Instagram::ApiClient.stub(:new, ->(*_args, **_opts) { raise "The feed API must not be touched" }) do
+        Facebook::StoriesPublisher.stub(:new, ->(_user) { delegate }) do
+          assert_equal "fb_story_001", @publisher.publish(story)
+        end
+      end
+
+      assert_equal [ story ], calls
+    end
+
+    # -------------------------------------------------------------------------
     # #publish — carousel
     # -------------------------------------------------------------------------
 

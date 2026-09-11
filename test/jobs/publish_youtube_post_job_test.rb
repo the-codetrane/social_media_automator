@@ -73,43 +73,64 @@ class PublishYouTubePostJobTest < ActiveSupport::TestCase
   end
 
   # -------------------------------------------------------------------------
-  # Error handling / retry behaviour
+  # Error handling
   # -------------------------------------------------------------------------
 
-  test "perform marks post failed after retries exhausted via discard_on" do
-    YouTube::VideoPublisher.stub(:new, ->(_) {
+  # A publisher double whose #publish always raises the given error.
+  def failing_publisher(error_class, message)
+    ->(_) {
       obj = Object.new
-      obj.define_singleton_method(:publish) { |_| raise YouTube::ApiError, "Permanent failure" }
+      obj.define_singleton_method(:publish) { |_| raise error_class, message }
       obj
-    }) do
-      assert_nothing_raised { PublishYouTubePostJob.perform_now(@post.id) }
-    end
-
-    assert @post.reload.failed?
+    }
   end
 
-  test "perform retries on RateLimitError (solid_queue handles re-enqueue)" do
-    YouTube::VideoPublisher.stub(:new, ->(_) {
-      obj = Object.new
-      obj.define_singleton_method(:publish) { |_| raise YouTube::RateLimitError, "Quota hit" }
-      obj
-    }) do
-      # retry_on exhausts attempts then discard_on swallows — nothing escapes
-      assert_nothing_raised { PublishYouTubePostJob.perform_now(@post.id) }
-    end
+  # Retryable errors must actually re-enqueue the job.  A re-enqueue is the only
+  # observable difference between "retried" and "discarded" under perform_now,
+  # so assert on enqueued_jobs rather than on the post's status.
+  { "RateLimitError" => YouTube::RateLimitError,
+    "ApiError" => YouTube::ApiError }.each do |name, error_class|
+    test "perform retries a #{name} instead of discarding it" do
+      assert_enqueued_jobs 1, only: PublishYouTubePostJob do
+        YouTube::VideoPublisher.stub(:new, failing_publisher(error_class, "transient")) do
+          assert_nothing_raised { PublishYouTubePostJob.perform_now(@post.id) }
+        end
+      end
 
-    assert @post.reload.failed?
+      assert_not @post.reload.failed?, "a retryable error must not fail the post on the first attempt"
+    end
   end
 
-  test "perform marks post failed on UploadError via discard_on" do
-    YouTube::VideoPublisher.stub(:new, ->(_) {
-      obj = Object.new
-      obj.define_singleton_method(:publish) { |_| raise YouTube::UploadError, "Transfer failed" }
-      obj
-    }) do
-      assert_nothing_raised { PublishYouTubePostJob.perform_now(@post.id) }
+  test "perform marks the post failed once the retries are exhausted" do
+    job = PublishYouTubePostJob.new(@post.id)
+    job.exception_executions = { "[YouTube::RateLimitError]" => 5 }
+
+    YouTube::VideoPublisher.stub(:new, failing_publisher(YouTube::RateLimitError, "still broken")) do
+      assert_enqueued_jobs 0, only: PublishYouTubePostJob do
+        assert_nothing_raised { job.perform_now }
+      end
     end
 
     assert @post.reload.failed?
+    assert_equal "still broken", @post.failure_reason
+  end
+
+  # UploadError can never succeed on a retry, so it must not match any
+  # retry_on — it falls through to discard_on and fails the post at once.
+  test "perform fails immediately on a UploadError without retrying" do
+    assert_enqueued_jobs 0, only: PublishYouTubePostJob do
+      YouTube::VideoPublisher.stub(:new, failing_publisher(YouTube::UploadError, "reconnect the account")) do
+        assert_nothing_raised { PublishYouTubePostJob.perform_now(@post.id) }
+      end
+    end
+
+    assert @post.reload.failed?
+    assert_equal "reconnect the account", @post.failure_reason
+  end
+
+  test "perform does not swallow errors from outside the YouTube namespace" do
+    YouTube::VideoPublisher.stub(:new, failing_publisher(ArgumentError, "boom")) do
+      assert_raises(ArgumentError) { PublishYouTubePostJob.perform_now(@post.id) }
+    end
   end
 end

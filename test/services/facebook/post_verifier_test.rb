@@ -40,6 +40,66 @@ module Facebook
       assert_includes verify_call[:params][:fields], "permalink_url"
     end
 
+    test "verify_story finds the matching story in the page's story list" do
+      page_id  = @page_id
+      call_log = []
+
+      Instagram::ApiClient.stub(:new, ->(_user, **_opts) {
+        client = Object.new
+        client.define_singleton_method(:get) do |path, params = {}|
+          call_log << { path: path, params: params }
+          next { "access_token" => "PAGE_TOKEN" } if params[:fields] == "access_token"
+
+          {
+            "data" => [
+              { "post_id" => "other_story", "status" => "PUBLISHED", "url" => "https://www.facebook.com/stories/0/" },
+              { "post_id" => "fb_story_001", "status" => "PUBLISHED", "url" => "https://www.facebook.com/stories/1/" }
+            ]
+          }
+        end
+        client
+      }) do
+        result = @verifier.verify_story("fb_story_001")
+
+        assert_equal "https://www.facebook.com/stories/1/", result["url"]
+        assert_equal "PUBLISHED", result["status"]
+      end
+
+      list_call = call_log.find { |c| c[:path] == "#{page_id}/stories" }
+      assert_not_nil list_call, "expected a GET on the page's stories edge"
+    end
+
+    test "verify_story reports UNLISTED when the story is no longer listed" do
+      Instagram::ApiClient.stub(:new, ->(_user, **_opts) {
+        client = Object.new
+        client.define_singleton_method(:get) do |_path, params = {}|
+          next { "access_token" => "PAGE_TOKEN" } if params[:fields] == "access_token"
+          { "data" => [] }
+        end
+        client
+      }) do
+        result = @verifier.verify_story("fb_story_001")
+
+        assert_equal Facebook::PostVerifier::UNLISTED_STATUS, result["status"]
+        assert_nil result["url"]
+      end
+    end
+
+    test "verify_story matches on post_id even when Meta returns it as a number" do
+      Instagram::ApiClient.stub(:new, ->(_user, **_opts) {
+        client = Object.new
+        client.define_singleton_method(:get) do |_path, params = {}|
+          next { "access_token" => "PAGE_TOKEN" } if params[:fields] == "access_token"
+          { "data" => [ { "post_id" => 123456, "status" => "ARCHIVED", "url" => "https://www.facebook.com/stories/2/" } ] }
+        end
+        client
+      }) do
+        result = @verifier.verify_story("123456")
+
+        assert_equal "ARCHIVED", result["status"]
+      end
+    end
+
     test "raises ApiError when user has no page_id" do
       @user.instagram_page_id = nil
       assert_raises(Instagram::ApiError) { Facebook::PostVerifier.new(@user) }

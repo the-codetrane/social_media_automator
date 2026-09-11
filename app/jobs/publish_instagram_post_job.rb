@@ -10,23 +10,37 @@
 #                         .perform_later(planned_post.id)
 #
 # Retries:
-# - Instagram::RateLimitError → retried after a 1-hour wait (quota resets rolling 24 h)
 # - Instagram::ContainerTimeoutError → retried after 30 s (video processing lag)
-# - Other Instagram::Error → retried 3× with exponential back-off then marked failed
+# - Instagram::RateLimitError        → retried after 1 hour (quota resets rolling 24 h)
+# - Instagram::ApiError              → retried 3× with exponential back-off
+# - Other Instagram::Error           → marked failed at once
+#
+# Instagram::TokenExpiredError is deliberately absent from the retry list: a
+# token that has expired will not have un-expired 30 seconds later, so it goes
+# straight to failed and the account needs reconnecting.
 class PublishInstagramPostJob < ApplicationJob
   queue_as :default
 
-  # Retry transient errors a limited number of times.
-  retry_on Instagram::ContainerTimeoutError, wait: 30.seconds, attempts: 5
-  retry_on Instagram::RateLimitError,        wait: 1.hour,     attempts: 5
-  retry_on Instagram::ApiError,              wait: :polynomially_longer, attempts: 3
-
-  # After all retries are exhausted, mark the post as failed and re-raise.
-  discard_on(Instagram::Error) do |job, error|
-    planned_post = PlannedPost.find_by(id: job.arguments.first)
-    planned_post&.update(status: :failed)
+  # Marks the post failed, whether that is because retries ran out or because
+  # the error was never retryable in the first place.
+  # PlannedPost#mark_failed! stores the reason on the record so the UI can show
+  # why, and skips validation — a post can be invalid for the very reason it
+  # failed, in which case update! would raise and update would silently no-op.
+  MARK_FAILED = proc do |job, error|
+    PlannedPost.find_by(id: job.arguments.first)&.mark_failed!(error.message)
     Rails.logger.error("[PublishInstagramPostJob] Permanently failed for PlannedPost##{job.arguments.first}: #{error.message}")
   end
+
+  # Declaration order matters: retry_on and discard_on both register rescue_from
+  # handlers, and those are matched last-registered-first.  The catch-all
+  # discard_on therefore has to come FIRST, so the specific retry_on rules below
+  # it win for the errors they name and only unmatched errors — notably
+  # TokenExpiredError — fall through to be discarded immediately.
+  discard_on Instagram::Error, &MARK_FAILED
+
+  retry_on Instagram::ContainerTimeoutError, wait: 30.seconds, attempts: 5, &MARK_FAILED
+  retry_on Instagram::RateLimitError,        wait: 1.hour,     attempts: 5, &MARK_FAILED
+  retry_on Instagram::ApiError,              wait: :polynomially_longer, attempts: 3, &MARK_FAILED
 
   # @param planned_post_id [Integer]
   def perform(planned_post_id)

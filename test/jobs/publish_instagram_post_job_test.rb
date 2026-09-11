@@ -71,37 +71,65 @@ class PublishInstagramPostJobTest < ActiveSupport::TestCase
   end
 
   # -------------------------------------------------------------------------
-  # Error handling / retry behaviour
+  # Error handling
   # -------------------------------------------------------------------------
 
-  test "perform marks post failed after retries exhausted via discard_on" do
-    Instagram::MediaPublisher.stub(:new, ->(_) {
+  # A publisher double whose #publish always raises the given error.
+  def failing_publisher(error_class, message)
+    ->(_) {
       obj = Object.new
-      obj.define_singleton_method(:publish) { |_| raise Instagram::ApiError, "Permanent failure" }
+      obj.define_singleton_method(:publish) { |_| raise error_class, message }
       obj
-    }) do
-      # discard_on swallows the error — nothing escapes perform_now
-      assert_nothing_raised do
-        PublishInstagramPostJob.perform_now(@post.id)
-      end
-    end
-
-    # The discard_on block updates the post status to :failed
-    assert @post.reload.failed?
+    }
   end
 
-  test "perform retries on RateLimitError (solid_queue handles re-enqueue)" do
-    Instagram::MediaPublisher.stub(:new, ->(_) {
-      obj = Object.new
-      obj.define_singleton_method(:publish) { |_| raise Instagram::RateLimitError, "Quota hit" }
-      obj
-    }) do
-      # retry_on exhausts attempts then discard_on swallows — nothing escapes
-      assert_nothing_raised do
-        PublishInstagramPostJob.perform_now(@post.id)
+  # Retryable errors must actually re-enqueue the job.  A re-enqueue is the only
+  # observable difference between "retried" and "discarded" under perform_now,
+  # so assert on enqueued_jobs rather than on the post's status.
+  { "ContainerTimeoutError" => Instagram::ContainerTimeoutError,
+    "RateLimitError" => Instagram::RateLimitError,
+    "ApiError" => Instagram::ApiError }.each do |name, error_class|
+    test "perform retries a #{name} instead of discarding it" do
+      assert_enqueued_jobs 1, only: PublishInstagramPostJob do
+        Instagram::MediaPublisher.stub(:new, failing_publisher(error_class, "transient")) do
+          assert_nothing_raised { PublishInstagramPostJob.perform_now(@post.id) }
+        end
+      end
+
+      assert_not @post.reload.failed?, "a retryable error must not fail the post on the first attempt"
+    end
+  end
+
+  test "perform marks the post failed once the retries are exhausted" do
+    job = PublishInstagramPostJob.new(@post.id)
+    job.exception_executions = { "[Instagram::ContainerTimeoutError]" => 5 }
+
+    Instagram::MediaPublisher.stub(:new, failing_publisher(Instagram::ContainerTimeoutError, "still broken")) do
+      assert_enqueued_jobs 0, only: PublishInstagramPostJob do
+        assert_nothing_raised { job.perform_now }
       end
     end
 
     assert @post.reload.failed?
+    assert_equal "still broken", @post.failure_reason
+  end
+
+  # TokenExpiredError can never succeed on a retry, so it must not match any
+  # retry_on — it falls through to discard_on and fails the post at once.
+  test "perform fails immediately on a TokenExpiredError without retrying" do
+    assert_enqueued_jobs 0, only: PublishInstagramPostJob do
+      Instagram::MediaPublisher.stub(:new, failing_publisher(Instagram::TokenExpiredError, "reconnect the account")) do
+        assert_nothing_raised { PublishInstagramPostJob.perform_now(@post.id) }
+      end
+    end
+
+    assert @post.reload.failed?
+    assert_equal "reconnect the account", @post.failure_reason
+  end
+
+  test "perform does not swallow errors from outside the Instagram namespace" do
+    Instagram::MediaPublisher.stub(:new, failing_publisher(ArgumentError, "boom")) do
+      assert_raises(ArgumentError) { PublishInstagramPostJob.perform_now(@post.id) }
+    end
   end
 end

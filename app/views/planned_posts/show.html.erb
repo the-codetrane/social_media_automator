@@ -210,6 +210,13 @@
             </dd>
           </div>
         <% end %>
+        <%# Nothing else on this page distinguishes a story from a single feed post. %>
+        <% if @planned_post.story? %>
+          <div>
+            <dt class="text-xs text-gray-400 uppercase tracking-wide mb-1">Story</dt>
+            <dd class="text-lg text-gray-900"><%= story_status_label(@planned_post) %></dd>
+          </div>
+        <% end %>
         <div>
           <dt class="text-xs text-gray-400 uppercase tracking-wide mb-1">Media Asset</dt>
           <dd class="text-lg text-gray-900">

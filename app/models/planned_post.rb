@@ -14,6 +14,9 @@ class PlannedPost < ApplicationRecord
   validate :published_at_not_in_future, if: :published?
   validate :scheduled_at_in_future, if: :scheduled?
   validate :tiktok_requires_video_asset, if: :tiktok?
+  validate :story_supported_on_platform, if: :story?
+  validate :story_requires_single_visual_asset, if: :story?
+  validate :story_media_within_platform_limits, if: :story?
 
   scope :upcoming, -> { where(status: :scheduled).where("scheduled_at > ?", Time.current).order(:scheduled_at) }
   scope :for_platform, ->(platform) { where(platform: platform) }
@@ -89,10 +92,21 @@ class PlannedPost < ApplicationRecord
     platform_payload&.dig("failure_reason")
   end
 
+  # Which shape this post publishes as: "story", "carousel" or "single".
+  #
+  # Story is an explicit choice recorded in platform_payload — it cannot be
+  # inferred from the assets, since a story and a single feed post look
+  # identical from here. It wins over the carousel checks so a post switched to
+  # a story is not still read as a carousel by a stale social_template name.
   def post_type
+    return "story" if platform_payload&.dig("post_type") == "story"
     return "carousel" if platform_payload&.dig("carousel_asset_ids")&.size.to_i >= 2
     return "carousel" if social_template&.name&.match?(/carousel/i)
     "single"
+  end
+
+  def story?
+    post_type == "story"
   end
 
   private
@@ -106,6 +120,42 @@ class PlannedPost < ApplicationRecord
   def scheduled_at_in_future
     if scheduled_at.present? && scheduled_at <= Time.current
       errors.add(:scheduled_at, "must be in the future")
+    end
+  end
+
+  # Instagram and Facebook each have a Stories publisher; YouTube and TikTok
+  # have no equivalent — without this check a post marked as a story on those
+  # platforms publishes silently to the feed instead.
+  def story_supported_on_platform
+    return if instagram? || facebook?
+
+    errors.add(:base, "Stories are only supported on Instagram and Facebook")
+  end
+
+  # A story is one image or video card: Meta's Stories API takes a single
+  # image_url or video_url, so a carousel payload or an audio-only asset has no
+  # way to publish.
+  def story_requires_single_visual_asset
+    if platform_payload&.dig("carousel_asset_ids").present?
+      errors.add(:base, "Stories cannot be carousels — a story is a single image or video")
+    end
+
+    return if media_asset.blank?
+    return if media_asset.image? || media_asset.video?
+
+    errors.add(:media_asset, "must be an image or video — stories do not support #{media_asset.media_type}")
+  end
+
+  # Catch a story whose media Meta will reject — an over-long video, an
+  # undersized frame, an oversized file — at save time. Otherwise the failure
+  # arrives whenever the post is due, after the upload has already been paid
+  # for: a Facebook video story reports "Resolution too low" only in the
+  # processing phase, minutes after the file was fetched.
+  def story_media_within_platform_limits
+    return if media_asset.blank?
+
+    StoryMediaSpec.for(platform).errors_for(media_asset).each do |message|
+      errors.add(:media_asset, message)
     end
   end
 

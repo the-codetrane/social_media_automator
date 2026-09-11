@@ -47,6 +47,26 @@ module Instagram
       handle_response(response)
     end
 
+    # POST to an absolute upload URL handed back by another endpoint.
+    #
+    # Meta's resumable upload host (rupload.facebook.com, used by the Page
+    # Stories video flow) does not take the token as a form parameter the way
+    # graph.facebook.com does: it wants an `Authorization: OAuth <token>` header,
+    # and describes the source with headers rather than a body. This reuses the
+    # Faraday stack — retries, JSON parsing, error raising — but skips
+    # authenticated_params, which would put the token in the wrong place.
+    #
+    # @param url [String] absolute URL from an upload-session start response
+    # @param headers [Hash] request headers, e.g. { "file_url" => "https://…" }
+    # @return [Hash] parsed JSON body
+    def post_upload(url, headers = {})
+      response = connection.post(url) do |req|
+        req.headers["Authorization"] = "OAuth #{access_token}"
+        headers.each { |key, value| req.headers[key.to_s] = value.to_s }
+      end
+      handle_response(response)
+    end
+
     # Check how many API-published posts remain in the current 24 h window.
     # @return [Hash] { quota_usage: Integer, config: Hash }
     def publishing_limit(ig_user_id)

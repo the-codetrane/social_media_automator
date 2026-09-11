@@ -461,6 +461,21 @@ class PlannedPostsControllerTest < ActionDispatch::IntegrationTest
     get edit_planned_post_path(@planned_post)
     assert_select "input[type='radio'][name='planned_post[post_type]'][value='single']"
     assert_select "input[type='radio'][name='planned_post[post_type]'][value='carousel']"
+    assert_select "input[type='radio'][name='planned_post[post_type]'][value='story']"
+  end
+
+  test "edit hides the story radio on a platform without a stories publisher" do
+    sign_in_as(@user)
+    get edit_planned_post_path(planned_posts(:tiktok_draft_post))
+    assert_select "input[type='radio'][name='planned_post[post_type]'][value='story']", count: 0
+  end
+
+  test "edit pre-selects story for a story post" do
+    sign_in_as(@user)
+    @planned_post.update!(platform_payload: { "post_type" => "story" })
+
+    get edit_planned_post_path(@planned_post)
+    assert_select "input[type='radio'][name='planned_post[post_type]'][value='story'][checked]"
   end
 
   test "edit pre-selects carousel for a carousel post" do
@@ -555,6 +570,110 @@ class PlannedPostsControllerTest < ActionDispatch::IntegrationTest
     carousel.reload
     assert_nil carousel.platform_payload["carousel_asset_ids"]
     assert_equal media_assets(:sample_image).id, carousel.media_asset_id
+  end
+
+  test "show describes a published facebook story" do
+    sign_in_as(@user)
+    story = planned_posts(:facebook_draft_post)
+    story.update!(
+      status:           :published,
+      external_post_id: "fb_story_001",
+      published_at:     Time.current,
+      platform_payload: { "post_type" => "story", "story_status" => "PUBLISHED" }
+    )
+
+    get planned_post_path(story)
+    assert_response :success
+    assert_match "Live on the Page.", response.body
+  end
+
+  test "show explains an unlisted story rather than showing nothing" do
+    sign_in_as(@user)
+    story = planned_posts(:facebook_draft_post)
+    story.update!(
+      status:           :published,
+      external_post_id: "fb_story_001",
+      published_at:     Time.current,
+      platform_payload: { "post_type" => "story", "story_status" => "UNLISTED" }
+    )
+
+    get planned_post_path(story)
+    assert_response :success
+    assert_match "No longer listed", response.body
+  end
+
+  # Story update tests
+  test "update with story post type records post_type in platform_payload" do
+    sign_in_as(@user)
+
+    patch planned_post_path(@planned_post), params: {
+      planned_post: {
+        post_type: "story",
+        caption: @planned_post.caption,
+        status: @planned_post.status,
+        media_asset_id: media_assets(:sample_image).id
+      }
+    }
+
+    assert_redirected_to planned_post_path(@planned_post)
+    @planned_post.reload
+    assert_equal "story", @planned_post.platform_payload["post_type"]
+    assert_equal "story", @planned_post.post_type
+  end
+
+  test "update with story post type clears carousel_asset_ids" do
+    sign_in_as(@user)
+    carousel = planned_posts(:carousel_post)
+
+    patch planned_post_path(carousel), params: {
+      planned_post: {
+        post_type: "story",
+        caption: carousel.caption,
+        status: carousel.status,
+        media_asset_id: media_assets(:sample_image).id
+      }
+    }
+
+    assert_redirected_to planned_post_path(carousel)
+    carousel.reload
+    assert_nil carousel.platform_payload["carousel_asset_ids"]
+    assert_equal "story", carousel.post_type
+  end
+
+  # The caption is left alone rather than blanked: Instagram drops it on a
+  # story, but switching back to a feed post should not have lost the text.
+  test "update with story post type keeps the caption on the record" do
+    sign_in_as(@user)
+
+    patch planned_post_path(@planned_post), params: {
+      planned_post: {
+        post_type: "story",
+        caption: "Kept for later",
+        status: @planned_post.status,
+        media_asset_id: media_assets(:sample_image).id
+      }
+    }
+
+    @planned_post.reload
+    assert_equal "Kept for later", @planned_post.caption
+  end
+
+  test "switching a story back to single clears post_type" do
+    sign_in_as(@user)
+    @planned_post.update!(platform_payload: { "post_type" => "story" })
+
+    patch planned_post_path(@planned_post), params: {
+      planned_post: {
+        post_type: "single",
+        caption: @planned_post.caption,
+        status: @planned_post.status,
+        media_asset_id: media_assets(:sample_image).id
+      }
+    }
+
+    @planned_post.reload
+    assert_nil @planned_post.platform_payload["post_type"]
+    assert_equal "single", @planned_post.post_type
   end
 
   test "update with single post type succeeds with valid media_asset_id" do

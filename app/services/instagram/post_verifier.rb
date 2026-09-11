@@ -11,16 +11,25 @@ module Instagram
   class PostVerifier
     # media_audio_type reports whether a video uses licensed music ("MUSIC")
     # or original audio ("ORIGINAL_SOUND").
-    FIELDS = "id,permalink,timestamp,media_type,media_audio_type,like_count,comments_count"
+    # media_product_type is what distinguishes a story from a feed post: a
+    # story's media_type reports IMAGE/VIDEO like any other media, while
+    # media_product_type is one of AD, FEED, STORY or REELS.
+    FIELDS = "id,permalink,timestamp,media_type,media_product_type,media_audio_type,like_count,comments_count"
+
+    # Stories carry no engagement counters and no audio type, and asking for a
+    # field a media object does not support is an error (code 100) rather than a
+    # null — so they get their own, smaller list.
+    STORY_FIELDS = "id,permalink,timestamp,media_type,media_product_type"
 
     def initialize(user)
       @client = Instagram::ApiClient.new(user)
     end
 
     # @param external_post_id [String] the ig_media_id stored on PlannedPost
+    # @param story [Boolean] read the story-safe field list instead
     # @return [Hash] parsed API response
-    def verify(external_post_id)
-      @client.get(external_post_id, fields: FIELDS)
+    def verify(external_post_id, story: false)
+      @client.get(external_post_id, fields: story ? STORY_FIELDS : FIELDS)
     end
 
     # Co-authors on a published post, with their invite status.
