@@ -50,7 +50,7 @@ module MediaAssetFolders
   end
 
   def list_from_bucket(service)
-    response = service.client.list_objects_v2(bucket: service.bucket.name, delimiter: "/")
+    response = service.bucket.client.list_objects_v2(bucket: service.bucket.name, delimiter: "/")
     response.common_prefixes.map(&:prefix)
   end
 

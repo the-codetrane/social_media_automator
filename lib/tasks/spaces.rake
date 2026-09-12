@@ -28,7 +28,7 @@ namespace :spaces do
   desc "List directories (common prefixes) in DigitalOcean Spaces"
   task dirs: :environment do
     service = ActiveStorage::Blob.services.fetch(:digitalocean)
-    client = service.client
+    client = service.bucket.client
     bucket_name = service.bucket.name
 
     resp = client.list_objects_v2(bucket: bucket_name, delimiter: "/")
@@ -51,8 +51,8 @@ namespace :spaces do
 
     puts "=== DigitalOcean Spaces Connection Test ==="
     puts "Bucket: #{bucket.name}"
-    puts "Region: #{service.client.config.region}"
-    puts "Endpoint: #{service.client.config.endpoint}"
+    puts "Region: #{service.bucket.client.config.region}"
+    puts "Endpoint: #{service.bucket.client.config.endpoint}"
 
     # Test by counting objects
     count = bucket.objects.limit(1000).count
@@ -67,7 +67,7 @@ namespace :spaces do
     service = ActiveStorage::Blob.services.fetch(:digitalocean)
     origins = ENV.fetch("ORIGINS", "https://socialmediaautomator.cainandco.band").split(",").map(&:strip)
 
-    service.client.put_bucket_cors(
+    service.bucket.client.put_bucket_cors(
       bucket: service.bucket.name,
       cors_configuration: {
         cors_rules: [ {
