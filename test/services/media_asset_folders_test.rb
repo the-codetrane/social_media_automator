@@ -24,3 +24,18 @@ class MediaAssetFoldersTest < ActiveSupport::TestCase
     assert_equal [ "Gigs", "Map Images" ], MediaAssetFolders.list
   end
 end
+
+require "active_storage/service/s3_service"
+
+class MediaAssetFoldersBucketTest < ActiveSupport::TestCase
+  test "list reads common prefixes from the bucket on S3-compatible services" do
+    service = ActiveStorage::Service::S3Service.new(
+      bucket: "ig-mcp-images", region: "sfo3", access_key_id: "k", secret_access_key: "s",
+      stub_responses: { list_objects_v2: { common_prefixes: [ { prefix: "Map Images/" }, { prefix: "Gigs/" } ] } }
+    )
+
+    ActiveStorage::Blob.stub(:service, service) do
+      assert_equal [ "Gigs", "Map Images" ], MediaAssetFolders.list
+    end
+  end
+end
