@@ -68,7 +68,7 @@ gem "redcarpet", "~> 3.6"
 gem "cssbundling-rails"
 
 # Mission Control for visualizing queue
-gem "mission_control-jobs", "~> 1.2"
+gem "mission_control-jobs", "~> 1.3"
 
 # Charts for insights dashboard
 gem "chartkick"
