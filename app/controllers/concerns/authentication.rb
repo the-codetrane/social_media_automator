@@ -34,8 +34,10 @@ module Authentication
       redirect_to new_session_path
     end
 
+    # The root URL is the public product page; a freshly signed-in user wants
+    # the dashboard behind it.
     def after_authentication_url
-      session.delete(:return_to_after_authenticating) || root_url
+      session.delete(:return_to_after_authenticating) || users_url
     end
 
     def start_new_session_for(user)

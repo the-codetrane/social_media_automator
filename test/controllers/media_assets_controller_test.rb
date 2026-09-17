@@ -129,8 +129,9 @@ class MediaAssetsControllerTest < ActionDispatch::IntegrationTest
     asset_no_url = media_assets(:sample_image_no_url)
     get media_asset_path(asset_no_url)
     assert_response :success
-    assert_select "img", count: 0
-    assert_select "video", count: 0
+    # Scoped to main: the nav carries the site logo as an <img>.
+    assert_select "main img", count: 0
+    assert_select "main video", count: 0
   end
 
   # Edit action tests

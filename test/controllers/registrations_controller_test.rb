@@ -25,7 +25,7 @@ class RegistrationsControllerTest < ActionDispatch::IntegrationTest
       }
     end
 
-    assert_redirected_to root_path
+    assert_redirected_to users_path
     assert cookies[:session_id].present?
     follow_redirect!
     assert_select "div", /Welcome! Your account has been created./

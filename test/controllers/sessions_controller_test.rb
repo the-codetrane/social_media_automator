@@ -13,7 +13,7 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
   test "create with valid credentials" do
     post session_path, params: { email_address: @user.email_address, password: "password" }
 
-    assert_redirected_to root_path
+    assert_redirected_to users_path
     assert cookies[:session_id]
   end
 
@@ -61,14 +61,24 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
 
   # Root path
 
-  test "root redirects when not signed in" do
+  # The root URL is a public product page (app reviewers reject a bare sign-in
+  # redirect), but the dashboard behind it still requires an account.
+  test "root renders the public home page when not signed in" do
     get root_path
+    assert_response :success
+    assert_select "a[href=?]", new_session_path
+  end
+
+  test "dashboard redirects to sign in when not signed in" do
+    get users_path
     assert_redirected_to new_session_path
   end
 
-  test "root returns success when signed in" do
+  test "root sends signed-in users to the dashboard" do
     sign_in_as(@user)
     get root_path
+    assert_redirected_to users_path
+    follow_redirect!
     assert_response :success
   end
 end

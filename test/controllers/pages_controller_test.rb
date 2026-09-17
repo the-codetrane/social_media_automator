@@ -7,6 +7,31 @@ class PagesControllerTest < ActionDispatch::IntegrationTest
   # fetch them without an account, so the unauthenticated cases are the ones
   # that actually matter.
 
+  test "home: is reachable without signing in and is not a sign-in page" do
+    get root_path
+    assert_response :ok
+    assert_select "h1", "Plan once. Publish everywhere."
+    assert_select "form[action=?]", session_path, count: 0
+  end
+
+  test "home: links to both legal pages in the page body, not just the footer" do
+    get root_path
+    assert_select "main a[href=?]", tos_path
+    assert_select "main a[href=?]", privacy_path
+  end
+
+  test "home: shows the same logo the developer portals use as the app icon" do
+    get root_path
+    assert_select "img[src=?]", "/icon.png"
+    assert_select "link[rel=icon][href=?]", "/icon.png"
+  end
+
+  test "home: sends signed-in users on to the dashboard" do
+    sign_in_as users(:one)
+    get root_path
+    assert_redirected_to users_path
+  end
+
   test "tos: is reachable without signing in" do
     get tos_path
     assert_response :ok

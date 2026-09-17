@@ -85,8 +85,10 @@ Rails.application.routes.draw do
     resources :media_assets, only: [ :index, :show ]
   end
 
-  # Defines the root path route ("/")
-  root to: "users#index"
+  # Public product overview. Platform app reviewers open the site's root URL and
+  # reject a bare sign-in redirect, so unauthenticated visitors get a real page;
+  # signed-in users are bounced on to the dashboard by PagesController#home.
+  root to: "pages#home"
 
    # Mission Control
    mount MissionControl::Jobs::Engine, at: "/jobs"
