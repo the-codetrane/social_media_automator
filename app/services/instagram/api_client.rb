@@ -107,14 +107,30 @@ module Instagram
         err = body["error"]
         klass = rate_limit_error?(err) ? Instagram::RateLimitError : Instagram::ApiError
         raise klass.new(
-          err["message"],
-          code:       err["code"],
-          type:       err["type"],
-          fbtrace_id: err["fbtrace_id"]
+          error_message(err),
+          code:         err["code"],
+          subcode:      err["error_subcode"],
+          type:         err["type"],
+          fbtrace_id:   err["fbtrace_id"],
+          user_message: err["error_user_msg"].presence
         )
       end
 
       body
+    end
+
+    # Meta's top-level +message+ is frequently too terse to act on — "Invalid
+    # user id" covers a wrong IG user ID, a deleted account and a private
+    # collaborator handle alike. The codes are what tell those apart, and
+    # error_user_msg is Meta's own human-readable explanation, so both are
+    # folded into the message that ends up in the log and on the post.
+    def error_message(err)
+      message = err["message"].presence || "Unknown Meta API error"
+      detail  = err["error_user_msg"].presence
+      message = "#{message}: #{detail}" if detail && !message.include?(detail)
+
+      codes = [ err["code"], err["error_subcode"] ].compact_blank
+      codes.any? ? "#{message} (Meta error #{codes.join("/")})" : message
     end
 
     def rate_limit_error?(err)

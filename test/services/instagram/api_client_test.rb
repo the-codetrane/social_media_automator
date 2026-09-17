@@ -131,7 +131,7 @@ module Instagram
         error = assert_raises(Instagram::ApiError) do
           @client.post_upload("https://rupload.facebook.com/vid_002", "file_url" => "https://cdn.example.com/gone.mp4")
         end
-        assert_equal "File not found", error.message
+        assert_equal "File not found (Meta error 100)", error.message
       end
     end
 
@@ -156,7 +156,7 @@ module Instagram
 
       @client.stub(:connection, conn) do
         err = assert_raises(Instagram::ApiError) { @client.get("me") }
-        assert_equal "Invalid OAuth access token", err.message
+        assert_equal "Invalid OAuth access token (Meta error 190)", err.message
         assert_equal 190, err.code
         assert_equal "OAuthException", err.type
         assert_equal "abc123", err.fbtrace_id
@@ -190,6 +190,37 @@ module Instagram
 
       @client.stub(:connection, conn) do
         assert_raises(Instagram::RateLimitError) { @client.get("me") }
+      end
+    end
+
+    test "handle_response folds error_subcode and error_user_msg into the message" do
+      error_body = {
+        "error" => {
+          "message"        => "Invalid user id",
+          "type"           => "OAuthException",
+          "code"           => 110,
+          "error_subcode"  => 2207018,
+          "error_user_msg" => "Cannot load user with a private profile or invalid username",
+          "fbtrace_id"     => "trace1"
+        }
+      }
+
+      stubs = Faraday::Adapter::Test::Stubs.new do |stub|
+        stub.get("me") { [ 200, { "Content-Type" => "application/json" }, error_body.to_json ] }
+      end
+      conn = Faraday.new { |f| f.response :json; f.adapter :test, stubs }
+
+      @client.stub(:connection, conn) do
+        err = assert_raises(Instagram::ApiError) { @client.get("me") }
+
+        assert_equal(
+          "Invalid user id: Cannot load user with a private profile or invalid username " \
+          "(Meta error 110/2207018)",
+          err.message
+        )
+        assert_equal 110, err.code
+        assert_equal 2207018, err.subcode
+        assert_equal "Cannot load user with a private profile or invalid username", err.user_message
       end
     end
 
