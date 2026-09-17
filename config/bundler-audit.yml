@@ -2,4 +2,9 @@
 # CVEs that are not relevant to the application can be enumerated on the ignore list below.
 
 ignore:
-  - CVE-THAT-DOES-NOT-APPLY
+  # ruby_llm ReDoS in RubyLLM::Utils.underscore (GHSA-42r3-x6vx-x49x). Does not
+  # apply here: that method only exists on the 2.x line (1.16.0 has no
+  # Utils.underscore), and the advisory is specific to Ruby 3.1.x whereas we run
+  # Ruby 4.x, whose regex engine is not vulnerable to polynomial backtracking.
+  # Drop this entry when ruby_llm is upgraded to a stable 2.x release.
+  - CVE-2026-67991
