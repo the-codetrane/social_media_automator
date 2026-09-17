@@ -1,0 +1,138 @@
+<%# Public product overview shown at the root URL to anyone who is not signed in.
+    Meta, Google and TikTok reviewers open this URL, so it needs to describe the
+    product, show the same logo that the developer portals use as the app icon,
+    and link to the Terms and Privacy Policy directly in the page body. %>
+<% content_for :title, "Social Media Automator by Cain & Co." %>
+
+<div class="max-w-5xl mx-auto">
+  <%# ── Header ── %>
+  <header class="flex items-center justify-between py-6">
+    <div class="flex items-center gap-3">
+      <%= image_tag "/icon.png", alt: "Cain & Co.", class: "w-12 h-12" %>
+      <span class="text-lg font-bold tracking-tight text-gray-900">Social Media Automator</span>
+    </div>
+    <nav aria-label="Primary" class="flex items-center gap-4 text-sm font-medium">
+      <%= link_to "Terms of Service", tos_path, class: "text-gray-600 hover:text-gray-900 transition-colors" %>
+      <%= link_to "Privacy Policy", privacy_path, class: "text-gray-600 hover:text-gray-900 transition-colors" %>
+      <%= link_to "Sign in", new_session_path, class: "rounded-md bg-indigo-600 px-4 py-2 text-white shadow-sm hover:bg-indigo-700 transition-colors" %>
+    </nav>
+  </header>
+
+  <%# ── Hero ── %>
+  <section class="text-center py-12 sm:py-20">
+    <%= image_tag "/app-icon-1024.png", alt: "Cain & Co. — American Blues Rock", class: "mx-auto w-48 h-48 sm:w-64 sm:h-64 rounded-3xl shadow-lg" %>
+    <h1 class="mt-8 text-4xl sm:text-5xl font-bold tracking-tight text-gray-900">
+      Plan once. Publish everywhere.
+    </h1>
+    <p class="mt-4 max-w-2xl mx-auto text-lg text-gray-600">
+      Social Media Automator is the in-house content tool for the band
+      <strong class="text-gray-900">Cain &amp; Co.</strong> It turns a shared library of photos and
+      video into a scheduled calendar of posts for Instagram, Facebook, YouTube and TikTok — and
+      reports back on how each one performed.
+    </p>
+    <div class="mt-8 flex flex-wrap items-center justify-center gap-3">
+      <%= link_to "Sign in to the dashboard", new_session_path, class: "rounded-md bg-indigo-600 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 transition-colors" %>
+      <a href="#how-it-works" class="rounded-md px-5 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-100 transition-colors">See how it works &darr;</a>
+    </div>
+  </section>
+
+  <%# ── How it works ── %>
+  <section id="how-it-works" class="py-12 border-t border-gray-200">
+    <h2 class="text-2xl font-bold text-gray-900 text-center">How it works</h2>
+    <ol class="mt-10 grid gap-8 sm:grid-cols-3">
+      <li class="rounded-lg bg-white border border-gray-200 p-6 shadow-sm">
+        <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-indigo-600 text-sm font-bold text-white">1</span>
+        <h3 class="mt-4 font-semibold text-gray-900">Upload media</h3>
+        <p class="mt-2 text-sm text-gray-600">
+          Drop show photos, rehearsal clips and studio video into one media library. Every asset
+          is checked against each platform's format and length limits before it can be scheduled.
+        </p>
+      </li>
+      <li class="rounded-lg bg-white border border-gray-200 p-6 shadow-sm">
+        <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-indigo-600 text-sm font-bold text-white">2</span>
+        <h3 class="mt-4 font-semibold text-gray-900">Plan the calendar</h3>
+        <p class="mt-2 text-sm text-gray-600">
+          Draft captions from reusable per-platform templates, tag collaborators, pick music for
+          Reels, and move posts around the calendar until the week looks right.
+        </p>
+      </li>
+      <li class="rounded-lg bg-white border border-gray-200 p-6 shadow-sm">
+        <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-indigo-600 text-sm font-bold text-white">3</span>
+        <h3 class="mt-4 font-semibold text-gray-900">Publish and measure</h3>
+        <p class="mt-2 text-sm text-gray-600">
+          Posts go out automatically at their scheduled time through each platform's official API.
+          Reach, views and engagement flow back into a single insights view.
+        </p>
+      </li>
+    </ol>
+  </section>
+
+  <%# ── Features ── %>
+  <section class="py-12 border-t border-gray-200">
+    <h2 class="text-2xl font-bold text-gray-900 text-center">What's inside</h2>
+    <dl class="mt-10 grid gap-x-8 gap-y-8 sm:grid-cols-2">
+      <div>
+        <dt class="font-semibold text-gray-900">Multi-platform publishing</dt>
+        <dd class="mt-1 text-sm text-gray-600">
+          Instagram photos, carousels, Reels and Stories; Facebook Page posts; YouTube uploads;
+          and TikTok video — each published through the platform's own developer API, never by
+          automating a browser.
+        </dd>
+      </div>
+      <div>
+        <dt class="font-semibold text-gray-900">Scheduling with retries</dt>
+        <dd class="mt-1 text-sm text-gray-600">
+          A background queue publishes at the planned time and retries transparently when a
+          platform is rate-limiting or still processing a video.
+        </dd>
+      </div>
+      <div>
+        <dt class="font-semibold text-gray-900">Caption templates</dt>
+        <dd class="mt-1 text-sm text-gray-600">
+          Per-platform templates keep hashtags, credits and calls to action consistent, with
+          per-user overrides for anyone who likes to do it their own way.
+        </dd>
+      </div>
+      <div>
+        <dt class="font-semibold text-gray-900">Performance insights</dt>
+        <dd class="mt-1 text-sm text-gray-600">
+          Post-level metrics are pulled back from each platform so the band can see which
+          songs, venues and formats actually land with the audience.
+        </dd>
+      </div>
+      <div>
+        <dt class="font-semibold text-gray-900">Bulk import API</dt>
+        <dd class="mt-1 text-sm text-gray-600">
+          A JSON API creates whole batches of planned posts from external media URLs, so a
+          tour's worth of content can be loaded in one go.
+        </dd>
+      </div>
+      <div>
+        <dt class="font-semibold text-gray-900">Private by design</dt>
+        <dd class="mt-1 text-sm text-gray-600">
+          Accounts are created by invitation only. The app publishes to accounts the band owns
+          and never posts on anyone else's behalf.
+        </dd>
+      </div>
+    </dl>
+  </section>
+
+  <%# ── About / legal ── %>
+  <section class="py-12 border-t border-gray-200">
+    <div class="rounded-lg bg-white border border-gray-200 p-8 shadow-sm sm:flex sm:items-center sm:justify-between sm:gap-8">
+      <div>
+        <h2 class="text-xl font-bold text-gray-900">About Cain &amp; Co.</h2>
+        <p class="mt-2 text-sm text-gray-600 max-w-xl">
+          Cain &amp; Co. is an American blues rock band. Social Media Automator is built and
+          operated by the band to run its own social channels. Questions about the app or the
+          data it handles can be sent to
+          <%= mail_to PagesController::CONTACT_EMAIL, class: "text-indigo-600 hover:text-indigo-800 hover:underline" %>.
+        </p>
+      </div>
+      <div class="mt-6 sm:mt-0 flex flex-col gap-2 text-sm font-medium shrink-0">
+        <%= link_to "Terms of Service", tos_path, class: "text-indigo-600 hover:text-indigo-800 hover:underline" %>
+        <%= link_to "Privacy Policy", privacy_path, class: "text-indigo-600 hover:text-indigo-800 hover:underline" %>
+      </div>
+    </div>
+  </section>
+</div>

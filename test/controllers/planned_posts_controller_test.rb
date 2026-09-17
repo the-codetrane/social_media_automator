@@ -149,8 +149,9 @@ class PlannedPostsControllerTest < ActionDispatch::IntegrationTest
     )
     get planned_post_path(post_no_url)
     assert_response :success
-    assert_select "img", count: 0
-    assert_select "video", count: 0
+    # Scoped to main: the nav carries the site logo as an <img>.
+    assert_select "main img", count: 0
+    assert_select "main video", count: 0
   end
 
   test "show renders all carousel slides for a carousel post" do
