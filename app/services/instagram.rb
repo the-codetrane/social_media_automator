@@ -9,14 +9,22 @@
 # each subclass.
 module Instagram
   # Base error for all Instagram API failures.
+  #
+  # Meta splits an error across several fields, and the top-level +message+ is
+  # routinely the least useful of them ("Invalid user id" for anything from a
+  # bad IG user ID to a private collaborator handle). +subcode+ is what actually
+  # identifies the problem, and +user_message+ is the sentence Meta writes for
+  # humans, so both are kept alongside the message the UI shows.
   class Error < StandardError
-    attr_reader :code, :type, :fbtrace_id
+    attr_reader :code, :subcode, :type, :fbtrace_id, :user_message
 
-    def initialize(message = nil, code: nil, type: nil, fbtrace_id: nil)
+    def initialize(message = nil, code: nil, subcode: nil, type: nil, fbtrace_id: nil, user_message: nil)
       super(message)
-      @code        = code
-      @type        = type
-      @fbtrace_id  = fbtrace_id
+      @code         = code
+      @subcode      = subcode
+      @type         = type
+      @fbtrace_id   = fbtrace_id
+      @user_message = user_message
     end
   end
 

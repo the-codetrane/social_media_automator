@@ -26,7 +26,54 @@ module Instagram
     # Valid range for both audio_volume and video_volume.
     VOLUME_RANGE = (0..100)
 
+    # How Meta reports an untaggable collaborator on POST /{ig-user-id}/media.
+    # The top-level message is the unhelpfully generic "Invalid user id"; the
+    # subcode is what actually identifies it. Code 110 alone is matched too,
+    # because Meta omits the subcode on some responses.
+    COLLABORATOR_ERROR_SUBCODE = 2207018
+    COLLABORATOR_ERROR_CODE    = 110
+
     module_function
+
+    # Translate the container error Meta returns for an untaggable collaborator
+    # into something the person looking at the failed post can act on.
+    #
+    # Instagram refuses to tag an account as a collaborator unless the profile
+    # is public and the username exists — a private account (very common for a
+    # band member's personal handle) is rejected exactly like a typo, with no
+    # indication of which of the two it was.
+    #
+    # @param error [Instagram::Error] raised by the container call
+    # @param params [Hash] the params that call was given
+    # @return [Instagram::Error] the original error, or a clearer replacement
+    def explain_collaborator_error(error, params)
+      encoded = params[:collaborators] || params["collaborators"]
+      return error if encoded.blank?
+      return error unless collaborator_error?(error)
+
+      usernames =
+        begin
+          Array(JSON.parse(encoded)).join(", ")
+        rescue JSON::ParserError
+          encoded
+        end
+
+      error.class.new(
+        "Instagram rejected the collaborator(s) #{usernames}. An account can only be " \
+        "tagged as a collaborator if the username exists and the profile is public — " \
+        "make it public, or remove it from this post. (#{error.message})",
+        code:         error.code,
+        subcode:      error.subcode,
+        type:         error.type,
+        fbtrace_id:   error.fbtrace_id,
+        user_message: error.user_message
+      )
+    end
+
+    def collaborator_error?(error)
+      error.subcode.to_i == COLLABORATOR_ERROR_SUBCODE ||
+        (error.subcode.blank? && error.code.to_i == COLLABORATOR_ERROR_CODE)
+    end
 
     # @param payload [Hash, nil] a PlannedPost#platform_payload
     # @return [String, nil] JSON array of usernames, or nil when unset

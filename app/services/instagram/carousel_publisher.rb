@@ -80,8 +80,12 @@ module Instagram
       )
 
       ig_media_id
-    rescue Instagram::Error
-      planned_post.update!(status: :failed)
+    rescue Instagram::Error => e
+      # mark_failed! rather than update!: it records why on the post so the UI
+      # can show it, and skips validation — a post can be invalid for the very
+      # reason it failed, in which case update! would raise and strand it in
+      # its previous status.
+      planned_post.mark_failed!(e.message)
       raise
     end
 
@@ -197,6 +201,9 @@ module Instagram
     def create_container(params)
       result = @client.post("#{ig_user_id}/media", params)
       result["id"] || raise(Instagram::ApiError, "No container ID returned: #{result.inspect}")
+    rescue Instagram::Error => e
+      # A rejected collaborator surfaces here as a bare "Invalid user id".
+      raise Instagram::PublishOptions.explain_collaborator_error(e, params)
     end
 
     # POST /{ig-user-id}/media_publish → returns the published media's ig_media_id

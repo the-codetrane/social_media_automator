@@ -111,5 +111,56 @@ module Instagram
 
       assert_match(/audio_volume must be an integer between 0 and 100/, error.message)
     end
+
+    # -------------------------------------------------------------------------
+    # .explain_collaborator_error
+    # -------------------------------------------------------------------------
+
+    test "explain_collaborator_error names the usernames Instagram rejected" do
+      original = Instagram::ApiError.new(
+        "Invalid user id (Meta error 110/2207018)",
+        code: 110, subcode: 2207018, type: "OAuthException", fbtrace_id: "trace1"
+      )
+
+      result = Instagram::PublishOptions.explain_collaborator_error(
+        original, collaborators: [ "private_handle", "typo_handle" ].to_json
+      )
+
+      assert_not_same original, result
+      assert_match(/private_handle, typo_handle/, result.message)
+      assert_match(/profile is public/, result.message)
+      assert_match(/Invalid user id/, result.message)
+      assert_equal 110, result.code
+      assert_equal 2207018, result.subcode
+      assert_equal "trace1", result.fbtrace_id
+    end
+
+    test "explain_collaborator_error matches a bare code 110 with no subcode" do
+      original = Instagram::ApiError.new("Invalid user id (Meta error 110)", code: 110)
+
+      result = Instagram::PublishOptions.explain_collaborator_error(
+        original, collaborators: [ "private_handle" ].to_json
+      )
+
+      assert_match(/private_handle/, result.message)
+    end
+
+    test "explain_collaborator_error returns the error untouched without collaborators" do
+      original = Instagram::ApiError.new("Invalid user id", code: 110, subcode: 2207018)
+
+      result = Instagram::PublishOptions.explain_collaborator_error(original, image_url: "https://example.com/a.png")
+
+      assert_same original, result
+    end
+
+    test "explain_collaborator_error returns the error untouched for an unrelated code" do
+      original = Instagram::ApiError.new("Media upload failed", code: 2207003)
+
+      result = Instagram::PublishOptions.explain_collaborator_error(
+        original, collaborators: [ "someone" ].to_json
+      )
+
+      assert_same original, result
+    end
   end
 end
