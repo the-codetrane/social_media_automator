@@ -61,6 +61,20 @@ class PublishInstagramPostJobTest < ActiveSupport::TestCase
     end
   end
 
+  # This guard is why the Instagram publishers must not mark a post failed
+  # before re-raising: doing so flipped the status on the first attempt, so
+  # every retry landed here and returned without republishing, leaving the
+  # retry_on rules below inert.  See the FAILURE_IS_THE_JOBS_JOB assertions in
+  # test/services/instagram/*_publisher_test.rb for the other half.
+  test "perform skips an already-failed post without calling publisher" do
+    draft_post = planned_posts(:draft_post)
+    draft_post.mark_failed!("earlier attempt blew up")
+
+    Instagram::MediaPublisher.stub(:new, ->(_) { raise "should not be called" }) do
+      assert_nothing_raised { PublishInstagramPostJob.perform_now(draft_post.id) }
+    end
+  end
+
   test "perform skips already-published posts without calling publisher" do
     published_post = planned_posts(:published_post)
     assert published_post.published?

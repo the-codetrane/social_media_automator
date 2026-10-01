@@ -4,6 +4,14 @@ require "test_helper"
 
 module Instagram
   class MediaPublisherTest < ActiveSupport::TestCase
+# The publisher raises and leaves the post alone; PublishInstagramPostJob
+# marks it failed once retries are exhausted or the error was never
+# retryable.  The publisher used to do this itself, which tripped the job's
+# status guard on every retry and made retry_on inert.
+FAILURE_IS_THE_JOBS_JOB =
+  "the publisher must not mark the post failed — that is the job's call, " \
+  "and doing it here breaks every retry"
+
     # -------------------------------------------------------------------------
     # Setup
     # -------------------------------------------------------------------------
@@ -79,7 +87,7 @@ module Instagram
       @publisher.stub(:check_quota!, nil) do
         err = assert_raises(Instagram::ApiError) { @publisher.publish(post) }
         assert_match(/no public URL/i, err.message)
-        assert post.reload.failed?
+        assert_not post.reload.failed?, FAILURE_IS_THE_JOBS_JOB
       end
     end
 

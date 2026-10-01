@@ -4,6 +4,14 @@ require "test_helper"
 
 module Instagram
   class VideoPublisherTest < ActiveSupport::TestCase
+# The publisher raises and leaves the post alone; PublishInstagramPostJob
+# marks it failed once retries are exhausted or the error was never
+# retryable.  The publisher used to do this itself, which tripped the job's
+# status guard on every retry and made retry_on inert.
+FAILURE_IS_THE_JOBS_JOB =
+  "the publisher must not mark the post failed — that is the job's call, " \
+  "and doing it here breaks every retry"
+
     # -------------------------------------------------------------------------
     # Setup
     # -------------------------------------------------------------------------
@@ -191,7 +199,7 @@ module Instagram
       no_url_asset.update_column(:media_type, MediaAsset.media_types[:image])
     end
 
-    test "marks post as failed and re-raises when an Instagram::Error occurs" do
+    test "re-raises without failing the post when an Instagram::Error occurs" do
       post = PlannedPost.create!(
         user:         @user,
         media_asset:  @video_asset,
@@ -208,10 +216,10 @@ module Instagram
       @publisher.instance_variable_set(:@client, mock_client)
 
       assert_raises(Instagram::ApiError) { @publisher.publish(post) }
-      assert post.reload.failed?
+      assert_not post.reload.failed?, FAILURE_IS_THE_JOBS_JOB
     end
 
-    test "marks post as failed when container enters ERROR status" do
+    test "raises when container enters ERROR status" do
       post = PlannedPost.create!(
         user:         @user,
         media_asset:  @video_asset,
@@ -229,7 +237,7 @@ module Instagram
 
       err = assert_raises(Instagram::ApiError) { @publisher.publish(post) }
       assert_match(/ERROR/i, err.message)
-      assert post.reload.failed?
+      assert_not post.reload.failed?, FAILURE_IS_THE_JOBS_JOB
     end
 
     # -------------------------------------------------------------------------
@@ -252,14 +260,14 @@ module Instagram
 
       err = assert_raises(Instagram::RateLimitError) { @publisher.publish(post) }
       assert_match(/quota exhausted/i, err.message)
-      assert post.reload.failed?
+      assert_not post.reload.failed?, FAILURE_IS_THE_JOBS_JOB
     end
 
     # -------------------------------------------------------------------------
     # Container timeout
     # -------------------------------------------------------------------------
 
-    test "raises ContainerTimeoutError and marks post failed when container times out" do
+    test "raises ContainerTimeoutError when container times out" do
       post = PlannedPost.create!(
         user:         @user,
         media_asset:  @video_asset,
@@ -280,7 +288,7 @@ module Instagram
         assert_raises(Instagram::ContainerTimeoutError) { @publisher.publish(post) }
       end
 
-      assert post.reload.failed?
+      assert_not post.reload.failed?, FAILURE_IS_THE_JOBS_JOB
     end
 
     # -------------------------------------------------------------------------

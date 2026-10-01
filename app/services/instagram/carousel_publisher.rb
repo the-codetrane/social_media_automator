@@ -80,13 +80,13 @@ module Instagram
       )
 
       ig_media_id
-    rescue Instagram::Error => e
-      # mark_failed! rather than update!: it records why on the post so the UI
-      # can show it, and skips validation — a post can be invalid for the very
-      # reason it failed, in which case update! would raise and strand it in
-      # its previous status.
-      planned_post.mark_failed!(e.message)
-      raise
+      # NOTE: deliberately no `rescue Instagram::Error` that marks the post
+      # failed.  Doing so set status to :failed on the *first* attempt, and
+      # PublishInstagramPostJob#perform only proceeds for a scheduled or draft
+      # post — so every retry short-circuited and the retry_on rules for
+      # ApiError, RateLimitError and ContainerTimeoutError never did anything.
+      # The job owns failure marking (its MARK_FAILED handler), which runs when
+      # retries are exhausted or the error was never retryable.
     end
 
     private
