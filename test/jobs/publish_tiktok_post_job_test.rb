@@ -101,6 +101,19 @@ class PublishTikTokPostJobTest < ActiveSupport::TestCase
     end
   end
 
+  # This guard is why TikTok::VideoPublisher must not mark a post failed before
+  # re-raising: doing so flipped the status on the first attempt, so every
+  # retry landed here and returned without republishing, leaving the retry_on
+  # rules below inert.  See the FAILURE_IS_THE_JOBS_JOB assertions in
+  # test/services/tiktok/video_publisher_test.rb for the other half.
+  test "perform skips an already-failed post without calling publisher" do
+    @post.mark_failed!("earlier attempt blew up")
+
+    TikTok::VideoPublisher.stub(:new, ->(_) { raise "should not be called" }) do
+      assert_nothing_raised { PublishTikTokPostJob.perform_now(@post.id) }
+    end
+  end
+
   test "perform marks the post failed once the retries are exhausted" do
     job = PublishTikTokPostJob.new(@post.id)
     job.exception_executions = { "[TikTok::ApiError]" => 3 }

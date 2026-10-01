@@ -18,6 +18,14 @@ module TikTok
       "max_video_post_duration_sec" => 600
     }.freeze
 
+    # The publisher raises and leaves the post alone; PublishTikTokPostJob marks
+    # it failed once retries are exhausted or the error was never retryable.
+    # The publisher used to do this itself, which tripped the job's status guard
+    # on every retry and made retry_on inert.
+    FAILURE_IS_THE_JOBS_JOB =
+      "the publisher must not mark the post failed — that is the job's call, " \
+      "and doing it here breaks every retry"
+
     def setup
       @user        = users(:one)
       @publisher   = TikTok::VideoPublisher.new(@user)
@@ -252,7 +260,7 @@ module TikTok
         assert_match(/not available for this creator/, error.message)
       end
 
-      assert post.reload.failed?
+      assert_not post.reload.failed?, FAILURE_IS_THE_JOBS_JOB
     end
 
     test "publish forces disable_comment when the creator has comments switched off" do
@@ -291,7 +299,7 @@ module TikTok
         assert_match(/can only post videos up to 60s/, error.message)
       end
 
-      assert post.reload.failed?
+      assert_not post.reload.failed?, FAILURE_IS_THE_JOBS_JOB
     end
 
     # -------------------------------------------------------------------------
@@ -321,7 +329,7 @@ module TikTok
       assert_nil post.platform_payload["tiktok_post_id"]
     end
 
-    test "publish raises and fails the post when TikTok reports FAILED" do
+    test "publish raises when TikTok reports FAILED" do
       post = new_tiktok_post
 
       with_stubs(statuses: [ "FAILED" ]) do
@@ -329,7 +337,7 @@ module TikTok
         assert_match(/video_format_check_failed/, error.message)
       end
 
-      assert post.reload.failed?
+      assert_not post.reload.failed?, FAILURE_IS_THE_JOBS_JOB
     end
 
     test "wait_until_published! raises PublishTimeoutError when processing never finishes" do
@@ -365,7 +373,7 @@ module TikTok
         assert_match(/requires a video MediaAsset/, error.message)
       end
 
-      assert post.reload.failed?
+      assert_not post.reload.failed?, FAILURE_IS_THE_JOBS_JOB
     end
 
     test "publish raises PermanentError when the asset has no public URL" do
@@ -377,17 +385,17 @@ module TikTok
         assert_raises(TikTok::PermanentError) { @publisher.publish(post) }
       end
 
-      assert post.reload.failed?
+      assert_not post.reload.failed?, FAILURE_IS_THE_JOBS_JOB
     end
 
-    test "publish marks the post failed and re-raises when init is rejected" do
+    test "publish re-raises without failing the post when init is rejected" do
       post = new_tiktok_post
 
       with_stubs(init_error: TikTok::RateLimitError.new("quota exhausted", code: "spam_risk_too_many_posts")) do
         assert_raises(TikTok::RateLimitError) { @publisher.publish(post) }
       end
 
-      assert post.reload.failed?
+      assert post.reload.draft?, "a rate-limited post must stay publishable so the job can retry it"
     end
 
     test "publish raises ApiError when TikTok returns no publish_id" do
@@ -397,7 +405,7 @@ module TikTok
         assert_raises(TikTok::ApiError) { @publisher.publish(post) }
       end
 
-      assert post.reload.failed?
+      assert_not post.reload.failed?, FAILURE_IS_THE_JOBS_JOB
     end
 
     test "publish raises ApiError when TikTok returns no upload_url" do
@@ -407,7 +415,7 @@ module TikTok
         assert_raises(TikTok::ApiError) { @publisher.publish(post) }
       end
 
-      assert post.reload.failed?
+      assert_not post.reload.failed?, FAILURE_IS_THE_JOBS_JOB
     end
   end
 end

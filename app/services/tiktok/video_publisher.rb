@@ -116,9 +116,13 @@ module TikTok
       )
 
       publish_id
-    rescue TikTok::Error => e
-      planned_post.mark_failed!(e.message)
-      raise
+      # NOTE: deliberately no `rescue TikTok::Error` that marks the post failed.
+      # Doing so set status to :failed on the *first* attempt, and
+      # PublishTikTokPostJob#perform only proceeds for a scheduled or draft post
+      # — so every retry short-circuited and the retry_on rules for ApiError,
+      # UploadError, RateLimitError and PublishTimeoutError never did anything.
+      # The job owns failure marking (its MARK_FAILED handler), which runs when
+      # retries are exhausted or the error was never retryable.
     ensure
       tempfile&.close
       tempfile&.unlink
