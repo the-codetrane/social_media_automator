@@ -12,6 +12,14 @@ module MediaAssetFolders
   # Anything that would escape the folder or produce an odd key.
   INVALID_SEGMENT = /\A\.{1,2}\z/
 
+  # Path separators, control characters and anything that would need escaping in
+  # a public URL. Spaces, ampersands and parentheses are deliberately kept —
+  # folders and objects already in the bucket use them.
+  UNSAFE_FILENAME = %r{[/\\\x00-\x1f\x7f"<>\#?%{}|^~\[\]`]+}
+
+  # How many suffixed names to try before giving up and using an opaque token.
+  SUFFIX_ATTEMPTS = 5
+
   module_function
 
   # @return [Array<String>] folder names without a trailing slash, sorted
@@ -41,12 +49,51 @@ module MediaAssetFolders
     segments.join("/")
   end
 
-  # Builds a unique blob key inside the given folder.
+  # Builds a blob key inside the given folder, named after the file the user
+  # uploaded so the object is recognisable in Spaces instead of an opaque token.
+  # A short random suffix is appended only when the name is already taken, so an
+  # upload never overwrites an object that is already there.
   #
   # @param folder [String] already sanitized
+  # @param filename [String, nil] as supplied by the browser
   # @return [String]
-  def key_for(folder)
-    "#{folder}/#{ActiveStorage::Blob.generate_unique_secure_token}"
+  def key_for(folder, filename: nil)
+    name = sanitize_filename(filename)
+    key  = "#{folder}/#{name}"
+    return key unless key_taken?(key)
+
+    extension = File.extname(name)
+    stem      = name.delete_suffix(extension)
+
+    SUFFIX_ATTEMPTS.times do
+      key = "#{folder}/#{stem}-#{SecureRandom.hex(3)}#{extension}"
+      return key unless key_taken?(key)
+    end
+
+    "#{folder}/#{ActiveStorage::Blob.generate_unique_secure_token}#{extension}"
+  end
+
+  # Reduces a browser-supplied filename to a single safe key segment. Returns an
+  # opaque token when nothing usable is left, which also disposes of "." and
+  # ".." before they can escape the folder.
+  def sanitize_filename(filename)
+    name = File.basename(filename.to_s.tr("\\", "/"))
+             .gsub(UNSAFE_FILENAME, "-")
+             .squeeze("-")
+             .sub(/\A[-.[:space:]]+/, "")
+             .sub(/[-[:space:]]+\z/, "")
+
+    name.presence || ActiveStorage::Blob.generate_unique_secure_token
+  end
+
+  # Objects uploaded outside the app have no blob row, so the bucket is checked
+  # too rather than trusting the database alone.
+  def key_taken?(key)
+    return true if ActiveStorage::Blob.exists?(key: key)
+
+    ActiveStorage::Blob.service.exist?(key)
+  rescue Aws::S3::Errors::ServiceError
+    false
   end
 
   def list_from_bucket(service)
