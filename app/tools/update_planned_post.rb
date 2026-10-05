@@ -5,37 +5,37 @@ class UpdatePlannedPost < RubyLLM::Tool
               "the first ID becomes the primary asset. Pass collaborators to set Instagram collaborator tags. " \
               "All fields except id are optional."
 
-  param :id,
+  parameter :id,
     type: :integer,
-    desc: "The planned post ID to update"
-  param :caption,
+    description: "The planned post ID to update"
+  parameter :caption,
     type: :string,
-    desc: "New caption text",
+    description: "New caption text",
     required: false
-  param :hashtags,
+  parameter :hashtags,
     type: :string,
-    desc: "New hashtag string, e.g. '#blues #livemusic'",
+    description: "New hashtag string, e.g. '#blues #livemusic'",
     required: false
-  param :status,
+  parameter :status,
     type: :string,
-    desc: "New status: draft or scheduled",
+    description: "New status: draft or scheduled",
     required: false
-  param :scheduled_at,
+  parameter :scheduled_at,
     type: :string,
-    desc: "New scheduled time as ISO 8601, e.g. 2026-06-01T19:00:00Z. Required when changing status to scheduled.",
+    description: "New scheduled time as ISO 8601, e.g. 2026-06-01T19:00:00Z. Required when changing status to scheduled.",
     required: false
-  param :social_template_id,
+  parameter :social_template_id,
     type: :integer,
-    desc: "Social template ID to associate with the post",
+    description: "Social template ID to associate with the post",
     required: false
-  param :media_asset_ids,
+  parameter :media_asset_ids,
     type: :array,
-    desc: "Ordered list of existing MediaAsset IDs. First ID becomes the primary asset. " \
+    description: "Ordered list of existing MediaAsset IDs. First ID becomes the primary asset. " \
           "Pass 2–10 IDs to create or reorder a carousel.",
     required: false
-  param :collaborators,
+  parameter :collaborators,
     type: :array,
-    desc: "Instagram usernames to tag as collaborators (max 3, leading @ optional), e.g. " \
+    description: "Instagram usernames to tag as collaborators (max 3, leading @ optional), e.g. " \
           "['themakeouts', 'mikeandthetvs']. Replaces the existing list; pass [] to remove all. " \
           "Omit to leave collaborators unchanged. Instagram feed posts, Reels and carousels only — not stories.",
     required: false

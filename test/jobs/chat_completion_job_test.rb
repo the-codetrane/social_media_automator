@@ -91,8 +91,7 @@ class ChatCompletionJobTest < ActiveSupport::TestCase
     assistant = chat.messages.create!(role: "assistant", content: "working on it")
 
     calls = Array.new(call_count) do |i|
-      ToolCall.create!(
-        message_id: assistant.id,
+      assistant.ruby_llm_tool_calls.create!(
         tool_call_id: "toolu_#{SecureRandom.hex(6)}_#{i}",
         name: "search_media_assets",
         arguments: { q: i }
@@ -100,7 +99,7 @@ class ChatCompletionJobTest < ActiveSupport::TestCase
     end
 
     calls.first(result_count).each_with_index do |call, i|
-      chat.messages.create!(role: "tool", content: "result #{i}", tool_call_id: call.id)
+      call.update!(result: chat.messages.create!(role: "tool", content: "result #{i}"))
     end
 
     assistant
@@ -117,7 +116,7 @@ class ChatCompletionJobTest < ActiveSupport::TestCase
     run_repair(chat)
 
     assert Message.exists?(assistant.id), "a complete parallel turn must not be deleted"
-    assert_equal 3, Message.where(role: "tool", tool_call_id: assistant.tool_calls.map(&:id)).count
+    assert_equal 3, assistant.reload.tool_results.size
   end
 
   test "repair still removes an incomplete tool turn" do

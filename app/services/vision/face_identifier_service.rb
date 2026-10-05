@@ -26,7 +26,9 @@ module Vision
       PROMPT
 
       response = nil
-      response = RubyLLM.chat(model: Vision::MODEL).ask(build_content(prompt, ref_urls, target_url))
+      chat = RubyLLM.chat(model: Vision::MODEL)
+      chat.before_request { |payload| cache_reference_images(payload, ref_urls.size) }
+      response = chat.ask(prompt, with: ref_urls + [ target_url ])
 
       JSON.parse(response.content.strip.delete_prefix("```json").delete_suffix("```").strip)
     rescue JSON::ParserError
@@ -40,20 +42,11 @@ module Vision
     private
 
     # Reference photos are identical across every call for a given known_people set, so they're
-    # built as a cached prefix — only the trailing target image is paid for at full price after
+    # marked as a cached prefix — only the trailing target image is paid for at full price after
     # the first call in a batch (e.g. enrich_media_assets looping over many assets).
-    def build_content(prompt, ref_urls, target_url)
-      parts = [ { type: "text", text: prompt } ]
-
-      ref_urls.each_with_index do |url, i|
-        part = { type: "image", source: { type: "url", url: url } }
-        part[:cache_control] = { type: "ephemeral" } if i == ref_urls.size - 1
-        parts << part
-      end
-
-      parts << { type: "image", source: { type: "url", url: target_url } }
-
-      RubyLLM::Providers::Anthropic::Content.new(parts: parts)
+    def cache_reference_images(payload, ref_count)
+      images = payload[:messages].last[:content].select { |block| block[:type] == "image" }
+      images[ref_count - 1][:cache_control] = { type: "ephemeral" }
     end
   end
 end

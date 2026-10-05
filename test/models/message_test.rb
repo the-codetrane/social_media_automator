@@ -79,7 +79,7 @@ class MessageTest < ActiveSupport::TestCase
     message = @chat.messages.create!(role: "assistant", content: "Hello")
 
     events = capture_broadcasts do
-      message.update!(input_tokens: 42)
+      message.update!(finish_reason: "stop")
     end
 
     assert_empty events

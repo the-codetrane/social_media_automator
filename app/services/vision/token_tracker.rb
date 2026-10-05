@@ -3,28 +3,24 @@
 module Vision
   module TokenTracker
     def self.record(response)
-      return unless response&.input_tokens.present?
+      return if response&.tokens.nil? || response.tokens.input.nil?
 
-      model_record = Model.find_or_create_by!(model_id: Vision::MODEL) do |m|
-        m.name     = Vision::MODEL
-        m.provider = "anthropic"
+      model_record = RubyLLM::ActiveRecord::Model.find_or_create_by!(model_id: Vision::MODEL, provider: "anthropic") do |m|
+        m.name = Vision::MODEL
       end
 
-      chat = Chat.find_or_create_by!(user_id: nil, model: model_record)
+      chat = Chat.find_or_create_by!(user_id: nil, ruby_llm_model_id: model_record.id)
 
-      now = Time.current
-      Message.insert({
-        role: "assistant",
-        content: "",
-        chat_id: chat.id,
-        model_id: model_record.id,
-        input_tokens: response.input_tokens,
-        output_tokens: response.output_tokens,
-        cached_tokens: response.cache_read_tokens,
-        cache_creation_tokens: response.cache_write_tokens,
-        created_at: now,
-        updated_at: now
-      })
+      chat.ruby_llm_usages.create!(
+        operation: "chat",
+        status: "succeeded",
+        provider: "anthropic",
+        model: Vision::MODEL,
+        input_tokens: response.tokens.input,
+        output_tokens: response.tokens.output,
+        cache_read_tokens: response.tokens.cache_read,
+        cache_write_tokens: response.tokens.cache_write
+      )
     rescue => e
       Rails.logger.error("[Vision::TokenTracker] Failed to record usage: #{e.message}")
     end

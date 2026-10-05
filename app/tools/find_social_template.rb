@@ -1,12 +1,12 @@
 class FindSocialTemplate < RubyLLM::Tool
   description "Find available social media caption templates for a given platform"
 
-  param :platform,
+  parameter :platform,
     type: :string,
-    desc: "Platform: instagram, youtube, facebook, or tiktok"
-  param :user_id,
+    description: "Platform: instagram, youtube, facebook, or tiktok"
+  parameter :user_id,
     type: :integer,
-    desc: "The current user's ID"
+    description: "The current user's ID"
 
   def execute(platform:, user_id:)
     SocialTemplate.for_platform(platform)

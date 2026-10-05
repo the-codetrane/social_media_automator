@@ -3,6 +3,9 @@
 # If running the rails server then create or migrate existing database
 if [ "${@: -2:1}" == "./bin/rails" ] && [ "${@: -1:1}" == "server" ]; then
   ./bin/rails db:prepare
+  # RubyLLM 2.0 resolves models from the ruby_llm_models table rather than the gem's
+  # bundled models.json, so sync the table on every boot to pick up registry updates.
+  ./bin/rails ruby_llm:load_models
 fi
 
 exec "${@}"

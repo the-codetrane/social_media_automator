@@ -5,17 +5,17 @@ class ListMediaAssets < RubyLLM::Tool
               "DigitalOcean Spaces bucket. Use this to discover what media is available before creating posts. " \
               "Returns public CDN URLs ready to pass to resolve_media_asset or sync_media_assets_from_spaces."
 
-  param :prefix,
+  parameter :prefix,
     type: :string,
-    desc: "Optional folder/prefix to filter results, e.g. 'band-photos/' or 'shows/2025/'. Leave blank for all directories.",
+    description: "Optional folder/prefix to filter results, e.g. 'band-photos/' or 'shows/2025/'. Leave blank for all directories.",
     required: false
-  param :limit,
+  parameter :limit,
     type: :integer,
-    desc: "Maximum number of files to return (default: 500, max: 5000)",
+    description: "Maximum number of files to return (default: 500, max: 5000)",
     required: false
-  param :media_type_filter,
+  parameter :media_type_filter,
     type: :string,
-    desc: "Filter by type: 'image', 'video', 'audio', or leave blank for all",
+    description: "Filter by type: 'image', 'video', 'audio', or leave blank for all",
     required: false
 
   CDN_BASE   = "https://ig-mcp-images.sfo3.cdn.digitaloceanspaces.com"

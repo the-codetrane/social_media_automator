@@ -35,13 +35,14 @@ class ChatCompletionJob < ApplicationJob
   def repair_orphaned_tool_messages(chat)
     return unless chat.respond_to?(:messages_association)
 
-    chat.messages_association.includes(:tool_calls).order(:id).each do |message|
+    chat.messages_association.includes(ruby_llm_tool_calls: :result).order(:id).each do |message|
       next unless message.role.to_s == "assistant"
 
-      if message.tool_calls.empty? && message.content.blank?
+      calls = message.ruby_llm_tool_calls
+      if calls.empty? && message.content.blank?
         message.destroy
-      elsif message.tool_calls.any? && message.tool_calls.count != message.tool_results.count
-        message.tool_results.each(&:destroy)
+      elsif calls.any? { |call| call.result.nil? }
+        calls.filter_map(&:result).each(&:destroy)
         message.destroy
       end
     end

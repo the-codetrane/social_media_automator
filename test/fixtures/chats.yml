@@ -1,11 +1,11 @@
 empty_chat:
   id: <%= ActiveRecord::FixtureSet.identify(:empty_chat) %>
-  model_id: <%= ActiveRecord::FixtureSet.identify(:sonar_pro) %>
+  ruby_llm_model_id: <%= ActiveRecord::FixtureSet.identify(:sonar_pro) %>
   created_at: <%= Time.current %>
   updated_at: <%= Time.current %>
 
 chat_with_messages:
   id: <%= ActiveRecord::FixtureSet.identify(:chat_with_messages) %>
-  model_id: <%= ActiveRecord::FixtureSet.identify(:sonar_pro) %>
+  ruby_llm_model_id: <%= ActiveRecord::FixtureSet.identify(:sonar_pro) %>
   created_at: <%= Time.current %>
   updated_at: <%= Time.current %>
