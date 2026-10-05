@@ -10,7 +10,10 @@ module MediaAssets
       folder = MediaAssetFolders.sanitize(params[:folder])
       return render json: { error: "Destination folder is required" }, status: :unprocessable_entity if folder.nil?
 
-      blob = ActiveStorage::Blob.create_before_direct_upload!(key: MediaAssetFolders.key_for(folder), **blob_args)
+      args = blob_args
+      key  = MediaAssetFolders.key_for(folder, filename: args[:filename])
+
+      blob = ActiveStorage::Blob.create_before_direct_upload!(key: key, **args)
       render json: direct_upload_json(blob)
     end
 
