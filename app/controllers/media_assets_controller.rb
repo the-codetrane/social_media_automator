@@ -72,6 +72,7 @@ class MediaAssetsController < ApplicationController
       file_size:     blob.byte_size
     )
     asset.file.attach(blob)
+    PublicBlobAcl.apply(blob)
     AnalyzeMediaAssetJob.perform_later(asset.id)
     asset
   end

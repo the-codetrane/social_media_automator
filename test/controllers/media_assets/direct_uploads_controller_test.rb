@@ -21,7 +21,7 @@ class MediaAssets::DirectUploadsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     body = response.parsed_body
     blob = ActiveStorage::Blob.find_signed!(body["signed_id"])
-    assert_match %r{\AGigs/2026/[a-z0-9]+\z}, blob.key
+    assert_equal "Gigs/2026/gig.jpg", blob.key
     assert_equal "gig.jpg", blob.filename.to_s
     assert body.dig("direct_upload", "url").present?
   end

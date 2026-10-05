@@ -120,6 +120,27 @@ This will:
 - Set up the proxy with SSL (Let's Encrypt)
 - Run database migrations
 
+#### Allow browser uploads to Spaces (one time per bucket)
+
+Media Assets upload straight from the browser to DigitalOcean Spaces, so the
+bucket needs a CORS rule permitting `PUT` from the app's domain. Without it the
+preflight is rejected with `403 AccessDenied`, the upload never leaves the
+browser, and the only server-side trace is a successful
+`POST /media_assets/direct_uploads` with no `POST /media_assets` after it.
+
+```bash
+bin/kamal app exec --reuse 'bin/rails spaces:cors'
+```
+
+Pass `ORIGINS` to allow something other than the production domain:
+
+```bash
+bin/kamal app exec --reuse 'ORIGINS=https://staging.example.com bin/rails spaces:cors'
+```
+
+This is bucket state rather than application config, so it survives deploys but
+must be re-run if the bucket is ever recreated or its CORS rules are reset.
+
 ### Regular Deployments
 
 For subsequent deployments:

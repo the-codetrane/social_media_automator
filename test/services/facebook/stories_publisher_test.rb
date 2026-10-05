@@ -4,6 +4,14 @@ require "test_helper"
 
 module Facebook
   class StoriesPublisherTest < ActiveSupport::TestCase
+    # The publisher raises and leaves the post alone; PublishFacebookPostJob
+    # marks it failed once retries are exhausted or the error was never
+    # retryable.  The publisher used to do this itself, which tripped the
+    # job's status guard on every retry and made retry_on inert.
+    FAILURE_IS_THE_JOBS_JOB =
+      "the publisher must not mark the post failed — that is the job's call, " \
+      "and doing it here breaks every retry"
+
     def setup
       @user      = users(:one)
       @page_id   = @user.instagram_page_id
@@ -184,8 +192,7 @@ module Facebook
         assert_match(/Resolution too low/, error.message)
       end
 
-      assert post.reload.failed?
-      assert_match(/Resolution too low/, post.failure_reason)
+      assert_not post.reload.failed?, FAILURE_IS_THE_JOBS_JOB
     end
 
     test "wait_until_processed! raises ContainerTimeoutError when processing never completes" do
@@ -217,17 +224,16 @@ module Facebook
     # Validation and failure bookkeeping
     # -------------------------------------------------------------------------
 
-    test "publish marks the post failed and keeps the reason" do
+    test "publish raises a descriptive error when the asset has no public URL" do
       post = story_post(asset: media_assets(:sample_image_no_url))
 
       client, = stub_client
       with_client(client) do
-        assert_raises(Instagram::ApiError) { @publisher.publish(post) }
+        error = assert_raises(Instagram::ApiError) { @publisher.publish(post) }
+        assert_match(/has no public URL/, error.message)
       end
 
-      post.reload
-      assert post.failed?
-      assert_match(/has no public URL/, post.failure_reason)
+      assert_not post.reload.failed?, FAILURE_IS_THE_JOBS_JOB
     end
 
     test "publish rejects an audio asset" do
@@ -258,7 +264,7 @@ module Facebook
       end
 
       assert_empty calls.reject { |kind, _, _| kind == :get }
-      assert post.reload.failed?
+      assert_not post.reload.failed?, FAILURE_IS_THE_JOBS_JOB
     end
 
     test "initialize raises when the user has no page ID" do
