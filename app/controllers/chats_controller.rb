@@ -4,7 +4,7 @@ class ChatsController < ApplicationController
   MODELS = [
     {
       id: "claude-haiku-4-5-20251001",
-      display_name: "Claude Haiku",
+      display_name: "Claude Haiku 4.5",
       tagline: "Fast & lightweight",
       description: "Best for quick questions and simple tasks where speed matters most.",
       strengths: [ "Fastest response times", "Most economical", "Good for high-volume use" ],
@@ -12,18 +12,34 @@ class ChatsController < ApplicationController
     },
     {
       id: "claude-sonnet-4-6",
-      display_name: "Claude Sonnet",
-      tagline: "Balanced — default",
+      display_name: "Claude Sonnet 4.6",
+      tagline: "Previous default",
       description: "Reliable for all social media drafting, scheduling, and content management.",
       strengths: [ "Strong writing & reasoning", "Handles all tools reliably", "Good speed/quality balance" ],
       limitations: [ "Slower than Haiku", "Overkill for very simple lookups" ]
     },
     {
+      id: "claude-sonnet-5",
+      display_name: "Claude Sonnet 5",
+      tagline: "Balanced — default",
+      description: "Next-generation Sonnet for drafting, scheduling, and content management, at a lower price than Sonnet 4.6.",
+      strengths: [ "Newest Sonnet generation", "Cheaper per token than Sonnet 4.6", "Good speed/quality balance" ],
+      limitations: [ "Slower than Haiku", "Overkill for very simple lookups" ]
+    },
+    {
       id: "claude-opus-4-8",
-      display_name: "Claude Opus",
+      display_name: "Claude Opus 4.8",
       tagline: "Most capable",
       description: "Best for complex creative writing, multi-step workflows, and nuanced reasoning.",
       strengths: [ "Highest quality output", "Best at nuanced writing", "Strongest multi-step reasoning" ],
+      limitations: [ "Slowest response time", "Most expensive per request" ]
+    },
+    {
+      id: "claude-opus-5",
+      display_name: "Claude Opus 5",
+      tagline: "Newest Opus",
+      description: "Next-generation Opus for the hardest writing and multi-step work, at the same price as Opus 4.8.",
+      strengths: [ "Newest Opus generation", "Best at nuanced writing", "Strongest multi-step reasoning" ],
       limitations: [ "Slowest response time", "Most expensive per request" ]
     }
   ].freeze

@@ -328,6 +328,34 @@ class ChatsControllerTest < ActionDispatch::IntegrationTest
     assert_not_equal original, session[:chat_id]
   end
 
+  # ---------------------------------------------------------------------------
+  # POST /chat/model
+  # ---------------------------------------------------------------------------
+
+  %w[claude-sonnet-5 claude-opus-5].each do |model_id|
+    test "select_model switches the chat to #{model_id}" do
+      sign_in_as(@user)
+      get chat_path
+
+      post chat_model_path, params: { model_id: model_id }
+
+      assert_redirected_to chat_path
+      assert_equal model_id, Chat.find(session[:chat_id]).model.model_id
+    end
+  end
+
+  test "select_model rejects a model that isn't in the menu" do
+    sign_in_as(@user)
+    get chat_path
+    original = Chat.find(session[:chat_id]).model&.model_id
+
+    post chat_model_path, params: { model_id: "claude-not-a-model" }
+
+    assert_redirected_to chat_path
+    assert_equal "Unknown model.", flash[:alert]
+    assert_equal original, Chat.find(session[:chat_id]).model&.model_id
+  end
+
   private
 
   # Stand in for a provider response so the controller can read a context size back.

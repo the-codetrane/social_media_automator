@@ -27,6 +27,16 @@ class LocalLlmUsageServiceTest < ActiveSupport::TestCase
     assert_in_delta 3.00 + 15.00 + 0.30 + 3.75, sonnet[:cost], 0.0001
   end
 
+  test "prices Claude 5 models instead of counting them as free" do
+    record_usage(model: "claude-sonnet-5", input_tokens: 1_000_000, output_tokens: 1_000_000)
+    record_usage(model: "claude-opus-5", input_tokens: 1_000_000, output_tokens: 1_000_000)
+
+    by_model = LocalLlmUsageService.new.call[:by_model].to_h
+
+    assert_in_delta 2.00 + 10.00, by_model.fetch("claude-sonnet-5")[:cost], 0.0001
+    assert_in_delta 5.00 + 25.00, by_model.fetch("claude-opus-5")[:cost], 0.0001
+  end
+
   test "ignores usage older than the reporting window" do
     record_usage(model: "claude-sonnet-4-6", input_tokens: 500, created_at: (LocalLlmUsageService::DAYS + 1).days.ago)
 

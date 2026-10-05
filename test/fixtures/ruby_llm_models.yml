@@ -33,3 +33,19 @@ claude_opus:
   family: claude-opus
   created_at: <%= Time.current %>
   updated_at: <%= Time.current %>
+
+claude_sonnet_5:
+  provider: anthropic
+  model_id: claude-sonnet-5
+  name: Claude Sonnet 5
+  family: claude-sonnet
+  created_at: <%= Time.current %>
+  updated_at: <%= Time.current %>
+
+claude_opus_5:
+  provider: anthropic
+  model_id: claude-opus-5
+  name: Claude Opus 5
+  family: claude-opus
+  created_at: <%= Time.current %>
+  updated_at: <%= Time.current %>
