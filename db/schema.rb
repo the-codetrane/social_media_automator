@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_05_133617) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_05_140256) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -100,19 +100,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_05_133617) do
   create_table "messages", force: :cascade do |t|
     t.string "role", null: false
     t.text "content"
-    t.json "content_raw"
     t.text "thinking_text"
     t.text "thinking_signature"
-    t.integer "thinking_tokens"
-    t.integer "input_tokens"
-    t.integer "output_tokens"
-    t.integer "cached_tokens"
-    t.integer "cache_creation_tokens"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "chat_id", null: false
-    t.integer "model_id"
-    t.integer "tool_call_id"
     t.boolean "cache_until_here", default: false, null: false
     t.string "finish_reason"
     t.json "citations"
@@ -120,9 +112,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_05_133617) do
     t.json "raw_content"
     t.json "raw_reasoning"
     t.index [ "chat_id" ], name: "index_messages_on_chat_id"
-    t.index [ "model_id" ], name: "index_messages_on_model_id"
-    t.index [ "role" ], name: "index_messages_on_role"
-    t.index [ "tool_call_id" ], name: "index_messages_on_tool_call_id"
   end
 
   create_table "planned_posts", force: :cascade do |t|
@@ -234,13 +223,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_05_133617) do
     t.check_constraint "status IN ('pending', 'succeeded', 'failed', 'cancelled')"
   end
 
-  create_table "ruby_llm_v2_backfills", id: false, force: :cascade do |t|
-    t.string "task", null: false
-    t.integer "last_id"
-    t.boolean "completed", default: false, null: false
-    t.index [ "task" ], name: "index_ruby_llm_v2_backfills_on_task", unique: true
-  end
-
   create_table "sessions", force: :cascade do |t|
     t.integer "user_id", null: false
     t.string "ip_address"
@@ -293,8 +275,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_05_133617) do
   add_foreign_key "chats", "users"
   add_foreign_key "known_people", "users"
   add_foreign_key "messages", "chats"
-  add_foreign_key "messages", "ruby_llm_models", column: "model_id"
-  add_foreign_key "messages", "ruby_llm_tool_calls", column: "tool_call_id"
   add_foreign_key "planned_posts", "media_assets"
   add_foreign_key "planned_posts", "social_templates"
   add_foreign_key "planned_posts", "users"
