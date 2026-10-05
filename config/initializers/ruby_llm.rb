@@ -5,6 +5,6 @@ RubyLLM.configure do |config|
   else
                                 ENV["ANTHROPIC_API_KEY"] || Rails.application.credentials.anthropic_api_key
   end
-  config.default_model = "claude-sonnet-4-6"
+  config.default_model = "claude-sonnet-5"
   config.logger = Rails.logger
 end

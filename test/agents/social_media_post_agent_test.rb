@@ -34,6 +34,7 @@ class SocialMediaPostAgentTest < ActiveSupport::TestCase
     payload = captured_payload(llm_chat)
 
     assert_equal({ type: "ephemeral" }, payload[:cache_control])
+    assert_equal "claude-sonnet-5", payload[:model], "new chats should default to Sonnet 5"
     assert payload[:tools].present?, "agent tools should be sent with the request"
   end
 
