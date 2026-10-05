@@ -2,7 +2,8 @@ class UpdatePlannedPost < RubyLLM::Tool
   description "Update an existing planned post. Can modify caption, hashtags, schedule, status, " \
               "or replace/reorder media assets to convert a single-photo post into a carousel. " \
               "Pass media_asset_ids (ordered array of existing asset IDs) to set or reorder carousel images; " \
-              "the first ID becomes the primary asset. All fields except id are optional."
+              "the first ID becomes the primary asset. Pass collaborators to set Instagram collaborator tags. " \
+              "All fields except id are optional."
 
   param :id,
     type: :integer,
@@ -32,9 +33,15 @@ class UpdatePlannedPost < RubyLLM::Tool
     desc: "Ordered list of existing MediaAsset IDs. First ID becomes the primary asset. " \
           "Pass 2–10 IDs to create or reorder a carousel.",
     required: false
+  param :collaborators,
+    type: :array,
+    desc: "Instagram usernames to tag as collaborators (max 3, leading @ optional), e.g. " \
+          "['themakeouts', 'mikeandthetvs']. Replaces the existing list; pass [] to remove all. " \
+          "Omit to leave collaborators unchanged. Instagram feed posts, Reels and carousels only — not stories.",
+    required: false
 
   def execute(id:, caption: nil, hashtags: nil, status: nil, scheduled_at: nil,
-              social_template_id: nil, media_asset_ids: nil)
+              social_template_id: nil, media_asset_ids: nil, collaborators: nil)
     post = PlannedPost.find_by(id: id)
     return { error: "Planned post ##{id} not found" } unless post
 
@@ -58,6 +65,22 @@ class UpdatePlannedPost < RubyLLM::Tool
       attrs[:platform_payload] = payload
     end
 
+    # nil means "leave alone"; an empty array clears the list.
+    unless collaborators.nil?
+      return { error: "Collaborators are only supported on Instagram posts" } unless post.instagram?
+      return { error: "Instagram stories don't support collaborators" } if post.story?
+
+      begin
+        usernames = Instagram::PublishOptions.normalize_collaborators(collaborators)
+      rescue ArgumentError => e
+        return { error: e.message }
+      end
+
+      payload = (attrs[:platform_payload] || post.platform_payload || {}).to_h
+      attrs[:platform_payload] =
+        usernames.any? ? payload.merge("collaborators" => usernames) : payload.except("collaborators")
+    end
+
     if post.update(attrs)
       carousel_ids = post.platform_payload&.dig("carousel_asset_ids")
       {
@@ -70,6 +93,8 @@ class UpdatePlannedPost < RubyLLM::Tool
         caption: post.caption,
         hashtags: post.hashtags,
         scheduled_at: post.scheduled_at&.iso8601,
+        collaborators: post.platform_payload&.dig("collaborators") || [],
+        platform_payload: post.platform_payload,
         updated_at: post.updated_at.iso8601
       }
     else

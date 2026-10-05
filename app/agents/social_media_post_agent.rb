@@ -91,6 +91,11 @@ class SocialMediaPostAgent < RubyLLM::Agent
       changed fields.
     - To convert a single-photo post to a carousel, reorder its images, or swap one out: call
       update_planned_post with the full media_asset_ids array (2–10 ordered IDs).
+    - To tag Instagram collaborators: call update_planned_post with a collaborators array of
+      usernames (max 3, e.g. ['themakeouts', 'mikeandthetvs']). This replaces the whole list,
+      so include existing collaborators you want to keep; pass [] to remove them all.
+      Mentioning an account in the caption does NOT make it a collaborator — only this field
+      does. Stories can't have collaborators. The account must be public or publishing fails.
     - To replace a post entirely: confirm with the user first, then delete_planned_post, then
       create_planned_post with the new media. Never call delete_planned_post without explicit
       user confirmation.
