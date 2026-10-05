@@ -2,9 +2,9 @@ class DeletePlannedPost < RubyLLM::Tool
   description "Permanently delete a planned post by ID. Use as an alternative to update — " \
               "delete a single-photo post and replace it with a new carousel post."
 
-  param :id,
+  parameter :id,
     type: :integer,
-    desc: "The planned post ID to delete"
+    description: "The planned post ID to delete"
 
   def execute(id:)
     post = PlannedPost.find_by(id: id)

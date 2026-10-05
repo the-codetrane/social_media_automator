@@ -1,0 +1,35 @@
+_fixture:
+  model_class: RubyLLM::ActiveRecord::Model
+
+sonar_pro:
+  id: <%= ActiveRecord::FixtureSet.identify(:sonar_pro) %>
+  provider: perplexity
+  model_id: sonar-pro
+  name: Sonar Pro
+  family: sonar
+  created_at: <%= Time.current %>
+  updated_at: <%= Time.current %>
+
+claude_haiku:
+  provider: anthropic
+  model_id: claude-haiku-4-5-20251001
+  name: Claude Haiku 4.5
+  family: claude-haiku
+  created_at: <%= Time.current %>
+  updated_at: <%= Time.current %>
+
+claude_sonnet:
+  provider: anthropic
+  model_id: claude-sonnet-4-6
+  name: Claude Sonnet 4.6
+  family: claude-sonnet
+  created_at: <%= Time.current %>
+  updated_at: <%= Time.current %>
+
+claude_opus:
+  provider: anthropic
+  model_id: claude-opus-4-8
+  name: Claude Opus 4.8
+  family: claude-opus
+  created_at: <%= Time.current %>
+  updated_at: <%= Time.current %>

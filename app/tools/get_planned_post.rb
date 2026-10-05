@@ -2,9 +2,9 @@ class GetPlannedPost < RubyLLM::Tool
   description "Fetch full details of a specific planned post by ID, including all media assets, " \
               "caption, hashtags, platform, scheduled time, and status."
 
-  param :id,
+  parameter :id,
     type: :integer,
-    desc: "The planned post ID"
+    description: "The planned post ID"
 
   def execute(id:)
     post = PlannedPost.find_by(id: id)

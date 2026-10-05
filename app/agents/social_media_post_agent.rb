@@ -1,6 +1,11 @@
 class SocialMediaPostAgent < RubyLLM::Agent
   chat_model "Chat"
   model "claude-sonnet-4-6", assume_model_exists: true, provider: "anthropic"
+  # A tool-heavy chat resends its whole history every turn; without caching ~94% of each
+  # request was billed as uncached input, which was 96% of the API bill. This turns on
+  # Anthropic's automatic prompt caching, which moves the cache breakpoint to the end of
+  # the conversation on every request so tools, system prompt and history are all reused.
+  caching
   inputs :user
   # Scoped to creating planned posts: finding media, drafting captions, scheduling.
   # Enrichment, geocoding, face identification, and variety/duplicate checking were removed.

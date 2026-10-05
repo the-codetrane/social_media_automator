@@ -160,7 +160,7 @@ class ChatsControllerTest < ActionDispatch::IntegrationTest
     chat_id = session[:chat_id]
     record_context(Chat.find(chat_id),
                    input_tokens: 10,
-                   cache_creation_tokens: ChatsController::MAX_CONTEXT_TOKENS)
+                   cache_write_tokens: ChatsController::MAX_CONTEXT_TOKENS)
 
     post chat_messages_path, params: { content: "keep going" }
 
@@ -171,7 +171,7 @@ class ChatsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(@user)
     get chat_path
     chat_id = session[:chat_id]
-    record_context(Chat.find(chat_id), input_tokens: 100, cached_tokens: 100, cache_creation_tokens: 100)
+    record_context(Chat.find(chat_id), input_tokens: 100, cache_read_tokens: 100, cache_write_tokens: 100)
 
     post chat_messages_path, params: { content: "keep going" }
 
@@ -331,13 +331,17 @@ class ChatsControllerTest < ActionDispatch::IntegrationTest
   private
 
   # Stand in for a provider response so the controller can read a context size back.
-  def record_context(chat, input_tokens: 0, cached_tokens: 0, cache_creation_tokens: 0)
-    chat.messages.create!(
-      role: "assistant",
-      content: "ok",
+  def record_context(chat, input_tokens: 0, cache_read_tokens: 0, cache_write_tokens: 0)
+    message = chat.messages.create!(role: "assistant", content: "ok")
+    chat.ruby_llm_usages.create!(
+      message: message,
+      operation: "chat",
+      status: "succeeded",
+      provider: "anthropic",
+      model: "claude-sonnet-4-6",
       input_tokens: input_tokens,
-      cached_tokens: cached_tokens,
-      cache_creation_tokens: cache_creation_tokens
+      cache_read_tokens: cache_read_tokens,
+      cache_write_tokens: cache_write_tokens
     )
   end
 end

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# Computes LLM usage and estimated cost from locally stored Message records.
+# Computes LLM usage and estimated cost from RubyLLM's locally stored usage ledger.
 # Replaces AnthropicUsageService for accounts without an Anthropic Admin API key.
 class LocalLlmUsageService
   DAYS      = 31
@@ -31,20 +31,20 @@ class LocalLlmUsageService
   def call
     since = DAYS.days.ago.beginning_of_day
 
-    rows = Message
-      .joins(:model)
-      .where(role: "assistant")
-      .where("messages.created_at >= ?", since)
-      .where("messages.input_tokens IS NOT NULL OR messages.output_tokens IS NOT NULL")
+    # RubyLLM records one ledger row per provider attempt (retries included), which is
+    # what was billed. The 2.0 upgrade backfilled the 1.x per-message counts into it.
+    rows = RubyLLM::ActiveRecord::Usage
+      .where(created_at: since..)
+      .where("input_tokens IS NOT NULL OR output_tokens IS NOT NULL")
       .select(
-        "DATE(messages.created_at) AS day",
-        "models.model_id AS llm_model_id",
-        "SUM(COALESCE(messages.input_tokens, 0)) AS total_input",
-        "SUM(COALESCE(messages.output_tokens, 0)) AS total_output",
-        "SUM(COALESCE(messages.cached_tokens, 0)) AS total_cache_read",
-        "SUM(COALESCE(messages.cache_creation_tokens, 0)) AS total_cache_write"
+        "DATE(created_at) AS day",
+        "model AS llm_model_id",
+        "SUM(COALESCE(input_tokens, 0)) AS total_input",
+        "SUM(COALESCE(output_tokens, 0)) AS total_output",
+        "SUM(COALESCE(cache_read_tokens, 0)) AS total_cache_read",
+        "SUM(COALESCE(cache_write_tokens, 0)) AS total_cache_write"
       )
-      .group("DATE(messages.created_at)", "models.model_id")
+      .group("DATE(created_at)", "model")
       .map do |r|
         pricing = pricing_for(r.llm_model_id)
         cost = compute_cost(

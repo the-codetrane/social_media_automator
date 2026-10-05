@@ -53,7 +53,7 @@ class ChatsController < ApplicationController
 
     if upload.present?
       media_asset = create_media_asset_from_upload(upload)
-      @chat.create_user_message(content, with: media_asset.file)
+      @chat.ask_later(content, with: media_asset.file)
     else
       @chat.add_message(role: :user, content: content)
     end
@@ -79,7 +79,7 @@ class ChatsController < ApplicationController
     return redirect_to chat_path, alert: "Unknown model." unless valid_model?(model_id)
 
     session[:chat_model] = model_id
-    @chat.with_model(model_id, provider: "anthropic", assume_exists: true)
+    @chat.with_model(model_id, provider: "anthropic", assume_model_exists: true)
 
     redirect_to chat_path
   end
@@ -104,7 +104,7 @@ class ChatsController < ApplicationController
     chat.update!(user: Current.user)
     preferred = session[:chat_model]
     if valid_model?(preferred) && preferred != chat.model_id
-      chat.with_model(preferred, provider: "anthropic", assume_exists: true)
+      chat.with_model(preferred, provider: "anthropic", assume_model_exists: true)
     end
     chat
   end
@@ -121,18 +121,14 @@ class ChatsController < ApplicationController
   end
 
   # Size of the context the API last saw for this chat. The provider reports it per
-  # response, so the newest assistant message is an exact measure rather than an estimate.
+  # call, so the newest successful usage entry is an exact measure rather than an estimate.
   # Anthropic splits the prompt across three counters -- uncached input, cache reads and
   # cache writes -- so all three have to be summed to get the whole context back.
   def conversation_tokens
-    last = @chat.messages
-                .where(role: "assistant")
-                .where.not(input_tokens: nil)
-                .order(:id)
-                .last
+    last = @chat.ruby_llm_usages.where(operation: "chat", status: "succeeded").last
     return 0 unless last
 
-    last.input_tokens.to_i + last.cached_tokens.to_i + last.cache_creation_tokens.to_i
+    last.input_tokens.to_i + last.cache_read_tokens.to_i + last.cache_write_tokens.to_i
   end
 
   def valid_model?(model_id)

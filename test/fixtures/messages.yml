@@ -9,7 +9,6 @@ user_greeting:
 assistant_reply:
   id: <%= ActiveRecord::FixtureSet.identify(:assistant_reply) %>
   chat_id: <%= ActiveRecord::FixtureSet.identify(:chat_with_messages) %>
-  model_id: <%= ActiveRecord::FixtureSet.identify(:sonar_pro) %>
   role: assistant
   content: "Hi! How can I help?"
   created_at: <%= 1.minute.ago %>

@@ -3,29 +3,29 @@ class SearchMediaAssets < RubyLLM::Tool
               "Use this to find the asset to attach to a planned post. " \
               "Returns id, external_name, media_type, status, and location fields for each match."
 
-  param :name,
+  parameter :name,
     type: :string,
-    desc: "Case-insensitive substring to match against external_name.",
+    description: "Case-insensitive substring to match against external_name.",
     required: false
 
-  param :geocoded,
+  parameter :geocoded,
     type: :boolean,
-    desc: "true = only assets with coordinates, false = only assets without. Omit to return both.",
+    description: "true = only assets with coordinates, false = only assets without. Omit to return both.",
     required: false
 
-  param :media_type,
+  parameter :media_type,
     type: :string,
-    desc: "Filter by type: 'image', 'video', or 'audio'. Omit for all.",
+    description: "Filter by type: 'image', 'video', or 'audio'. Omit for all.",
     required: false
 
-  param :status,
+  parameter :status,
     type: :string,
-    desc: "Filter by status: 'discovered', 'processed', 'failed', or 'archived'. Omit for all.",
+    description: "Filter by status: 'discovered', 'processed', 'failed', or 'archived'. Omit for all.",
     required: false
 
-  param :limit,
+  parameter :limit,
     type: :integer,
-    desc: "Max records to return (default: 50, max: 200).",
+    description: "Max records to return (default: 50, max: 200).",
     required: false
 
   def execute(name: nil, geocoded: nil, media_type: nil, status: nil, limit: 50)

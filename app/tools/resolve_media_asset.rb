@@ -1,9 +1,9 @@
 class ResolveMediaAsset < RubyLLM::Tool
   description "Resolve or create a media asset from a public URL. Returns the asset ID required to create a post."
 
-  param :url,
+  parameter :url,
     type: :string,
-    desc: "The public HTTP/HTTPS URL of the image or video"
+    description: "The public HTTP/HTTPS URL of the image or video"
 
   def execute(url:)
     service = Api::MediaAssetFromUrlService.new(url)

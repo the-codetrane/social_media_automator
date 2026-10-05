@@ -3,30 +3,30 @@ class PublishYouTubeVideo < RubyLLM::Tool
               "published as YouTube Shorts (#Shorts appended to title and description). " \
               "The first line of caption becomes the video title; full caption is used as description."
 
-  param :user_id,
+  parameter :user_id,
     type: :integer,
-    desc: "The current user's ID"
-  param :media_asset_id,
+    description: "The current user's ID"
+  parameter :media_asset_id,
     type: :integer,
-    desc: "ID of the video MediaAsset to upload (must be media_type: video with a public URL)"
-  param :caption,
+    description: "ID of the video MediaAsset to upload (must be media_type: video with a public URL)"
+  parameter :caption,
     type: :string,
-    desc: "Video caption. First line is used as the YouTube title (max 100 chars); full text is the description."
-  param :hashtags,
+    description: "Video caption. First line is used as the YouTube title (max 100 chars); full text is the description."
+  parameter :hashtags,
     type: :string,
-    desc: "Hashtag string appended to the description, e.g. '#vlog #travel'",
+    description: "Hashtag string appended to the description, e.g. '#vlog #travel'",
     required: false
-  param :privacy_status,
+  parameter :privacy_status,
     type: :string,
-    desc: "Video visibility: public, unlisted, or private. Defaults to public.",
+    description: "Video visibility: public, unlisted, or private. Defaults to public.",
     required: false
-  param :category_id,
+  parameter :category_id,
     type: :string,
-    desc: "YouTube category ID, e.g. '22' (People & Blogs), '17' (Sports), '10' (Music). Defaults to '22'.",
+    description: "YouTube category ID, e.g. '22' (People & Blogs), '17' (Sports), '10' (Music). Defaults to '22'.",
     required: false
-  param :tags,
+  parameter :tags,
     type: :string,
-    desc: "Comma-separated keyword tags for the video, e.g. 'travel,vlog,adventure'",
+    description: "Comma-separated keyword tags for the video, e.g. 'travel,vlog,adventure'",
     required: false
 
   def execute(user_id:, media_asset_id:, caption:, hashtags: nil, privacy_status: nil, category_id: nil, tags: nil)

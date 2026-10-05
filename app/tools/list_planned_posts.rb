@@ -3,17 +3,17 @@ class ListPlannedPosts < RubyLLM::Tool
               "Use this to find single-photo posts that need to be converted to carousels, " \
               "or to review what is currently scheduled."
 
-  param :status,
+  parameter :status,
     type: :string,
-    desc: "Filter by status: draft, scheduled, published, failed, or canceled",
+    description: "Filter by status: draft, scheduled, published, failed, or canceled",
     required: false
-  param :platform,
+  parameter :platform,
     type: :string,
-    desc: "Filter by platform: instagram, youtube, facebook, or tiktok",
+    description: "Filter by platform: instagram, youtube, facebook, or tiktok",
     required: false
-  param :user_id,
+  parameter :user_id,
     type: :integer,
-    desc: "Filter by user ID",
+    description: "Filter by user ID",
     required: false
 
   def execute(status: nil, platform: nil, user_id: nil)

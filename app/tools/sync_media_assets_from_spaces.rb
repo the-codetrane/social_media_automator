@@ -7,13 +7,13 @@ class SyncMediaAssetsFromSpaces < RubyLLM::Tool
               "Run once before bulk-creating posts so all assets are already registered. " \
               "Returns a summary of how many records were created, skipped, or failed."
 
-  param :prefix,
+  parameter :prefix,
     type: :string,
-    desc: "Optional folder prefix to limit the sync, e.g. 'concerts/2025/'. Leave blank to sync all directories.",
+    description: "Optional folder prefix to limit the sync, e.g. 'concerts/2025/'. Leave blank to sync all directories.",
     required: false
-  param :dry_run,
+  parameter :dry_run,
     type: :boolean,
-    desc: "If true, reports what would be created without writing to the database (default: false).",
+    description: "If true, reports what would be created without writing to the database (default: false).",
     required: false
 
   CDN_BASE   = "https://ig-mcp-images.sfo3.cdn.digitaloceanspaces.com"
