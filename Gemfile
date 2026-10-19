@@ -52,7 +52,7 @@ gem "ruby-vips", "~> 2.2"
 gem "aws-sdk-s3", require: false
 
 # HTTP client used for Meta/Instagram API calls
-gem "faraday", "~> 2.14"
+gem "faraday", "~> 2.15"
 gem "faraday-retry", "~> 2.0"
 
 # YouTube Data API v3 client
