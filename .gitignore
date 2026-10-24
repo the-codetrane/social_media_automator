@@ -44,3 +44,6 @@
 
 # Playwright files
 .playwright-mcp/
+
+# Claude files
+.claude/
