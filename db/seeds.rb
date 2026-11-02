@@ -116,7 +116,7 @@ external_ids_used = []
   external_ids_used << external_id
 
   media_type = [ :image, :video ].sample
-  statuses = [ :discovered, :processed, :failed, :archived ]
+  statuses = [ :discovered, :processed, :failed ]
 
   media_assets << MediaAsset.create!(
     external_id: external_id,

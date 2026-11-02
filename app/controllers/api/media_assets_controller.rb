@@ -2,19 +2,25 @@
 
 module Api
   class MediaAssetsController < BaseController
-    ALLOWED_SORT_COLUMNS = %w[first_seen_at created_at file_size external_name].freeze
+    ALLOWED_SORT_COLUMNS = %w[first_seen_at created_at file_size external_name published_at].freeze
     DEFAULT_PER_PAGE = 50
     MAX_PER_PAGE = 200
 
+    AVAILABILITY_FILTERS = (MediaAsset::AVAILABILITIES + %w[all]).freeze
+
     # GET /api/media_assets
     # Filters: media_type, status, mime_type, first_seen_at_after, first_seen_at_before
+    #          availability=available|reserved|published|archived|all
+    #            (default: everything except archived — archived assets are
+    #            soft-deleted. "available" = not archived, never published,
+    #            not on a scheduled post.)
     # Search:  q (searches external_name, address)
-    # Sort:    sort=first_seen_at|created_at|file_size|external_name, direction=asc|desc
+    # Sort:    sort=first_seen_at|created_at|file_size|external_name|published_at, direction=asc|desc
     # Page:    page, per_page (default 50, max 200)
     def index
-      assets = MediaAsset.all
+      assets = availability_scope
       assets = assets.where(media_type: params[:media_type]) if params[:media_type].present?
-      assets = assets.where(status: params[:status]) if params[:status].present?
+      assets = assets.where(status: params[:status]) if params[:status].present? && params[:status] != "archived"
       assets = assets.where(mime_type: params[:mime_type]) if params[:mime_type].present?
       assets = assets.where("first_seen_at >= ?", params[:first_seen_at_after]) if params[:first_seen_at_after].present?
       assets = assets.where("first_seen_at <= ?", params[:first_seen_at_before]) if params[:first_seen_at_before].present?
@@ -39,7 +45,8 @@ module Api
       response.set_header("X-Per-Page", per_page.to_s)
       response.set_header("X-Total-Pages", (total.to_f / per_page).ceil.to_s)
 
-      render json: assets.map { |a| media_asset_response(a) }
+      reserved_ids = MediaAsset.reserved_ids
+      render json: assets.map { |a| media_asset_response(a, reserved_ids: reserved_ids) }
     end
 
     # GET /api/media_assets/:id
@@ -50,9 +57,38 @@ module Api
       render json: { error: "Media asset not found" }, status: :not_found
     end
 
+    # PATCH /api/media_assets/:id/archive
+    def archive
+      asset = MediaAsset.find(params[:id])
+      asset.archive!
+      render json: media_asset_response(asset)
+    rescue ActiveRecord::RecordNotFound
+      render json: { error: "Media asset not found" }, status: :not_found
+    end
+
+    # PATCH /api/media_assets/:id/unarchive
+    def unarchive
+      asset = MediaAsset.find(params[:id])
+      asset.unarchive!
+      render json: media_asset_response(asset)
+    rescue ActiveRecord::RecordNotFound
+      render json: { error: "Media asset not found" }, status: :not_found
+    end
+
     private
 
-    def media_asset_response(asset)
+    # "status=archived" predates archived_at and is still honoured.
+    def availability_scope
+      availability = params[:status] == "archived" ? "archived" : params[:availability]
+
+      if AVAILABILITY_FILTERS.include?(availability)
+        MediaAsset.with_availability(availability)
+      else
+        MediaAsset.active
+      end
+    end
+
+    def media_asset_response(asset, reserved_ids: nil)
       {
         id: asset.id,
         external_id: asset.external_id,
@@ -65,6 +101,9 @@ module Api
         file_size: asset.file_size,
         duration_seconds: asset.duration_seconds,
         mime_type: asset.mime_type,
+        availability: asset.availability(reserved_ids: reserved_ids),
+        archived_at: asset.archived_at&.iso8601,
+        published_at: asset.published_at&.iso8601,
         first_seen_at: asset.first_seen_at&.iso8601,
         created_at: asset.created_at.iso8601,
         updated_at: asset.updated_at.iso8601

@@ -4,16 +4,24 @@
   status_colors = {
     "discovered" => "bg-yellow-100 text-yellow-800",
     "processed"  => "bg-green-100 text-green-800",
-    "failed"     => "bg-red-100 text-red-800",
-    "archived"   => "bg-gray-100 text-gray-600"
+    "failed"     => "bg-red-100 text-red-800"
   }
   type_colors = {
     "image" => "bg-purple-100 text-purple-800",
     "video" => "bg-pink-100 text-pink-800"
   }
+  availability_tabs = [
+    [ "available", "Available" ],
+    [ "reserved",  "Scheduled" ],
+    [ "published", "Published" ],
+    [ "archived",  "Archived" ],
+    [ "all",       "All" ]
+  ]
 %>
 
-<div data-controller="view-toggle" data-view-toggle-storage-key-value="media_assets_view">
+<div data-controller="view-toggle bulk-select"
+     data-view-toggle-storage-key-value="media_assets_view"
+     data-bulk-select-param-name-value="ids">
 
   <div class="flex items-center justify-between mb-6">
     <div>
@@ -60,6 +68,18 @@
     <%= turbo_frame_tag "media-upload-modal" %>
   </dialog>
 
+  <%# Availability filter — Available hides assets that are archived, already
+      published, or on a scheduled post, so they are not picked twice. %>
+  <nav class="mb-4 flex flex-wrap gap-1 border-b border-gray-200" aria-label="Filter by availability">
+    <% availability_tabs.each do |value, label| %>
+      <% active = @availability == value %>
+      <%= link_to label,
+            media_assets_path(availability: value, q: @query.presence, sort: @sort, direction: @direction),
+            class: "px-3 py-2 -mb-px text-sm font-medium border-b-2 transition-colors #{active ? "border-indigo-600 text-indigo-700" : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"}",
+            aria: { current: (active ? "page" : nil) } %>
+    <% end %>
+  </nav>
+
   <%# Search form — targets the media-assets-list turbo frame %>
   <%= form_with url: media_assets_path,
                 method: :get,
@@ -69,6 +89,7 @@
                 class: "mb-4" do %>
     <input type="hidden" name="sort" value="<%= @sort %>">
     <input type="hidden" name="direction" value="<%= @direction %>">
+    <input type="hidden" name="availability" value="<%= @availability %>">
     <div class="relative max-w-sm">
       <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
         <svg class="h-4 w-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -85,18 +106,72 @@
     </div>
   <% end %>
 
+  <%# Bulk action toolbar — hidden until assets are selected %>
+  <div data-bulk-select-target="actionBar"
+       class="hidden sticky top-4 z-20 mb-4 flex flex-wrap items-center gap-3 bg-white border border-gray-200 rounded-xl px-4 py-3 shadow-sm">
+    <span class="text-sm font-medium text-gray-700" data-bulk-select-target="countLabel">0 selected</span>
+
+    <div class="ml-auto flex items-center gap-2">
+      <% if @availability == "archived" %>
+        <%= form_with url: bulk_unarchive_media_assets_path, method: :patch,
+                      data: { action: "submit->bulk-select#injectIds", turbo_frame: "_top" } do %>
+          <button type="submit"
+                  class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors border border-indigo-200">
+            Restore
+          </button>
+        <% end %>
+      <% else %>
+        <%= form_with url: bulk_archive_media_assets_path, method: :patch,
+                      data: { action: "submit->bulk-select#injectIds", turbo_frame: "_top" } do %>
+          <button type="submit"
+                  class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium bg-gray-50 text-gray-700 hover:bg-gray-100 transition-colors border border-gray-300">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+            </svg>
+            Archive
+          </button>
+        <% end %>
+      <% end %>
+
+      <button type="button"
+              data-action="click->bulk-select#deselectAll"
+              class="text-sm text-gray-400 hover:text-gray-600 ml-1 transition-colors">
+        Cancel
+      </button>
+    </div>
+  </div>
+
   <%= turbo_frame_tag "media-assets-list",
-        data: { action: "turbo:frame-render->view-toggle#applyView" } do %>
+        data: { action: "turbo:frame-render->bulk-select#resetSelection turbo:frame-render->view-toggle#applyView" } do %>
 
     <% if @media_assets.empty? %>
-      <div class="text-center py-20 text-gray-400">No media assets found.</div>
+      <div class="text-center py-20 text-gray-400">
+        <%= @availability == "available" ? "No unused media assets found." : "No media assets found." %>
+      </div>
     <% else %>
 
       <%# ── Card view ──────────────────────────────────────────────────────── %>
       <div data-view-toggle-target="cardView">
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           <% @media_assets.each do |asset| %>
-            <%= link_to media_asset_path(asset), class: "bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col hover:shadow-md hover:border-gray-300 transition-all duration-200 cursor-pointer", data: { turbo_frame: "_top" } do %>
+            <% availability = asset.availability(reserved_ids: @reserved_ids) %>
+            <div class="relative has-checked:ring-2 has-checked:ring-indigo-500 has-checked:ring-offset-1 rounded-xl">
+            <%# Selection checkbox — sibling of the link so click doesn't navigate %>
+            <label class="absolute top-3 left-3 z-10 cursor-pointer select-none">
+              <input type="checkbox"
+                     class="peer sr-only"
+                     value="<%= asset.id %>"
+                     aria-label="Select <%= asset.display_name %>"
+                     data-bulk-select-target="checkbox"
+                     data-action="change->bulk-select#toggle">
+              <span class="flex h-5 w-5 items-center justify-center rounded border-2 border-gray-300 bg-white shadow-sm
+                           peer-checked:border-indigo-600 peer-checked:bg-indigo-600 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="white" class="h-3 w-3">
+                  <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" />
+                </svg>
+              </span>
+            </label>
+            <%= link_to media_asset_path(asset), class: "h-full bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col hover:shadow-md hover:border-gray-300 transition-all duration-200 cursor-pointer #{"opacity-60" if availability == "archived"}", data: { turbo_frame: "_top" } do %>
 
               <%# Media Preview Thumbnail %>
               <% if asset.public_url? %>
@@ -136,6 +211,7 @@
                     <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium <%= status_colors[asset.status] || 'bg-gray-100 text-gray-600' %> capitalize">
                       <%= asset.status %>
                     </span>
+                    <%= render "media_assets/availability_badge", availability: availability %>
                   </div>
                 </div>
 
@@ -189,21 +265,26 @@
 
                 <p class="text-xs text-gray-400 border-t border-gray-100 pt-3 mt-auto">
                   Added <%= asset.created_at.strftime("%b %-d, %Y") %>
+                  <% if asset.published? %>
+                    · Published <%= asset.published_at.strftime("%b %-d, %Y") %>
+                  <% end %>
                 </p>
               </div>
             <% end %>
+            </div>
           <% end %>
         </div>
       </div>
 
       <%# ── Table view ─────────────────────────────────────────────────────── %>
       <div data-view-toggle-target="tableView" class="hidden">
-        <% sort_base = { q: @query } %>
+        <% sort_base = { q: @query, availability: @availability } %>
         <% sort_data = { turbo_frame: "media-assets-list", turbo_action: "advance" } %>
         <div class="rounded-xl border border-gray-200 bg-white shadow-sm overflow-x-auto">
           <table class="min-w-full divide-y divide-gray-200 text-sm">
             <thead class="bg-gray-50">
               <tr>
+                <th class="w-10 px-4 py-3"><span class="sr-only">Select</span></th>
                 <th class="w-14 px-4 py-3"></th>
                 <th class="px-4 py-3 text-left">
                   <%= sort_link_to "Name", "external_name",
@@ -219,6 +300,12 @@
                 </th>
                 <th class="px-4 py-3 text-left">
                   <%= sort_link_to "Status", "status",
+                      current_sort: @sort, current_direction: @direction,
+                      base_params: sort_base, data: sort_data,
+                      class: "text-xs font-medium uppercase tracking-wide" %>
+                </th>
+                <th class="px-4 py-3 text-left">
+                  <%= sort_link_to "Published", "published_at",
                       current_sort: @sort, current_direction: @direction,
                       base_params: sort_base, data: sort_data,
                       class: "text-xs font-medium uppercase tracking-wide" %>
@@ -242,7 +329,16 @@
             </thead>
             <tbody class="divide-y divide-gray-100">
               <% @media_assets.each do |asset| %>
-                <tr class="hover:bg-gray-50 transition-colors">
+                <% availability = asset.availability(reserved_ids: @reserved_ids) %>
+                <tr class="hover:bg-gray-50 transition-colors <%= "opacity-60" if availability == "archived" %>">
+                  <td class="px-4 py-3">
+                    <input type="checkbox"
+                           value="<%= asset.id %>"
+                           aria-label="Select <%= asset.display_name %>"
+                           data-bulk-select-target="checkbox"
+                           data-action="change->bulk-select#toggle"
+                           class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                  </td>
                   <td class="px-4 py-3">
                     <div class="h-10 w-10 rounded-md overflow-hidden bg-gray-100 flex-shrink-0">
                       <% if asset.public_url? %>
@@ -275,9 +371,15 @@
                     </span>
                   </td>
                   <td class="px-4 py-3">
-                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium <%= status_colors[asset.status] || 'bg-gray-100 text-gray-600' %> capitalize">
-                      <%= asset.status %>
-                    </span>
+                    <div class="flex flex-wrap gap-1">
+                      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium <%= status_colors[asset.status] || 'bg-gray-100 text-gray-600' %> capitalize">
+                        <%= asset.status %>
+                      </span>
+                      <%= render "media_assets/availability_badge", availability: availability %>
+                    </div>
+                  </td>
+                  <td class="px-4 py-3 text-gray-600 whitespace-nowrap">
+                    <%= asset.published? ? asset.published_at.strftime("%b %-d, %Y") : "—" %>
                   </td>
                   <td class="px-4 py-3 text-gray-600 whitespace-nowrap">
                     <% if asset.width.present? && asset.height.present? %>

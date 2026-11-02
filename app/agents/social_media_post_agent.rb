@@ -69,7 +69,10 @@ class SocialMediaPostAgent < RubyLLM::Agent
 
     Step 1 — Pick the media
       Find the asset with search_media_assets or list_media_assets. If several could fit,
-      show the options and let the user choose rather than guessing.
+      show the options and let the user choose rather than guessing. search_media_assets
+      returns only unused assets by default; don't reach for archived, published or
+      already-scheduled media unless the user asks to reuse it. If a create or update
+      result includes warnings, relay them to the user.
 
     Step 2 — Draft the caption
       Follow the platform guidelines below. Don't invent details the user didn't give you or

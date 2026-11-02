@@ -18,8 +18,39 @@ class PlannedPost < ApplicationRecord
   validate :story_requires_single_visual_asset, if: :story?
   validate :story_media_within_platform_limits, if: :story?
 
+  after_commit :mark_media_assets_published, on: %i[create update],
+    if: -> { saved_change_to_status? && published? }
+
   scope :upcoming, -> { where(status: :scheduled).where("scheduled_at > ?", Time.current).order(:scheduled_at) }
   scope :for_platform, ->(platform) { where(platform: platform) }
+
+  # Posts that use the asset, as the primary asset or as a carousel member.
+  scope :using_media_asset, ->(media_asset_id) {
+    where(<<~SQL.squish, id: media_asset_id.to_i)
+      planned_posts.media_asset_id = :id
+      OR (
+        json_valid(planned_posts.platform_payload)
+        AND EXISTS (
+          SELECT 1 FROM json_each(planned_posts.platform_payload, '$.carousel_asset_ids') AS carousel_ids
+          WHERE CAST(carousel_ids.value AS INTEGER) = :id
+        )
+      )
+    SQL
+  }
+
+  # Subquery of the carousel member asset IDs of the given posts. Carousel
+  # members live only in platform_payload, so they are read with json_each;
+  # the primary asset is posts.select(:media_asset_id).
+  #
+  # @param posts [ActiveRecord::Relation<PlannedPost>]
+  # @return [ActiveRecord::Relation] selecting one integer column
+  def self.carousel_media_asset_ids(posts)
+    posts.unscope(:order, :select)
+      .where("json_valid(planned_posts.platform_payload)")
+      .joins("JOIN json_each(planned_posts.platform_payload, '$.carousel_asset_ids') AS carousel_ids")
+      .where("carousel_ids.value IS NOT NULL")
+      .select("CAST(carousel_ids.value AS INTEGER)")
+  end
 
   # True when the account this post publishes to has completed its OAuth
   # connection.  Publishing without one burns the post: the API client raises
@@ -69,6 +100,34 @@ class PlannedPost < ApplicationRecord
       .map { |username, count| { username: username, count: count } }
   end
 
+  # Every MediaAsset ID this post publishes: the primary asset plus any
+  # carousel members, in carousel order.
+  def all_media_asset_ids
+    carousel = Array(platform_payload&.dig("carousel_asset_ids")).map(&:to_i).reject(&:zero?)
+    (carousel + [ media_asset_id ]).compact.uniq
+  end
+
+  # Human-readable notes on assets in this post that have already been used or
+  # retired: archived, published elsewhere, or on another scheduled post.
+  # Reuse is allowed — these are surfaced as warnings, not validation errors.
+  #
+  # @return [Array<String>]
+  def media_asset_reuse_warnings
+    return [] if published?
+
+    ids = all_media_asset_ids
+    return [] if ids.empty?
+
+    reserved = MediaAsset.reserved_ids(excluding: self)
+    MediaAsset.where(id: ids).filter_map do |asset|
+      case asset.availability(reserved_ids: reserved)
+      when "archived"  then "#{asset.display_name} is archived"
+      when "published" then "#{asset.display_name} was already published on #{asset.published_at.strftime("%B %-d, %Y")}"
+      when "reserved"  then "#{asset.display_name} is also on another scheduled post"
+      end
+    end
+  end
+
   # Record a failure without validating, keeping the reason on the record.
   #
   # validate: false matters because the post may be invalid for the very reason
@@ -110,6 +169,13 @@ class PlannedPost < ApplicationRecord
   end
 
   private
+
+  # Stamp each asset with the first time it went out, so it can be filtered
+  # out of future posts. Already-stamped assets keep their original date.
+  def mark_media_assets_published
+    MediaAsset.where(id: all_media_asset_ids, published_at: nil)
+      .update_all(published_at: published_at || Time.current, updated_at: Time.current)
+  end
 
   def published_at_not_in_future
     if published_at.present? && published_at > Time.current

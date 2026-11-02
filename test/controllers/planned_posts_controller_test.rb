@@ -889,4 +889,36 @@ class PlannedPostsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_equal "music", captured_type
   end
+  # --- Media reuse ---------------------------------------------------------
+
+  test "edit groups used assets after available ones" do
+    sign_in_as(@user)
+    media_assets(:geocoded_image).archive!
+
+    get edit_planned_post_path(@planned_post)
+
+    assert_response :success
+    assert_select "optgroup[label=?]", "Available"
+    assert_select "optgroup[label=?] option", "Archived", text: "sf_photo.jpg"
+  end
+
+  test "update warns when the chosen asset was already published" do
+    sign_in_as(@user)
+    reused = media_assets(:sample_image_2)
+    reused.update!(published_at: 2.days.ago)
+
+    patch planned_post_path(@planned_post), params: { planned_post: { media_asset_id: reused.id } }
+
+    assert_redirected_to planned_post_path(@planned_post)
+    assert_equal reused.id, @planned_post.reload.media_asset_id
+    assert_match "sunrise.jpg was already published", flash[:alert]
+  end
+
+  test "update sets no warning for an unused asset" do
+    sign_in_as(@user)
+
+    patch planned_post_path(@planned_post), params: { planned_post: { media_asset_id: media_assets(:geocoded_image).id } }
+
+    assert_nil flash[:alert]
+  end
 end

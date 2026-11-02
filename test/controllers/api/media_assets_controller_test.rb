@@ -230,6 +230,58 @@ module Api
       end
     end
 
+    # ===========================================
+    # Availability / archive
+    # ===========================================
+
+    test "index excludes archived assets by default" do
+      media_assets(:geocoded_image).archive!
+
+      stub_api_key do
+        get api_media_assets_path, headers: { "X-API-AUTH" => @valid_api_key }
+        names = response.parsed_body.map { |a| a["external_name"] }
+        assert_not_includes names, "sf_photo.jpg"
+        assert_includes names, "sunrise.jpg"
+      end
+    end
+
+    test "index filters by availability" do
+      media_assets(:sample_image_2).update!(published_at: 1.day.ago)
+
+      stub_api_key do
+        get api_media_assets_path(availability: "published"), headers: { "X-API-AUTH" => @valid_api_key }
+        body = response.parsed_body
+        assert_equal [ "sunrise.jpg" ], body.map { |a| a["external_name"] }
+        assert_equal "published", body.first["availability"]
+        assert body.first["published_at"].present?
+      end
+    end
+
+    test "index still accepts status=archived" do
+      media_assets(:geocoded_image).archive!
+
+      stub_api_key do
+        get api_media_assets_path(status: "archived"), headers: { "X-API-AUTH" => @valid_api_key }
+        assert_equal [ "sf_photo.jpg" ], response.parsed_body.map { |a| a["external_name"] }
+      end
+    end
+
+    test "archive and unarchive" do
+      asset = media_assets(:geocoded_image)
+
+      stub_api_key do
+        patch archive_api_media_asset_path(asset), headers: { "X-API-AUTH" => @valid_api_key }
+        assert_response :success
+        assert_equal "archived", response.parsed_body["availability"]
+        assert asset.reload.archived?
+
+        patch unarchive_api_media_asset_path(asset), headers: { "X-API-AUTH" => @valid_api_key }
+        assert_response :success
+        assert_not asset.reload.archived?
+      end
+    end
+
+
     private
 
     def api_headers
