@@ -95,7 +95,8 @@ class UpdatePlannedPost < RubyLLM::Tool
         scheduled_at: post.scheduled_at&.iso8601,
         collaborators: post.platform_payload&.dig("collaborators") || [],
         platform_payload: post.platform_payload,
-        updated_at: post.updated_at.iso8601
+        updated_at: post.updated_at.iso8601,
+        warnings: post.media_asset_reuse_warnings
       }
     else
       { errors: post.errors.full_messages }

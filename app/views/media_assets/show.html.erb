@@ -4,8 +4,7 @@
   status_colors = {
     "discovered" => "bg-yellow-100 text-yellow-800",
     "processed"  => "bg-green-100 text-green-800",
-    "failed"     => "bg-red-100 text-red-800",
-    "archived"   => "bg-gray-100 text-gray-600"
+    "failed"     => "bg-red-100 text-red-800"
   }
   type_colors = {
     "image" => "bg-purple-100 text-purple-800",
@@ -24,12 +23,29 @@
       <% end %>
       <h1 class="text-xl sm:text-2xl font-bold text-gray-900 truncate max-w-[200px] sm:max-w-none"><%= decode_name(@media_asset.external_name.presence || @media_asset.external_id) %></h1>
     </div>
-    <%= link_to edit_media_asset_path(@media_asset), class: "inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors" do %>
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-      </svg>
-      Edit
-    <% end %>
+    <div class="flex items-center gap-2">
+      <% if @media_asset.archived? %>
+        <%= button_to unarchive_media_asset_path(@media_asset), method: :patch,
+              class: "inline-flex items-center gap-2 px-4 py-2 border border-gray-300 bg-white text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors" do %>
+          Restore
+        <% end %>
+      <% else %>
+        <%= button_to archive_media_asset_path(@media_asset), method: :patch,
+              title: "Hide this asset from pickers and search. It can be restored later.",
+              class: "inline-flex items-center gap-2 px-4 py-2 border border-gray-300 bg-white text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors" do %>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
+          </svg>
+          Archive
+        <% end %>
+      <% end %>
+      <%= link_to edit_media_asset_path(@media_asset), class: "inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors" do %>
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+        </svg>
+        Edit
+      <% end %>
+    </div>
   </div>
 
   <% if flash[:notice] %>
@@ -49,7 +65,14 @@
         <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium <%= status_colors[@media_asset.status] || 'bg-gray-100 text-gray-600' %> capitalize">
           <%= @media_asset.status %>
         </span>
+        <%= render "media_assets/availability_badge", availability: @media_asset.availability(reserved_ids: @reserved_ids), size: :large %>
       </div>
+
+      <% if @media_asset.archived? %>
+        <p class="mb-6 px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 text-sm text-gray-600">
+          Archived <%= @media_asset.archived_at.strftime("%B %-d, %Y") %>. It is hidden from the post editor's picker and the agent's search until restored.
+        </p>
+      <% end %>
 
       <%# Media Preview %>
       <% if @media_asset.public_url? %>
@@ -138,7 +161,11 @@
         <% end %>
         <div>
           <dt class="text-xs text-gray-400 uppercase tracking-wide mb-1">Planned Posts</dt>
-          <dd class="text-2xl font-semibold text-gray-900"><%= @media_asset.planned_posts.size %></dd>
+          <dd class="text-2xl font-semibold text-gray-900"><%= @posts_using.size %></dd>
+        </div>
+        <div>
+          <dt class="text-xs text-gray-400 uppercase tracking-wide mb-1">First Published</dt>
+          <dd class="text-lg text-gray-900"><%= @media_asset.published? ? @media_asset.published_at.strftime("%B %-d, %Y") : "Never" %></dd>
         </div>
         <div>
           <dt class="text-xs text-gray-400 uppercase tracking-wide mb-1">Added</dt>
@@ -146,6 +173,30 @@
         </div>
       </dl>
     </div>
+
+    <%# Posts that use this asset, including as a carousel member %>
+    <% if @posts_using.any? %>
+      <div class="border-t border-gray-200 px-6 py-4">
+        <p class="text-xs text-gray-400 uppercase tracking-wide mb-3">Used in posts</p>
+        <ul class="divide-y divide-gray-100">
+          <% @posts_using.each do |post| %>
+            <li>
+              <%= link_to planned_post_path(post), class: "flex items-center justify-between gap-3 py-2 text-sm hover:bg-gray-50 -mx-2 px-2 rounded" do %>
+                <span class="text-gray-700 capitalize truncate">
+                  <%= post.platform %> <%= post.post_type unless post.post_type == "single" %> · <%= post.caption.to_s.truncate(60).presence || "No caption" %>
+                </span>
+                <span class="shrink-0 text-xs text-gray-500">
+                  <span class="capitalize"><%= post.status %></span>
+                  <% if (when_at = post.published_at || post.scheduled_at) %>
+                    · <%= when_at.strftime("%b %-d, %Y") %>
+                  <% end %>
+                </span>
+              <% end %>
+            </li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
 
     <%# Collapsible additional details %>
     <div class="border-t border-gray-200" data-controller="collapse">

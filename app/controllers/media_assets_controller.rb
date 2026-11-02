@@ -1,22 +1,47 @@
 # frozen_string_literal: true
 
 class MediaAssetsController < ApplicationController
-  before_action :set_media_asset, only: %i[show edit update]
+  before_action :set_media_asset, only: %i[show edit update archive unarchive]
 
-  SORT_COLUMNS = %w[external_name media_type status file_size first_seen_at created_at].freeze
+  SORT_COLUMNS = %w[external_name media_type status file_size first_seen_at published_at created_at].freeze
+  AVAILABILITY_FILTERS = (MediaAsset::AVAILABILITIES + %w[all]).freeze
 
   def index
     @query     = params[:q].to_s.strip
     @sort      = SORT_COLUMNS.include?(params[:sort]) ? params[:sort] : "created_at"
     @direction = params[:direction] == "asc" ? "asc" : "desc"
+    @availability = AVAILABILITY_FILTERS.include?(params[:availability]) ? params[:availability] : "available"
 
-    scope = MediaAsset.all
+    scope = MediaAsset.with_availability(@availability)
     scope = scope.where("external_name LIKE ?", "%#{@query}%") if @query.length >= 3
 
     @pagy, @media_assets = pagy(scope.order(@sort => @direction))
+    @reserved_ids = MediaAsset.reserved_ids
   end
 
   def show
+    @posts_using = @media_asset.posts_using.order(Arel.sql("COALESCE(published_at, scheduled_at, created_at) DESC"))
+    @reserved_ids = MediaAsset.reserved_ids
+  end
+
+  def archive
+    @media_asset.archive!
+    redirect_back_or_to @media_asset, notice: "#{@media_asset.display_name} archived."
+  end
+
+  def unarchive
+    @media_asset.unarchive!
+    redirect_back_or_to @media_asset, notice: "#{@media_asset.display_name} restored."
+  end
+
+  def bulk_archive
+    count = MediaAsset.active.where(id: bulk_ids).update_all(archived_at: Time.current, updated_at: Time.current)
+    redirect_back_or_to media_assets_path, notice: "#{count} #{"asset".pluralize(count)} archived."
+  end
+
+  def bulk_unarchive
+    count = MediaAsset.archived.where(id: bulk_ids).update_all(archived_at: nil, updated_at: Time.current)
+    redirect_back_or_to media_assets_path, notice: "#{count} #{"asset".pluralize(count)} restored."
   end
 
   # Upload form, rendered inside the modal on the index page.
@@ -55,6 +80,10 @@ class MediaAssetsController < ApplicationController
 
   def set_media_asset
     @media_asset = MediaAsset.find(params[:id])
+  end
+
+  def bulk_ids
+    Array(params[:ids]).map(&:to_i).reject(&:zero?)
   end
 
   def media_asset_params

@@ -54,4 +54,28 @@ module PlannedPostsHelper
       "Publishes as a story: live for 24 hours, with no caption."
     end
   end
+
+  ASSET_GROUP_LABELS = {
+    "available" => "Available",
+    "reserved"  => "On another scheduled post",
+    "published" => "Already published",
+    "archived"  => "Archived"
+  }.freeze
+
+  # Grouped <option>s for the media asset select: free assets first, then
+  # those already in use, so reuse is a deliberate choice.
+  #
+  # @param assets [Enumerable<MediaAsset>]
+  # @param availability [Hash{Integer => String}] asset id => availability
+  # @param selected [Integer, nil]
+  def grouped_media_asset_options(assets, availability, selected)
+    groups = assets.group_by { |asset| availability[asset.id] }
+    grouped = ASSET_GROUP_LABELS.filter_map do |key, label|
+      next unless groups[key]
+
+      [ label, groups[key].map { |asset| [ asset.display_name, asset.id ] } ]
+    end
+
+    grouped_options_for_select(grouped, selected)
+  end
 end

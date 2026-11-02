@@ -5,6 +5,8 @@ export default class extends Controller {
     "checkbox", "actionBar", "countLabel",
     "rescheduleModal", "deleteModal", "deleteCount"
   ]
+  // Name of the array param the selected IDs are submitted under.
+  static values = { paramName: { type: String, default: "post_ids" } }
 
   toggle() {
     const count = this.checkedIds.length
@@ -55,7 +57,7 @@ export default class extends Controller {
     this.checkedIds.forEach(id => {
       const input = document.createElement("input")
       input.type = "hidden"
-      input.name = "post_ids[]"
+      input.name = `${this.paramNameValue}[]`
       input.value = id
       input.setAttribute("data-injected-id", "")
       form.appendChild(input)

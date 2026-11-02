@@ -87,7 +87,7 @@ class MediaAssetTest < ActiveSupport::TestCase
     assert_equal 0, MediaAsset.statuses[:discovered]
     assert_equal 1, MediaAsset.statuses[:processed]
     assert_equal 2, MediaAsset.statuses[:failed]
-    assert_equal 3, MediaAsset.statuses[:archived]
+    assert_not MediaAsset.statuses.key?("archived"), "archiving moved to archived_at"
   end
 
   test "sample_image has media_type image" do

@@ -152,6 +152,8 @@ class PlannedPostsController < ApplicationController
     end
 
     if @planned_post.save
+      warnings = @planned_post.media_asset_reuse_warnings
+      flash[:alert] = "Heads up: #{warnings.to_sentence}." if warnings.any?
       redirect_to @planned_post, notice: "Planned post was successfully updated."
     else
       load_form_data
@@ -170,7 +172,16 @@ class PlannedPostsController < ApplicationController
   end
 
   def load_form_data
-    @media_assets = MediaAsset.where(status: [ :discovered, :processed ]).order(:external_name)
+    # Assets already in use are still offered — reuse is allowed, with a
+    # warning — but grouped below the free ones so they are not picked by
+    # accident. The post's own assets never count against it.
+    selected_ids = @planned_post.all_media_asset_ids
+    @media_assets = MediaAsset.where(status: [ :discovered, :processed ])
+      .or(MediaAsset.where(id: selected_ids))
+      .order(:external_name)
+    reserved_ids = MediaAsset.reserved_ids(excluding: @planned_post)
+    @asset_availability = @media_assets.to_h { |asset| [ asset.id, asset.availability(reserved_ids: reserved_ids) ] }
+    @reuse_warnings = @planned_post.media_asset_reuse_warnings
     @social_templates = SocialTemplate.order(:name)
     @carousel_asset_ids = @planned_post.platform_payload&.dig("carousel_asset_ids") || []
     @collaborators = @planned_post.platform_payload&.dig("collaborators") || []

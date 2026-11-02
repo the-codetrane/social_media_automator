@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_05_140256) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_02_143208) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -91,9 +91,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_05_140256) do
     t.string "city"
     t.string "state"
     t.string "country"
+    t.datetime "archived_at"
+    t.datetime "published_at"
+    t.index [ "archived_at" ], name: "index_media_assets_on_archived_at"
     t.index [ "external_id" ], name: "index_media_assets_on_external_id", unique: true
     t.index [ "latitude", "longitude" ], name: "index_media_assets_on_latitude_and_longitude"
     t.index [ "media_type" ], name: "index_media_assets_on_media_type"
+    t.index [ "published_at" ], name: "index_media_assets_on_published_at"
     t.index [ "status" ], name: "index_media_assets_on_status"
   end
 

@@ -1,7 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["search", "option", "checkbox", "selectedList", "hiddenInputs"]
+  static targets = ["search", "option", "checkbox", "selectedList", "hiddenInputs", "showUsed"]
   static values = { initialIds: { type: Array, default: [] } }
 
   connect() {
@@ -14,11 +14,17 @@ export default class extends Controller {
     this.render()
   }
 
+  // Hides options that don't match the search, and — unless "show used" is
+  // ticked — assets already archived, published or scheduled elsewhere.
+  // Selected assets always stay visible so they can be unticked.
   filter() {
     const query = this.searchTarget.value.toLowerCase().trim()
+    const showUsed = this.hasShowUsedTarget && this.showUsedTarget.checked
     this.optionTargets.forEach(option => {
-      const name = option.querySelector("[data-carousel-select-target='checkbox']").dataset.name.toLowerCase()
-      option.classList.toggle("hidden", query.length > 0 && !name.includes(query))
+      const checkbox = option.querySelector("[data-carousel-select-target='checkbox']")
+      const name = checkbox.dataset.name.toLowerCase()
+      const hiddenAsUsed = option.dataset.used === "true" && !showUsed && !checkbox.checked
+      option.classList.toggle("hidden", hiddenAsUsed || (query.length > 0 && !name.includes(query)))
     })
   }
 

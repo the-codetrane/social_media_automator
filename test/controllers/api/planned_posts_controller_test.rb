@@ -140,7 +140,7 @@ module Api
              headers: api_headers
 
         json = response.parsed_body
-        expected_keys = %w[id user_id media_asset_id carousel_asset_ids social_template_id platform post_type status caption hashtags scheduled_at platform_payload created_at updated_at]
+        expected_keys = %w[id user_id media_asset_id carousel_asset_ids social_template_id platform post_type status caption hashtags scheduled_at platform_payload created_at updated_at warnings]
         assert_equal expected_keys.sort, json.keys.sort
       end
     end
@@ -840,6 +840,31 @@ module Api
         assert_equal "200", response.headers["X-Per-Page"]
       end
     end
+
+    # ===========================================
+    # Media reuse warnings
+    # ===========================================
+
+    test "create returns warnings when the asset was already published" do
+      @media_asset.update!(published_at: 1.day.ago)
+
+      stub_api_key do
+        post api_planned_posts_path, params: { planned_post: valid_params }, headers: api_headers
+        assert_response :created
+        assert_match "already published", response.parsed_body["warnings"].join
+      end
+    end
+
+    test "create returns empty warnings for an unused asset" do
+      @media_asset = media_assets(:geocoded_image)
+
+      stub_api_key do
+        post api_planned_posts_path, params: { planned_post: valid_params }, headers: api_headers
+        assert_response :created
+        assert_equal [], response.parsed_body["warnings"]
+      end
+    end
+
 
     private
 

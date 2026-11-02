@@ -34,7 +34,16 @@ Rails.application.routes.draw do
 
   # Model index pages
   resources :users,            only: [ :index, :show, :edit, :update ]
-  resources :media_assets,     only: [ :index, :show, :new, :create, :edit, :update ]
+  resources :media_assets,     only: [ :index, :show, :new, :create, :edit, :update ] do
+    member do
+      patch :archive
+      patch :unarchive
+    end
+    collection do
+      patch :bulk_archive
+      patch :bulk_unarchive
+    end
+  end
   namespace :media_assets do
     resources :direct_uploads, only: [ :create ]
   end
@@ -82,7 +91,12 @@ Rails.application.routes.draw do
         post :bulk_create
       end
     end
-    resources :media_assets, only: [ :index, :show ]
+    resources :media_assets, only: [ :index, :show ] do
+      member do
+        patch :archive
+        patch :unarchive
+      end
+    end
   end
 
   # Public product overview. Platform app reviewers open the site's root URL and

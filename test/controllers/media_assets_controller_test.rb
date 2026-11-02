@@ -9,64 +9,64 @@ class MediaAssetsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "index redirects when not signed in" do
-    get media_assets_path
+    get media_assets_path(availability: "all")
     assert_redirected_to new_session_path
   end
 
   test "index returns success when signed in" do
     sign_in_as(@user)
-    get media_assets_path
+    get media_assets_path(availability: "all")
     assert_response :success
   end
 
   test "index lists all assets" do
     sign_in_as(@user)
-    get media_assets_path
+    get media_assets_path(availability: "all")
     assert_match "sunset.jpg", response.body
     assert_match "reel.mp4", response.body
   end
 
   test "index shows media type badges" do
     sign_in_as(@user)
-    get media_assets_path
+    get media_assets_path(availability: "all")
     assert_match "image", response.body
     assert_match "video", response.body
   end
 
   test "index shows status badges" do
     sign_in_as(@user)
-    get media_assets_path
+    get media_assets_path(availability: "all")
     assert_match "processed", response.body
   end
 
   test "index shows file size" do
     sign_in_as(@user)
-    get media_assets_path
+    get media_assets_path(availability: "all")
     assert_match "1.95 MB", response.body
   end
 
   test "index shows video duration" do
     sign_in_as(@user)
-    get media_assets_path
+    get media_assets_path(availability: "all")
     assert_match "31s", response.body
   end
 
   test "index displays image thumbnail preview" do
     sign_in_as(@user)
-    get media_assets_path
+    get media_assets_path(availability: "all")
     assert_select "img[src=?]", @media_asset.public_url
   end
 
   test "index displays video thumbnail preview" do
     sign_in_as(@user)
-    get media_assets_path
+    get media_assets_path(availability: "all")
     video_asset = media_assets(:sample_video)
     assert_select "video source[src=?]", video_asset.public_url
   end
 
   test "index displays placeholder when no public url" do
     sign_in_as(@user)
-    get media_assets_path
+    get media_assets_path(availability: "all")
     # Should have placeholder SVG for assets without public URL
     assert_select "svg"
   end
@@ -169,10 +169,10 @@ class MediaAssetsControllerTest < ActionDispatch::IntegrationTest
 
   test "update can change status" do
     sign_in_as(@user)
-    patch media_asset_path(@media_asset), params: { media_asset: { status: "archived" } }
+    patch media_asset_path(@media_asset), params: { media_asset: { status: "failed" } }
     assert_redirected_to media_asset_path(@media_asset)
     @media_asset.reload
-    assert_equal "archived", @media_asset.status
+    assert_equal "failed", @media_asset.status
   end
 
   test "update shows success notice" do
@@ -185,7 +185,7 @@ class MediaAssetsControllerTest < ActionDispatch::IntegrationTest
   # URL decoding tests
   test "index decodes URL-encoded names" do
     sign_in_as(@user)
-    get media_assets_path
+    get media_assets_path(availability: "all")
     # Should show decoded name, not URL-encoded
     assert_match "Big Guys BBQ", response.body
     assert_no_match(/%20/, response.body.scan(/Big.*BBQ/).first || "")
@@ -244,7 +244,7 @@ class MediaAssetsControllerTest < ActionDispatch::IntegrationTest
 
   test "index renders the upload CTA and modal frame" do
     sign_in_as(@user)
-    get media_assets_path
+    get media_assets_path(availability: "all")
     assert_select "a[href=?][data-turbo-frame=media-upload-modal]", new_media_asset_path, text: /Upload media/
     assert_select "dialog[data-controller=modal] turbo-frame#media-upload-modal"
   end
@@ -300,5 +300,76 @@ class MediaAssetsControllerTest < ActionDispatch::IntegrationTest
   test "create requires authentication" do
     post media_assets_path, params: { media_asset: { signed_ids: [ "x" ] } }
     assert_redirected_to new_session_path
+  end
+  # --- Archive / availability ------------------------------------------------
+
+  test "index defaults to available assets only" do
+    sign_in_as(@user)
+    media_assets(:geocoded_image).archive!
+
+    get media_assets_path
+
+    assert_response :success
+    assert_no_match "sf_photo.jpg", response.body  # archived
+    assert_no_match "sunset.jpg", response.body    # on a scheduled fixture post
+    assert_match "sunrise.jpg", response.body      # unused
+  end
+
+  test "index can filter to archived assets" do
+    sign_in_as(@user)
+    media_assets(:geocoded_image).archive!
+
+    get media_assets_path(availability: "archived")
+
+    assert_match "sf_photo.jpg", response.body
+    assert_no_match "sunrise.jpg", response.body
+  end
+
+  test "index can filter to published assets" do
+    sign_in_as(@user)
+    media_assets(:sample_image_2).update!(published_at: 1.day.ago)
+
+    get media_assets_path(availability: "published")
+
+    assert_match "sunrise.jpg", response.body
+    assert_match "Published", response.body
+  end
+
+  test "archive soft-deletes and unarchive restores" do
+    sign_in_as(@user)
+
+    patch archive_media_asset_path(@media_asset)
+    assert_redirected_to media_asset_path(@media_asset)
+    assert @media_asset.reload.archived?
+
+    patch unarchive_media_asset_path(@media_asset)
+    assert_not @media_asset.reload.archived?
+  end
+
+  test "archive requires sign in" do
+    patch archive_media_asset_path(@media_asset)
+    assert_redirected_to new_session_path
+    assert_not @media_asset.reload.archived?
+  end
+
+  test "bulk_archive and bulk_unarchive act on the selected ids" do
+    sign_in_as(@user)
+    ids = [ media_assets(:sample_image_2).id, media_assets(:geocoded_image).id ]
+
+    patch bulk_archive_media_assets_path, params: { ids: ids }
+    assert_redirected_to media_assets_path
+    assert_equal 2, MediaAsset.archived.where(id: ids).count
+
+    patch bulk_unarchive_media_assets_path, params: { ids: ids }
+    assert_equal 0, MediaAsset.archived.where(id: ids).count
+  end
+
+  test "show lists posts that use the asset, including carousels" do
+    sign_in_as(@user)
+    get media_asset_path(media_assets(:sample_image_2))
+
+    assert_response :success
+    assert_match "Used in posts", response.body
+    assert_match planned_post_path(planned_posts(:carousel_post)), response.body
   end
 end

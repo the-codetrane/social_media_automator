@@ -42,7 +42,8 @@ class CreatePlannedPost < RubyLLM::Tool
     post.scheduled_at = Time.zone.parse(scheduled_at) if scheduled_at.present?
 
     if post.save
-      { id: post.id, platform: post.platform, status: post.status, caption: post.caption, scheduled_at: post.scheduled_at }
+      { id: post.id, platform: post.platform, status: post.status, caption: post.caption, scheduled_at: post.scheduled_at,
+        warnings: post.media_asset_reuse_warnings }
     else
       { errors: post.errors.full_messages }
     end

@@ -60,7 +60,7 @@ module Api
       planned_post = PlannedPost.new(post_attrs)
 
       if planned_post.save
-        render json: planned_post_response(planned_post), status: :created
+        render json: planned_post_response_with_warnings(planned_post), status: :created
       else
         render json: { errors: planned_post.errors.full_messages }, status: :unprocessable_entity
       end
@@ -80,7 +80,7 @@ module Api
         planned_post = PlannedPost.new(post_attrs)
 
         if planned_post.save
-          results[:created] << planned_post_response(planned_post)
+          results[:created] << planned_post_response_with_warnings(planned_post)
         else
           results[:errors] << {
             index: index,
@@ -120,7 +120,7 @@ module Api
       attrs = apply_post_type(attrs, params.dig(:planned_post, :post_type), existing: @planned_post.platform_payload)
 
       if @planned_post.update(attrs)
-        render json: planned_post_response(@planned_post)
+        render json: planned_post_response_with_warnings(@planned_post)
       else
         render json: { errors: @planned_post.errors.full_messages }, status: :unprocessable_entity
       end
@@ -326,6 +326,12 @@ module Api
         media_urls: [],
         media_asset_ids: []
       ).except(:media_urls, :media_asset_ids, :post_type)
+    end
+
+    # Reusing an archived, published or already-scheduled asset is allowed but
+    # flagged, so API callers can catch accidental duplicates.
+    def planned_post_response_with_warnings(planned_post)
+      planned_post_response(planned_post).merge(warnings: planned_post.media_asset_reuse_warnings)
     end
 
     def planned_post_response(planned_post)
