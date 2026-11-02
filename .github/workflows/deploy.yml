@@ -31,7 +31,6 @@ jobs:
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: 3.3.6
           bundler-cache: true
 
       - name: Set up Docker Buildx
