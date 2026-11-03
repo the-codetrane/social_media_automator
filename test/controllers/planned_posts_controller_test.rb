@@ -709,6 +709,24 @@ class PlannedPostsControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-controller='audio-select']"
   end
 
+  # Stimulus rejects "null" for an Object value and the audio picker then
+  # fails to connect, so a post without audio must render an empty object.
+  test "edit renders an empty audio picker value when no audio is attached" do
+    sign_in_as(@user)
+    get edit_planned_post_path(@planned_post)
+
+    assert_select "[data-controller='audio-select'][data-audio-select-initial-value=?]", "{}"
+  end
+
+  test "edit renders the attached audio in the audio picker value" do
+    sign_in_as(@user)
+    @planned_post.update!(platform_payload: { "audio_id" => "123", "audio_title" => "Song", "audio_artist" => "Band" })
+    get edit_planned_post_path(@planned_post)
+
+    value = css_select("[data-controller='audio-select']").first["data-audio-select-initial-value"]
+    assert_equal({ "audio_id" => "123", "title" => "Song", "artist" => "Band" }, JSON.parse(value))
+  end
+
   test "update stores normalized collaborators in platform_payload" do
     sign_in_as(@user)
 
