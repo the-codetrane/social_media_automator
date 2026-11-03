@@ -1,4 +1,5 @@
 require "application_system_test_case"
+require_relative "../support_diag"
 
 # Exercises the collaborator chip input for real, in a browser: the suggestion
 # dropdown, free-text entry, chip removal and the hidden inputs that carry the
