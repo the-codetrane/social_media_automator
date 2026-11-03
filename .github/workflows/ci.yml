@@ -80,10 +80,6 @@ jobs:
 
   system-test:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        shard: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
 
     # services:
     #  redis:
@@ -108,12 +104,12 @@ jobs:
           RAILS_ENV: test
           # RAILS_MASTER_KEY: ${{ secrets.RAILS_MASTER_KEY }}
           # REDIS_URL: redis://localhost:6379/0
-        run: bin/rails db:test:prepare test:system 2>&1 | tee /tmp/run.txt; grep -q " 0 failures, 0 errors" /tmp/run.txt
+        run: bin/rails db:test:prepare test:system
 
       - name: Keep screenshots from failed system tests
         uses: actions/upload-artifact@v7
         if: failure()
         with:
-          name: screenshots-${{ matrix.shard }}
+          name: screenshots
           path: ${{ github.workspace }}/tmp/screenshots
           if-no-files-found: ignore

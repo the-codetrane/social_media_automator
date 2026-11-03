@@ -1,5 +1,4 @@
 require "application_system_test_case"
-require_relative "../support_diag"
 
 # Exercises the collaborator chip input for real, in a browser: the suggestion
 # dropdown, free-text entry, chip removal and the hidden inputs that carry the
@@ -20,7 +19,7 @@ class CollaboratorPickerTest < ApplicationSystemTestCase
   end
 
   test "suggests previously used collaborators and adds the chosen one" do
-    visit edit_planned_post_path(@planned_post)
+    visit_edit_page expecting_count: 0
 
     find_field("Collaborators").click
     fill_in_collaborator "chef"
@@ -30,11 +29,11 @@ class CollaboratorPickerTest < ApplicationSystemTestCase
     find("[data-collaborator-select-target='suggestions'] button", text: "@chef_alex").click
 
     assert_selector "[data-collaborator-select-target='chips']", text: "@chef_alex"
-    assert_equal "1 of 3", find("[data-collaborator-select-target='counter']").text
+    assert_counter 1
   end
 
   test "adds a username that has never been used before" do
-    visit edit_planned_post_path(@planned_post)
+    visit_edit_page expecting_count: 0
 
     fill_in_collaborator "brand_new_account"
     press_enter_in_collaborator_field
@@ -48,7 +47,7 @@ class CollaboratorPickerTest < ApplicationSystemTestCase
   end
 
   test "strips an @ prefix and stops at three collaborators" do
-    visit edit_planned_post_path(@planned_post)
+    visit_edit_page expecting_count: 0
 
     %w[@one two three].each do |username|
       fill_in_collaborator username
@@ -56,7 +55,7 @@ class CollaboratorPickerTest < ApplicationSystemTestCase
     end
 
     assert_selector "[data-collaborator-select-target='chips'] span", text: "@one"
-    assert_equal "3 of 3", find("[data-collaborator-select-target='counter']").text
+    assert_counter 3
 
     # The input disables itself rather than letting a 4th through to the server,
     # which would be rejected by Instagram::PublishOptions.
@@ -65,9 +64,7 @@ class CollaboratorPickerTest < ApplicationSystemTestCase
 
   test "removes a collaborator with the chip's remove button" do
     @planned_post.update!(platform_payload: { "collaborators" => [ "chef_alex", "bakery_co" ] })
-    visit edit_planned_post_path(@planned_post)
-
-    assert_equal "2 of 3", find("[data-collaborator-select-target='counter']").text
+    visit_edit_page expecting_count: 2
 
     find("button[aria-label='Remove chef_alex']").click
 
@@ -81,6 +78,19 @@ class CollaboratorPickerTest < ApplicationSystemTestCase
   end
 
   private
+
+  # The counter is filled in by the collaborator-select controller on connect,
+  # so waiting for it also waits for the controller. Typing or clicking before
+  # then would hit an input with no Stimulus actions bound (Enter would submit
+  # the form, a chip's remove button would not exist yet).
+  def visit_edit_page(expecting_count:)
+    visit edit_planned_post_path(@planned_post)
+    assert_counter expecting_count
+  end
+
+  def assert_counter(count)
+    assert_selector "[data-collaborator-select-target='counter']", exact_text: "#{count} of 3"
+  end
 
   # Waits for the value to land (and re-types it if it did not) before the
   # next step; a bare set() races the debounced suggestion fetch under load.
