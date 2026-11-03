@@ -46,10 +46,18 @@ module Api
       false
     end
 
+    # The same Spaces object can arrive as many different URL strings (CDN vs
+    # origin host, raw vs percent-encoded), so match on the object key first.
+    # external_id still catches non-Spaces URLs and pre-storage_key rows.
     def find_existing_asset
-      # Look for existing asset by external_id (URL hash) or by URL in raw_metadata
-      external_id = generate_external_id
-      MediaAsset.find_by(external_id: external_id)
+      (storage_key && MediaAsset.find_by(storage_key: storage_key)) ||
+        MediaAsset.find_by(external_id: generate_external_id)
+    end
+
+    def storage_key
+      return @storage_key if defined?(@storage_key)
+
+      @storage_key = MediaAsset.storage_key_for_url(url)
     end
 
     def create_media_asset
@@ -59,20 +67,31 @@ module Api
         media_type: detect_media_type,
         status: :discovered,
         first_seen_at: Time.current,
+        storage_key: storage_key,
         raw_metadata: { public_url: url, source: "api" }.to_json
       )
 
-      unless @media_asset.save
-        @error = @media_asset.errors.full_messages.join(", ")
-        return false
+      saved = begin
+        @media_asset.save
+      rescue ActiveRecord::RecordNotUnique
+        false
+      end
+      return true if saved
+
+      # Lost a race with a concurrent import of the same object.
+      if (existing = find_existing_asset)
+        @media_asset = existing
+        return true
       end
 
-      true
+      @error = @media_asset.errors.full_messages.join(", ")
+      false
     end
 
     def generate_external_id
-      # Use a hash of the URL as the external_id to ensure uniqueness
-      "api_#{Digest::SHA256.hexdigest(url)[0, 16]}"
+      # Hash the Spaces key when there is one, so every spelling of the same
+      # object's URL yields the same id; fall back to the URL otherwise.
+      "api_#{Digest::SHA256.hexdigest(storage_key || url)[0, 16]}"
     end
 
     def extract_filename

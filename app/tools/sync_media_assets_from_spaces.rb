@@ -33,9 +33,9 @@ class SyncMediaAssetsFromSpaces < RubyLLM::Tool
 
     media_objects.each do |obj|
       url         = "#{CDN_BASE}/#{obj.key}"
-      external_id = generate_external_id(url)
+      external_id = generate_external_id(obj.key)
 
-      if MediaAsset.exists?(external_id: external_id)
+      if MediaAsset.exists?(storage_key: obj.key) || MediaAsset.exists?(external_id: external_id)
         skipped += 1
         next
       end
@@ -48,6 +48,7 @@ class SyncMediaAssetsFromSpaces < RubyLLM::Tool
       begin
         MediaAsset.create!(
           external_id:   external_id,
+          storage_key:   obj.key,
           external_name: File.basename(obj.key),
           media_type:    classify(obj.key),
           status:        :discovered,
@@ -95,8 +96,9 @@ class SyncMediaAssetsFromSpaces < RubyLLM::Tool
     objects
   end
 
-  def generate_external_id(url)
-    "api_#{Digest::SHA256.hexdigest(url)[0, 16]}"
+  # Same scheme as Api::MediaAssetFromUrlService: a hash of the Spaces key.
+  def generate_external_id(key)
+    "api_#{Digest::SHA256.hexdigest(key)[0, 16]}"
   end
 
   def classify(key)

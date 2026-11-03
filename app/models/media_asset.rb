@@ -33,7 +33,10 @@ class MediaAsset < ApplicationRecord
   # (soft delete) is the supported way to retire an asset.
   has_many :planned_posts, dependent: :restrict_with_error
 
+  before_validation :assign_storage_key
+
   validates :external_id, presence: true, uniqueness: true
+  validates :storage_key, uniqueness: true, allow_nil: true
   validates :media_type, presence: true
   validates :status, presence: true
   validates :first_seen_at, presence: true
@@ -159,7 +162,54 @@ class MediaAsset < ApplicationRecord
     public_url.present?
   end
 
+  # The Spaces object key a URL points at, or nil when the URL is not in our
+  # bucket. Accepts the CDN host, the virtual-hosted origin and path-style
+  # URLs, raw or percent-encoded, so every spelling of one object maps to the
+  # same key. This key, not the URL string, is what identifies an asset.
+  #
+  # @param url [String, nil]
+  # @return [String, nil]
+  def self.storage_key_for_url(url)
+    uri = URI.parse(url.to_s.strip.gsub(" ", "%20"))
+    return nil unless uri.is_a?(URI::HTTP) && uri.host
+
+    bucket = spaces_bucket
+    host = uri.host.downcase
+    path = uri.path.to_s
+    return nil unless host.end_with?(".digitaloceanspaces.com")
+
+    key =
+      if host.start_with?("#{bucket}.")
+        path.delete_prefix("/")
+      elsif path.start_with?("/#{bucket}/")
+        path.delete_prefix("/#{bucket}/")
+      end
+    key.present? ? URI.decode_uri_component(key) : nil
+  rescue URI::InvalidURIError
+    nil
+  end
+
+  # The Spaces key recorded in an asset's raw_metadata: the explicit "key"
+  # when an importer stored one, otherwise derived from "public_url".
+  #
+  # @param metadata [Hash, String, nil] raw_metadata, possibly JSON-encoded
+  # @return [String, nil]
+  def self.storage_key_from_metadata(metadata)
+    2.times { metadata = (JSON.parse(metadata) rescue nil) if metadata.is_a?(String) }
+    return nil unless metadata.is_a?(Hash)
+
+    metadata["key"].presence || storage_key_for_url(metadata["public_url"])
+  end
+
+  def self.spaces_bucket
+    Rails.application.credentials.dig(:digitalocean, :spaces_bucket) || "ig-mcp-images"
+  end
+
   private
+
+  def assign_storage_key
+    self.storage_key ||= file.attached? ? file.blob.key : self.class.storage_key_from_metadata(raw_metadata)
+  end
 
   def extract_gps_from_exif
     file.open do |tempfile|

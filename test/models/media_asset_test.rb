@@ -12,6 +12,7 @@ class MediaAssetTest < ActiveSupport::TestCase
     stub = Object.new
     stub.define_singleton_method(:attached?) { true }
     stub.define_singleton_method(:open) { |&blk| blk.call(tempfile) }
+    stub.define_singleton_method(:blob) { Struct.new(:key).new("stub/#{File.basename(tempfile.path)}") }
     stub
   end
 
@@ -275,5 +276,35 @@ class MediaAssetTest < ActiveSupport::TestCase
   ensure
     tempfile&.close
     tempfile&.unlink
+  end
+
+  # ---------------------------------------------------------------------------
+  # Storage key
+  # ---------------------------------------------------------------------------
+  test "storage_key_for_url canonicalizes every spelling of a Spaces object" do
+    key = "Big Guy's Promo Shoot/092025-Promo+Web 54.jpg"
+    [
+      "https://ig-mcp-images.sfo3.cdn.digitaloceanspaces.com/Big Guy's Promo Shoot/092025-Promo+Web 54.jpg",
+      "https://ig-mcp-images.sfo3.cdn.digitaloceanspaces.com/Big%20Guy%27s%20Promo%20Shoot/092025-Promo%2BWeb%2054.jpg",
+      "https://IG-MCP-IMAGES.sfo3.digitaloceanspaces.com/Big%20Guy's%20Promo%20Shoot/092025-Promo+Web%2054.jpg",
+      "https://sfo3.digitaloceanspaces.com/ig-mcp-images/Big%20Guy's%20Promo%20Shoot/092025-Promo+Web%2054.jpg?v=2"
+    ].each { |url| assert_equal key, MediaAsset.storage_key_for_url(url), url }
+  end
+
+  test "storage_key_for_url ignores urls outside the bucket" do
+    assert_nil MediaAsset.storage_key_for_url("https://example.com/a.jpg")
+    assert_nil MediaAsset.storage_key_for_url("https://other-bucket.sfo3.digitaloceanspaces.com/a.jpg")
+    assert_nil MediaAsset.storage_key_for_url("https://ig-mcp-images.sfo3.cdn.digitaloceanspaces.com/")
+    assert_nil MediaAsset.storage_key_for_url(nil)
+    assert_nil MediaAsset.storage_key_for_url("not a url")
+  end
+
+  test "a second asset for the same Spaces key is invalid" do
+    attrs = { media_type: :image, status: :processed, first_seen_at: Time.current }
+    MediaAsset.create!(attrs.merge(external_id: "one", raw_metadata: { key: "Porchfest/x.jpg" }.to_json))
+    dup = MediaAsset.new(attrs.merge(external_id: "two", raw_metadata: { public_url: "https://ig-mcp-images.sfo3.cdn.digitaloceanspaces.com/Porchfest/x.jpg" }.to_json))
+
+    assert_not dup.valid?
+    assert_includes dup.errors[:storage_key], "has already been taken"
   end
 end
