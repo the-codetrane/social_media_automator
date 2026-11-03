@@ -104,16 +104,17 @@
           <% if @media_asset.address.present? %>
             <p class="text-sm text-gray-700 mb-3"><%= @media_asset.address %></p>
           <% end %>
-          <% if @media_asset.static_map_image.attached? %>
-            <div class="rounded-lg overflow-hidden border border-gray-200">
-              <%= image_tag url_for(@media_asset.static_map_image), class: "w-full", alt: "Map" %>
-            </div>
-          <% else %>
-            <div class="rounded-lg bg-gray-50 border border-gray-200 px-4 py-3 text-sm text-gray-500">
-              Map image pending…
-              <span class="block mt-1 text-gray-400 font-mono text-xs"><%= @media_asset.latitude %>, <%= @media_asset.longitude %></span>
-            </div>
-          <% end %>
+          <div class="rounded-lg overflow-hidden border border-gray-200">
+            <iframe src="<%= osm_embed_url(@media_asset.latitude, @media_asset.longitude) %>"
+                    title="Map of <%= @media_asset.address.presence || "asset location" %>"
+                    class="w-full h-64 border-0" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+          </div>
+          <p class="mt-2 text-xs text-gray-400">
+            <span class="font-mono"><%= @media_asset.latitude %>, <%= @media_asset.longitude %></span>
+            ·
+            <%= link_to "View larger map", osm_link_url(@media_asset.latitude, @media_asset.longitude),
+                  target: "_blank", rel: "noopener", class: "text-blue-600 hover:underline" %>
+          </p>
         </div>
       <% end %>
 

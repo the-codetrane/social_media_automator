@@ -4,7 +4,7 @@ require "cgi"
 
 # Forward-geocodes an address and applies the coordinates to MediaAssets whose
 # external_name matches a given venue string. Triggers the model's reverse-geocode
-# callback (populates city/state/country/address) and queues FetchStaticMapJob.
+# callback (populates city/state/country/address).
 #
 # Used by:
 #   - lib/tasks/geocode.rake (geocode:venue)
