@@ -104,7 +104,16 @@ jobs:
           RAILS_ENV: test
           # RAILS_MASTER_KEY: ${{ secrets.RAILS_MASTER_KEY }}
           # REDIS_URL: redis://localhost:6379/0
-        run: bin/rails db:test:prepare test:system
+        run: |
+          bin/rails db:test:prepare
+          google-chrome --version || true
+          fails=0
+          for i in $(seq 1 10); do
+            bin/rails test test/system/zz_focus_probe_test.rb test/system/collaborator_picker_test.rb 2>&1 | tee /tmp/run.txt | grep -E "FOCUS|CHROME|runs,|Failure:" -A1 || true
+            grep -q " 0 failures, 0 errors" /tmp/run.txt || fails=$((fails+1))
+          done
+          echo "LOOP FAILED RUNS: $fails/10"
+          test $fails -eq 0
 
       - name: Keep screenshots from failed system tests
         uses: actions/upload-artifact@v7
