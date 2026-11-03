@@ -221,23 +221,14 @@ class MediaAssetsControllerTest < ActionDispatch::IntegrationTest
     assert_select "iframe", count: 0
   end
 
-  test "show renders pending state when static map image not yet fetched" do
+  test "show embeds an OpenStreetMap centred on the asset location" do
     sign_in_as(@user)
     get media_asset_path(media_assets(:geocoded_image))
-    assert_match "Map image pending", response.body
-    assert_select "iframe", count: 0
-  end
-
-  test "show renders static map image when attached" do
-    sign_in_as(@user)
-    asset = media_assets(:geocoded_image)
-    asset.static_map_image.attach(
-      io: File.open(Rails.root.join("test/fixtures/files/test_image.png")),
-      filename: "static_map.png",
-      content_type: "image/png"
-    )
-    get media_asset_path(asset)
-    assert_select "img[alt=?]", "Map"
+    assert_select "iframe[src^=?]", "https://www.openstreetmap.org/export/embed.html?" do |frames|
+      assert_includes frames.first["src"], "marker=37.7749%2C-122.4194"
+    end
+    assert_select "a[href=?]", "https://www.openstreetmap.org/?mlat=37.7749&mlon=-122.4194#map=17/37.7749/-122.4194",
+      text: "View larger map"
   end
 
   # ── Upload modal ────────────────────────────────────────────────────────

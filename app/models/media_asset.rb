@@ -25,7 +25,6 @@ class MediaAsset < ApplicationRecord
 
   # ActiveStorage attachment for the media file (stored on DigitalOcean Spaces)
   has_one_attached :file
-  has_one_attached :static_map_image
 
   before_validation :extract_gps_from_exif,
     if: -> { file.attached? && image? && latitude.nil? && mime_type&.include?("jpeg") }
@@ -42,9 +41,6 @@ class MediaAsset < ApplicationRecord
   validates :file_size, numericality: { only_integer: true, greater_than: 0 }, allow_nil: true
   validates :width, numericality: { only_integer: true, greater_than: 0 }, allow_nil: true
   validates :height, numericality: { only_integer: true, greater_than: 0 }, allow_nil: true
-
-  after_commit :enqueue_static_map_fetch,
-    if: -> { geocoded? && (saved_change_to_latitude? || saved_change_to_longitude?) }
 
   scope :images, -> { where(media_type: :image) }
   scope :videos, -> { where(media_type: :video) }
@@ -164,10 +160,6 @@ class MediaAsset < ApplicationRecord
   end
 
   private
-
-  def enqueue_static_map_fetch
-    FetchStaticMapJob.perform_later(id) unless static_map_image.attached?
-  end
 
   def extract_gps_from_exif
     file.open do |tempfile|
