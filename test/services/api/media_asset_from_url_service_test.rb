@@ -259,5 +259,55 @@ module Api
       assert_not_nil service.error
       assert_nil service.media_asset
     end
+
+    # ===========================================
+    # Spaces deduplication
+    # ===========================================
+
+    test "reuses the asset for one Spaces object reached through differently spelled urls" do
+      urls = [
+        "https://ig-mcp-images.sfo3.cdn.digitaloceanspaces.com/Eagle's%2034/Clip%201.mp4",
+        "https://ig-mcp-images.sfo3.cdn.digitaloceanspaces.com/Eagle%27s%2034/Clip%201.mp4",
+        "https://ig-mcp-images.sfo3.digitaloceanspaces.com/Eagle%27s%2034/Clip%201.mp4",
+        "https://sfo3.digitaloceanspaces.com/ig-mcp-images/Eagle's%2034/Clip%201.mp4?x=1"
+      ]
+
+      assets = nil
+      assert_difference("MediaAsset.count", 1) do
+        assets = urls.map { |u| MediaAssetFromUrlService.new(u).tap(&:call).media_asset }
+      end
+
+      assert_equal 1, assets.map(&:id).uniq.size
+      assert_equal "Eagle's 34/Clip 1.mp4", assets.first.storage_key
+    end
+
+    test "reuses an asset that was registered by the Spaces sync" do
+      existing = MediaAsset.create!(
+        external_id: "sync_whatever", media_type: :video, status: :discovered, first_seen_at: Time.current,
+        storage_key: "Car Promo/IMG_0001.mov"
+      )
+
+      service = MediaAssetFromUrlService.new("https://ig-mcp-images.sfo3.cdn.digitaloceanspaces.com/Car%20Promo/IMG_0001.mov")
+      assert_no_difference("MediaAsset.count") { assert service.call }
+      assert_equal existing, service.media_asset
+    end
+
+    test "matches legacy rows whose key is only in raw_metadata" do
+      legacy = MediaAsset.create!(
+        external_id: "api_legacy", media_type: :image, status: :processed, first_seen_at: Time.current,
+        raw_metadata: { public_url: "https://ig-mcp-images.sfo3.cdn.digitaloceanspaces.com/Porchfest/a%20b.jpg", source: "api" }.to_json
+      )
+      assert_equal "Porchfest/a b.jpg", legacy.storage_key
+
+      service = MediaAssetFromUrlService.new("https://ig-mcp-images.sfo3.digitaloceanspaces.com/Porchfest/a%20b.jpg?v=1")
+      assert_no_difference("MediaAsset.count") { assert service.call }
+      assert_equal legacy, service.media_asset
+    end
+
+    test "leaves storage_key blank for urls outside the bucket" do
+      service = MediaAssetFromUrlService.new("https://example.com/video.mp4")
+      assert service.call
+      assert_nil service.media_asset.storage_key
+    end
   end
 end
