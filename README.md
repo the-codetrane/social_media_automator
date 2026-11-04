@@ -1,6 +1,14 @@
 # Social Media Automator
 
-A Rails application for automating social media content planning and publishing.
+A Rails application for planning, generating, and publishing social media content. It lets an admin draft posts, attach media from a shared library, get AI help with captions and images, and publish to several platforms from one place.
+
+## Features
+
+- **Post planning**: planned posts, reusable social templates, and published-post tracking
+- **Multi-platform publishing**: Instagram, Facebook, TikTok (with a sandbox/production toggle), and YouTube
+- **AI assistance**: Claude-powered chat and image understanding through RubyLLM, with prompt caching and API usage reporting
+- **Media library**: uploads stored in DigitalOcean Spaces, with duplicate-import protection and archiving
+- **Admin tools**: Rails 8 authentication and an admin panel for user management
 
 ## Requirements
 
