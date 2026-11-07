@@ -61,7 +61,7 @@
         </div>
         <div class="divide-y divide-gray-100">
           <% current_model_id = @chat.model&.model_id || RubyLLM.config.default_model %>
-          <% ChatsController::MODELS.each do |m| %>
+          <% available_models.each do |m| %>
             <% selected = current_model_id == m[:id] %>
             <%= button_to chat_model_path,
                   params: { model_id: m[:id] },
