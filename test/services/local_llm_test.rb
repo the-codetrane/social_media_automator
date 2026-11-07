@@ -54,12 +54,15 @@ class LocalLlmTest < ActiveSupport::TestCase
 
   test "context points Anthropic requests at the local server without touching the global config" do
     ENV["LOCAL_LLM_URL"] = "http://127.0.0.1:8080"
-    global_base = RubyLLM.config.anthropic_api_base
+    original_base = RubyLLM.config.anthropic_api_base
+    RubyLLM.config.anthropic_api_base = "https://global.example"
 
     context = LocalLlm.context
 
     assert_equal "http://127.0.0.1:8080", context.config.anthropic_api_base
     assert_equal "local", context.config.anthropic_api_key
-    assert_equal global_base, RubyLLM.config.anthropic_api_base
+    assert_equal "https://global.example", RubyLLM.config.anthropic_api_base
+  ensure
+    RubyLLM.config.anthropic_api_base = original_base
   end
 end

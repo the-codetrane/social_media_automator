@@ -131,9 +131,16 @@ class ChatsController < ApplicationController
     on_local_model = chat.model&.model_id == LocalLlm.model_id
     return if on_local_model == LocalLlm.enabled?
 
+    chat.with_model(model_for_current_mode, provider: "anthropic", assume_model_exists: true)
+  end
+
+  # Decided per request: SocialMediaPostAgent.model is fixed when the class loads, and the
+  # session's preferred Claude model has to survive a stretch in local mode.
+  def model_for_current_mode
+    return LocalLlm.model_id if LocalLlm.enabled?
+
     preferred = session[:chat_model]
-    target = valid_model?(preferred) ? preferred : SocialMediaPostAgent.model[:model]
-    chat.with_model(target, provider: "anthropic", assume_model_exists: true)
+    valid_model?(preferred) ? preferred : SocialMediaPostAgent.model[:model]
   end
 
   def build_chat
