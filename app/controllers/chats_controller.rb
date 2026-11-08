@@ -50,6 +50,7 @@ class ChatsController < ApplicationController
   MAX_CONTEXT_TOKENS = 120_000
 
   before_action :set_chat
+  helper_method :available_models
 
   # GET /chat
   def chat
@@ -111,8 +112,35 @@ class ChatsController < ApplicationController
 
   def set_chat
     chat = Chat.find_by(id: session[:chat_id], user: Current.user) || build_chat
+    reconcile_model_with_mode(chat)
     session[:chat_id] = chat.id
     @chat = chat
+  end
+
+  # The models the picker offers: the local server's model while LocalLlm is on (it can't
+  # serve a Claude model ID), the Claude lineup otherwise.
+  def available_models
+    LocalLlm.enabled? ? [ LocalLlm.model_entry ] : MODELS
+  end
+
+  # A chat keeps the model it was created with, so flipping LOCAL_LLM_URL between server
+  # restarts would send a Claude model ID to the local server, or the local alias to
+  # Anthropic. Move a chat that crossed that line onto a model the current mode can serve;
+  # chats already on the right side are left exactly as they are.
+  def reconcile_model_with_mode(chat)
+    on_local_model = chat.model&.model_id == LocalLlm.model_id
+    return if on_local_model == LocalLlm.enabled?
+
+    chat.with_model(model_for_current_mode, provider: "anthropic", assume_model_exists: true)
+  end
+
+  # Decided per request: SocialMediaPostAgent.model is fixed when the class loads, and the
+  # session's preferred Claude model has to survive a stretch in local mode.
+  def model_for_current_mode
+    return LocalLlm.model_id if LocalLlm.enabled?
+
+    preferred = session[:chat_model]
+    valid_model?(preferred) ? preferred : SocialMediaPostAgent.model[:model]
   end
 
   def build_chat
@@ -148,7 +176,7 @@ class ChatsController < ApplicationController
   end
 
   def valid_model?(model_id)
-    MODELS.any? { |m| m[:id] == model_id }
+    available_models.any? { |m| m[:id] == model_id }
   end
 
   def create_media_asset_from_upload(upload)

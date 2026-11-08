@@ -356,6 +356,53 @@ class ChatsControllerTest < ActionDispatch::IntegrationTest
     assert_equal original, Chat.find(session[:chat_id]).model&.model_id
   end
 
+  # ---------------------------------------------------------------------------
+  # Local model server (LocalLlm)
+  # ---------------------------------------------------------------------------
+
+  test "GET /chat offers only the local model while LocalLlm is on" do
+    sign_in_as(@user)
+
+    LocalLlm.stub(:enabled?, true) { get chat_path }
+
+    assert_response :success
+    assert_select "button", text: /Local Qwen/
+    assert_select "button", text: /Claude Sonnet 5/, count: 0
+  end
+
+  test "GET /chat moves an existing Claude chat onto the local model when LocalLlm is on" do
+    sign_in_as(@user)
+    get chat_path
+    assert_equal "claude-sonnet-5", Chat.find(session[:chat_id]).model.model_id
+
+    LocalLlm.stub(:enabled?, true) { get chat_path }
+
+    assert_equal LocalLlm.model_id, Chat.find(session[:chat_id]).model.model_id
+  end
+
+  test "GET /chat moves a local chat back to the preferred Claude model when LocalLlm is off" do
+    sign_in_as(@user)
+    get chat_path
+    post chat_model_path, params: { model_id: "claude-opus-5" }
+    LocalLlm.stub(:enabled?, true) { get chat_path }
+
+    get chat_path
+
+    assert_equal "claude-opus-5", Chat.find(session[:chat_id]).model.model_id
+  end
+
+  test "select_model rejects Claude models while LocalLlm is on" do
+    sign_in_as(@user)
+
+    LocalLlm.stub(:enabled?, true) do
+      get chat_path
+      post chat_model_path, params: { model_id: "claude-sonnet-5" }
+    end
+
+    assert_equal "Unknown model.", flash[:alert]
+    assert_equal LocalLlm.model_id, Chat.find(session[:chat_id]).model.model_id
+  end
+
   private
 
   # Stand in for a provider response so the controller can read a context size back.

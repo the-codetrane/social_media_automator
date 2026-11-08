@@ -1,11 +1,24 @@
 class SocialMediaPostAgent < RubyLLM::Agent
   chat_model "Chat"
-  model "claude-sonnet-5", assume_model_exists: true, provider: "anthropic"
-  # A tool-heavy chat resends its whole history every turn; without caching ~94% of each
-  # request was billed as uncached input, which was 96% of the API bill. This turns on
-  # Anthropic's automatic prompt caching, which moves the cache breakpoint to the end of
-  # the conversation on every request so tools, system prompt and history are all reused.
-  caching
+
+  if LocalLlm.enabled?
+    # Development against a local llama-server (see LocalLlm). It speaks the Anthropic
+    # protocol, so the provider stays "anthropic"; the context swaps the base URL.
+    model LocalLlm.model_id, assume_model_exists: true, provider: "anthropic"
+    context LocalLlm.context
+    # llama-server reuses a matching prompt prefix on its own, and there's no bill to cut,
+    # so Anthropic's cache_control field is left off rather than sent to a server that
+    # doesn't use it.
+    caching false
+  else
+    model "claude-sonnet-5", assume_model_exists: true, provider: "anthropic"
+    # A tool-heavy chat resends its whole history every turn; without caching ~94% of each
+    # request was billed as uncached input, which was 96% of the API bill. This turns on
+    # Anthropic's automatic prompt caching, which moves the cache breakpoint to the end of
+    # the conversation on every request so tools, system prompt and history are all reused.
+    caching
+  end
+
   inputs :user
   # Scoped to creating planned posts: finding media, drafting captions, scheduling.
   # Enrichment, geocoding, face identification, and variety/duplicate checking were removed.
