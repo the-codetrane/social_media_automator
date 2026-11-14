@@ -1,0 +1,8 @@
+<%# Suggestions for the collaborators combobox (PlannedPostsController#collaborator_search). %>
+<turbo-frame id="<%= frame_id %>">
+  <% suggestions.each do |entry| %>
+    <%= ui_combobox_option value: entry[:username], label: entry[:username] do %>
+      @<%= entry[:username] %> <span class="text-xs text-body-muted">used <%= entry[:count] %>×</span>
+    <% end %>
+  <% end %>
+</turbo-frame>
