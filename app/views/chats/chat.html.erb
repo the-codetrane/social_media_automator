@@ -54,9 +54,9 @@
       <div class="bg-surface rounded-xl shadow-sm border border-border overflow-hidden lg:overflow-y-auto"
            style="max-height: calc(100dvh - 14rem);">
         <div class="px-4 py-3 border-b border-border bg-surface-subtle hidden lg:block">
-          <h2 class="text-xs font-semibold text-body-muted uppercase tracking-wider">Model</h2>
+          <h2 class="text-xs font-semibold text-body-muted">Model</h2>
         </div>
-        <div class="divide-y divide-gray-100">
+        <div class="divide-y divide-border">
           <% current_model_id = @chat.model&.model_id || RubyLLM.config.default_model %>
           <% available_models.each do |m| %>
             <% selected = current_model_id == m[:id] %>
@@ -79,13 +79,13 @@
               <div class="space-y-1">
                 <% m[:strengths].each do |s| %>
                   <div class="flex items-start gap-1.5">
-                    <span class="text-green-500 text-xs mt-0.5 flex-shrink-0">+</span>
+                    <span class="text-success text-xs mt-0.5 flex-shrink-0">+</span>
                     <span class="text-xs text-body-muted"><%= s %></span>
                   </div>
                 <% end %>
                 <% m[:limitations].each do |l| %>
                   <div class="flex items-start gap-1.5">
-                    <span class="text-red-400 text-xs mt-0.5 flex-shrink-0">&minus;</span>
+                    <span class="text-danger text-xs mt-0.5 flex-shrink-0">&minus;</span>
                     <span class="text-xs text-body-muted"><%= l %></span>
                   </div>
                 <% end %>

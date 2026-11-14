@@ -12,21 +12,21 @@
                       insights_chart_monthly_value: @monthly_series.to_json,
                       insights_chart_chart_id_value: "insights-performance-chart" } do %>
     <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
-      <h2 data-insights-chart-target="title" class="text-sm font-semibold text-body-muted uppercase tracking-wide">Weekly Performance</h2>
+      <h2 data-insights-chart-target="title" class="text-sm font-semibold text-body-muted">Weekly Performance</h2>
       <%# TODO(L2): toggle group (the insights-chart controller toggles these classes) %>
       <div class="flex rounded-lg border border-border overflow-hidden text-xs font-medium shrink-0">
         <button data-insights-chart-target="toggle"
                 data-action="click->insights-chart#switch"
                 data-period="daily"
-                class="px-3 py-1.5 bg-white text-gray-600 hover:bg-gray-50 transition-colors border-r border-border">Daily</button>
+                class="px-3 py-1.5 bg-surface text-body-muted hover:bg-surface-subtle transition-colors border-r border-border">Daily</button>
         <button data-insights-chart-target="toggle"
                 data-action="click->insights-chart#switch"
                 data-period="weekly"
-                class="px-3 py-1.5 bg-indigo-600 text-white transition-colors border-r border-border">Weekly</button>
+                class="px-3 py-1.5 bg-primary text-primary-on transition-colors border-r border-border">Weekly</button>
         <button data-insights-chart-target="toggle"
                 data-action="click->insights-chart#switch"
                 data-period="monthly"
-                class="px-3 py-1.5 bg-white text-gray-600 hover:bg-gray-50 transition-colors">Monthly</button>
+                class="px-3 py-1.5 bg-surface text-body-muted hover:bg-surface-subtle transition-colors">Monthly</button>
       </div>
     </div>
     <%= line_chart @weekly_series,

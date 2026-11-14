@@ -36,7 +36,7 @@
 <% if total_reactions > 0 %>
   <%= ui_card class: "mb-6" do %>
     <div class="flex items-center justify-between mb-4">
-      <h2 class="text-sm font-semibold text-body-muted uppercase tracking-wide">Reactions</h2>
+      <h2 class="text-sm font-semibold text-body-muted">Reactions</h2>
       <span class="text-sm text-body-muted"><%= number_with_delimiter(total_reactions) %> total</span>
     </div>
     <%= bar_chart reaction_data,
@@ -52,7 +52,7 @@
 <%# Impressions breakdown: organic vs paid %>
 <% if impressions_data.values.sum > 0 %>
   <%= ui_card class: "mb-6" do %>
-    <h2 class="text-sm font-semibold text-body-muted uppercase tracking-wide mb-4">Impressions Breakdown</h2>
+    <h2 class="text-sm font-semibold text-body-muted mb-4">Impressions Breakdown</h2>
     <%= ui_stats columns: 2, label: "Impressions breakdown" do |stats| %>
       <% stats.with_stat label: "Organic", value: number_with_delimiter(impressions_data["Organic"]) %>
       <% stats.with_stat label: "Paid", value: number_with_delimiter(impressions_data["Paid"]) %>
@@ -65,7 +65,7 @@
   <% has_video_data = %w[post_video_views post_video_views_unique post_video_avg_time_watched post_video_view_time].any? { |k| metrics.key?(k) } %>
   <% if has_video_data %>
     <%= ui_card class: "mb-6" do %>
-      <h2 class="text-sm font-semibold text-body-muted uppercase tracking-wide mb-4">Video Performance</h2>
+      <h2 class="text-sm font-semibold text-body-muted mb-4">Video Performance</h2>
       <%= ui_stats columns: 2, label: "Video performance" do |stats| %>
         <% if metrics.key?("post_video_views") %>
           <% stats.with_stat label: "Video Views (3s+)", value: number_with_delimiter(metrics["post_video_views"].to_i) %>
@@ -86,7 +86,7 @@
 
 <%# All metrics table %>
 <%= ui_card body: false do |card| %>
-  <% card.with_header { tag.h2("All Metrics", class: "text-sm font-semibold text-body-muted uppercase tracking-wide") } %>
+  <% card.with_header { tag.h2("All Metrics", class: "text-sm font-semibold text-body-muted") } %>
   <%= ui_table hover: true, responsive: true, class: "mb-0" do |table| %>
     <% table.with_caption(visible: false) { "All metrics" } %>
     <thead>

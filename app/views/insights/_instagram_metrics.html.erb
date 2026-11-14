@@ -34,7 +34,7 @@
 <%# Engagement breakdown chart %>
 <% if engagement_data.values.sum > 0 %>
   <%= ui_card class: "mb-6" do %>
-    <h2 class="text-sm font-semibold text-body-muted uppercase tracking-wide mb-4">Engagement Breakdown</h2>
+    <h2 class="text-sm font-semibold text-body-muted mb-4">Engagement Breakdown</h2>
     <%= bar_chart engagement_data,
           colors: ["#6366f1"],
           height: "280px",
@@ -48,7 +48,7 @@
 <%# Reel-specific watch time metrics %>
 <% if product_type == "REELS" && (metrics.key?("ig_reels_avg_watch_time") || metrics.key?("ig_reels_video_view_total_time")) %>
   <%= ui_card class: "mb-6" do %>
-    <h2 class="text-sm font-semibold text-body-muted uppercase tracking-wide mb-4">Watch Time</h2>
+    <h2 class="text-sm font-semibold text-body-muted mb-4">Watch Time</h2>
     <%= ui_stats columns: 2, label: "Watch time" do |stats| %>
       <% if metrics.key?("ig_reels_avg_watch_time") %>
         <% stats.with_stat label: "Avg Watch Time", value: "#{(metrics["ig_reels_avg_watch_time"].to_f / 1000).round(1)}s" %>
@@ -62,7 +62,7 @@
 
 <%# All metrics table %>
 <%= ui_card body: false do |card| %>
-  <% card.with_header { tag.h2("All Metrics", class: "text-sm font-semibold text-body-muted uppercase tracking-wide") } %>
+  <% card.with_header { tag.h2("All Metrics", class: "text-sm font-semibold text-body-muted") } %>
   <%= ui_table hover: true, responsive: true, class: "mb-0" do |table| %>
     <% table.with_caption(visible: false) { "All metrics" } %>
     <thead>
