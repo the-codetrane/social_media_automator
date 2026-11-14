@@ -5,61 +5,33 @@
 %>
 
 <div class="max-w-2xl mx-auto">
-  <%# Header with back link %>
-  <div class="flex items-center gap-4 mb-6">
-    <%= link_to social_templates_path, class: "text-gray-400 hover:text-gray-600 transition-colors" do %>
-      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+  <div class="flex items-start gap-3 mb-6">
+    <%# TODO(L4): ui_page_header back: %>
+    <%= link_to social_templates_path, aria: { label: "Back to social templates" }, class: "mt-2 text-body-muted hover:text-body transition-colors" do %>
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
       </svg>
     <% end %>
-    <h1 class="text-2xl font-bold text-gray-900">New Social Template</h1>
+    <%= ui_page_header title: "New Social Template", class: "flex-1 min-w-0" %>
   </div>
 
-  <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-    <%= form_with model: @social_template, class: "space-y-6" do |form| %>
-      <% if @social_template.errors.any? %>
-        <div class="px-4 py-3 rounded-lg bg-red-50 text-red-800 text-sm">
-          <p class="font-medium mb-2"><%= pluralize(@social_template.errors.count, "error") %> prohibited this template from being saved:</p>
-          <ul class="list-disc list-inside">
-            <% @social_template.errors.full_messages.each do |message| %>
-              <li><%= message %></li>
-            <% end %>
-          </ul>
-        </div>
-      <% end %>
+  <%= ui_card do %>
+    <%= ui_form_with model: @social_template, class: "space-y-6" do |f| %>
+      <%= f.error_summary title: "#{pluralize(@social_template.errors.count, "error")} prohibited this template from being saved:" %>
 
-      <div>
-        <%= form.label :name, class: "block text-sm font-medium text-gray-700 mb-2" %>
-        <%= form.text_field :name, class: "w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors", placeholder: "Template name" %>
-      </div>
-
-      <div>
-        <%= form.label :platform, class: "block text-sm font-medium text-gray-700 mb-2" %>
-        <%= form.select :platform, platform_options, {}, class: "w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors bg-white" %>
-      </div>
-
-      <div>
-        <%= form.label :default_caption, class: "block text-sm font-medium text-gray-700 mb-2" %>
-        <%= form.text_area :default_caption, rows: 4, class: "w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors resize-none", placeholder: "Default caption for posts using this template..." %>
-      </div>
+      <%= f.text_field :name, placeholder: "Template name" %>
+      <%= f.select :platform, platform_options %>
+      <%= f.text_area :default_caption, rows: 4, placeholder: "Default caption for posts using this template..." %>
 
       <div class="grid grid-cols-2 gap-4">
-        <div>
-          <%= form.label :max_caption_length, "Max Caption Length", class: "block text-sm font-medium text-gray-700 mb-2" %>
-          <%= form.number_field :max_caption_length, class: "w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors", placeholder: "e.g. 2200", min: 1 %>
-          <p class="mt-1 text-xs text-gray-500">Maximum characters allowed.</p>
-        </div>
-        <div>
-          <%= form.label :recommended_aspect_ratio, "Aspect Ratio", class: "block text-sm font-medium text-gray-700 mb-2" %>
-          <%= form.text_field :recommended_aspect_ratio, class: "w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors", placeholder: "e.g. 4:5 or 1:1" %>
-          <p class="mt-1 text-xs text-gray-500">Recommended aspect ratio.</p>
-        </div>
+        <%= f.number_field :max_caption_length, label: "Max Caption Length", placeholder: "e.g. 2200", min: 1, hint: "Maximum characters allowed." %>
+        <%= f.text_field :recommended_aspect_ratio, label: "Aspect Ratio", placeholder: "e.g. 4:5 or 1:1", hint: "Recommended aspect ratio." %>
       </div>
 
-      <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-200">
-        <%= link_to "Cancel", social_templates_path, class: "px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors" %>
-        <%= form.submit "Create Template", class: "px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors cursor-pointer" %>
+      <div class="flex items-center justify-end gap-3 pt-4 border-t border-border">
+        <%= ui_button "Cancel", href: social_templates_path, outline: true, variant: :secondary %>
+        <%= f.submit "Create Template", variant: :primary %>
       </div>
     <% end %>
-  </div>
+  <% end %>
 </div>

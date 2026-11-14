@@ -1,111 +1,75 @@
 <% content_for :title, @user.name %>
 
 <div class="max-w-3xl mx-auto">
-  <%# Header with back link and edit CTA %>
-  <div class="flex items-center justify-between mb-6">
-    <div class="flex items-center gap-4">
-      <%= link_to users_path, class: "text-gray-400 hover:text-gray-600 transition-colors" do %>
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-        </svg>
-      <% end %>
-      <h1 class="text-2xl font-bold text-gray-900"><%= @user.name %></h1>
-    </div>
-    <%= link_to edit_user_path(@user), class: "inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors" do %>
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+  <div class="flex items-start gap-3 mb-6">
+    <%# TODO(L4): ui_page_header back: %>
+    <%= link_to users_path, aria: { label: "Back to users" }, class: "mt-2 text-body-muted hover:text-body transition-colors" do %>
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
       </svg>
-      Edit
     <% end %>
+    <div class="flex-1 min-w-0">
+      <%= ui_page_header title: @user.name do |header| %>
+        <% header.with_actions do %>
+          <%= ui_button href: edit_user_path(@user), variant: :primary do %>
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+            </svg>
+            Edit
+          <% end %>
+        <% end %>
+      <% end %>
+    </div>
   </div>
 
-  <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-    <%# Main info section %>
+  <%= ui_card body: false do %>
     <div class="p-6">
-      <%# Avatar + name row %>
       <div class="flex items-center gap-4 mb-6">
-        <div class="w-16 h-16 rounded-full bg-indigo-100 text-indigo-700 font-bold text-xl flex items-center justify-center shrink-0">
-          <%= @user.name.to_s.split.map(&:first).first(2).join.upcase.presence || "?" %>
-        </div>
-        <div>
-          <p class="text-xl font-semibold text-gray-900"><%= @user.name %></p>
-          <p class="text-sm text-gray-500"><%= @user.email_address %></p>
+        <%= ui_avatar name: @user.name, variant: :primary, class: "!size-16 !text-xl" %>
+        <div class="min-w-0">
+          <p class="text-xl font-semibold text-body"><%= @user.name %></p>
+          <p class="text-sm text-body-muted break-all"><%= @user.email_address %></p>
         </div>
       </div>
 
-      <%# Instagram status %>
       <div class="flex flex-wrap gap-2 mb-6">
         <% if @user.instagram_connected? %>
           <% if @user.instagram_token_expired? %>
-            <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
-              ⛔ Token Expired
-            </span>
+            <%= ui_badge "Token Expired", variant: :danger, pill: true %>
           <% elsif @user.instagram_token_expiring? %>
-            <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
-              ⚠️ Token Expiring
-            </span>
+            <%= ui_badge "Token Expiring", variant: :warning, pill: true %>
           <% else %>
-            <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
-              ✓ Instagram Connected
-            </span>
+            <%= ui_badge "Instagram Connected", variant: :success, pill: true %>
           <% end %>
         <% else %>
-          <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-50 text-red-600 border border-red-100">
-            ✕ Not Connected
-          </span>
+          <%= ui_badge "Not Connected", variant: :danger, pill: true %>
         <% end %>
       </div>
 
-      <%# Stats grid %>
-      <dl class="grid grid-cols-2 gap-6">
-        <div>
-          <dt class="text-xs text-gray-400 uppercase tracking-wide mb-1">Planned Posts</dt>
-          <dd class="text-2xl font-semibold text-gray-900"><%= @user.planned_posts.size %></dd>
-        </div>
-        <div>
-          <dt class="text-xs text-gray-400 uppercase tracking-wide mb-1">Joined</dt>
-          <dd class="text-lg text-gray-700"><%= @user.created_at.strftime("%B %-d, %Y") %></dd>
-        </div>
-      </dl>
+      <%= ui_stats columns: 2, label: "User summary" do |stats| %>
+        <% stats.with_stat(label: "Planned Posts", value: @user.planned_posts.size) %>
+        <% stats.with_stat(label: "Joined", value: @user.created_at.strftime("%B %-d, %Y"), class: "[&_dd]:!text-xl") %>
+      <% end %>
     </div>
 
-    <%# Collapsible additional details %>
     <% if @user.instagram_user_id.present? || @user.instagram_token_expires_at.present? %>
-      <div class="border-t border-gray-200" data-controller="collapse">
-        <button
-          type="button"
-          class="w-full flex items-center justify-between px-6 py-4 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-          data-action="click->collapse#toggle"
-        >
-          <span>Additional Details</span>
-          <svg class="w-5 h-5 text-gray-400 transition-transform duration-200 rotate-180" data-collapse-target="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-          </svg>
-        </button>
-        <div class="px-6 pb-6" data-collapse-target="content">
-          <dl class="grid grid-cols-1 gap-4 text-sm">
-            <% if @user.instagram_user_id.present? %>
-              <div>
-                <dt class="text-gray-400 uppercase tracking-wide text-xs mb-1">Instagram User ID</dt>
-                <dd class="text-gray-700 font-mono"><%= @user.instagram_user_id %></dd>
-              </div>
+      <div class="border-t border-border px-6 py-2">
+        <%= ui_accordion do |accordion| %>
+          <% accordion.with_item(title: "Additional Details", open: true) do %>
+            <%= ui_description_list do |dl| %>
+              <% if @user.instagram_user_id.present? %>
+                <% dl.with_item(term: "Instagram User ID") { tag.span(@user.instagram_user_id, class: "font-mono break-all") } %>
+              <% end %>
+              <% if @user.instagram_page_id.present? %>
+                <% dl.with_item(term: "Instagram Page ID") { tag.span(@user.instagram_page_id, class: "font-mono break-all") } %>
+              <% end %>
+              <% if @user.instagram_token_expires_at.present? %>
+                <% dl.with_item(term: "Token Expires At", description: @user.instagram_token_expires_at.strftime("%B %-d, %Y at %H:%M")) %>
+              <% end %>
             <% end %>
-            <% if @user.instagram_page_id.present? %>
-              <div>
-                <dt class="text-gray-400 uppercase tracking-wide text-xs mb-1">Instagram Page ID</dt>
-                <dd class="text-gray-700 font-mono"><%= @user.instagram_page_id %></dd>
-              </div>
-            <% end %>
-            <% if @user.instagram_token_expires_at.present? %>
-              <div>
-                <dt class="text-gray-400 uppercase tracking-wide text-xs mb-1">Token Expires At</dt>
-                <dd class="text-gray-700"><%= @user.instagram_token_expires_at.strftime("%B %-d, %Y at %H:%M") %></dd>
-              </div>
-            <% end %>
-          </dl>
-        </div>
+          <% end %>
+        <% end %>
       </div>
     <% end %>
-  </div>
+  <% end %>
 </div>
-
