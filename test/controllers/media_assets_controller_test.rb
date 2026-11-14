@@ -36,7 +36,7 @@ class MediaAssetsControllerTest < ActionDispatch::IntegrationTest
   test "index shows status badges" do
     sign_in_as(@user)
     get media_assets_path(availability: "all")
-    assert_match "processed", response.body
+    assert_match "Processed", response.body
   end
 
   test "index shows file size" do

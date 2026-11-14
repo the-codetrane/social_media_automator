@@ -1,11 +1,6 @@
 <% content_for :title, "Media Assets" %>
 
 <%
-  status_colors = {
-    "discovered" => "bg-yellow-100 text-yellow-800",
-    "processed"  => "bg-green-100 text-green-800",
-    "failed"     => "bg-red-100 text-red-800"
-  }
   type_colors = {
     "image" => "bg-purple-100 text-purple-800",
     "video" => "bg-pink-100 text-pink-800"
@@ -208,9 +203,7 @@
                     <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium <%= type_colors[asset.media_type] || 'bg-gray-100 text-gray-600' %> capitalize">
                       <%= asset.media_type %>
                     </span>
-                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium <%= status_colors[asset.status] || 'bg-gray-100 text-gray-600' %> capitalize">
-                      <%= asset.status %>
-                    </span>
+                    <%= render StatusBadgeComponent.new(status: asset.status, kind: :media) %>
                     <%= render "media_assets/availability_badge", availability: availability %>
                   </div>
                 </div>
@@ -372,9 +365,7 @@
                   </td>
                   <td class="px-4 py-3">
                     <div class="flex flex-wrap gap-1">
-                      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium <%= status_colors[asset.status] || 'bg-gray-100 text-gray-600' %> capitalize">
-                        <%= asset.status %>
-                      </span>
+                      <%= render StatusBadgeComponent.new(status: asset.status, kind: :media) %>
                       <%= render "media_assets/availability_badge", availability: availability %>
                     </div>
                   </td>
