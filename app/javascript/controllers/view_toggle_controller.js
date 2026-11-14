@@ -1,7 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["cardView", "tableView", "cardButton", "tableButton"]
+  static targets = ["cardView", "tableView", "cardButton", "tableButton", "cardInput", "tableInput"]
   static values = { storageKey: String }
 
   connect() {
@@ -11,6 +11,12 @@ export default class extends Controller {
   applyView() {
     const view = localStorage.getItem(this.storageKeyValue) || "card"
     this.#setView(view)
+  }
+
+  // Radio inputs (a ToggleGroup): the checked value is the view.
+  select(event) {
+    if (event.target.value === "table") this.showTable()
+    else this.showCard()
   }
 
   showCard() {
@@ -29,6 +35,9 @@ export default class extends Controller {
     const isTable = view === "table"
     this.cardViewTargets.forEach(el => el.classList.toggle("hidden", isTable))
     this.tableViewTargets.forEach(el => el.classList.toggle("hidden", !isTable))
+    if (this.hasCardInputTarget) this.cardInputTarget.checked = !isTable
+    if (this.hasTableInputTarget) this.tableInputTarget.checked = isTable
+    if (this.hasCardInputTarget || this.hasTableInputTarget) this.#syncSelectionInputs(isTable)
     if (this.hasCardButtonTarget) {
       this.cardButtonTarget.classList.toggle("bg-white", !isTable)
       this.cardButtonTarget.classList.toggle("shadow-sm", !isTable)
@@ -43,8 +52,16 @@ export default class extends Controller {
     }
   }
 
+  // The hidden view's selection checkboxes are disabled so cl-bulk-select neither counts nor submits them twice.
+  #syncSelectionInputs(isTable) {
+    let changed
+    this.cardViewTargets.forEach(el => el.querySelectorAll("[data-cl-bulk-select-target='item']").forEach(cb => { cb.disabled = isTable; changed = cb }))
+    this.tableViewTargets.forEach(el => el.querySelectorAll("[data-cl-bulk-select-target='item']").forEach(cb => { cb.disabled = !isTable; changed = cb }))
+    if (changed) changed.dispatchEvent(new Event("change", { bubbles: true }))
+  }
+
   #resetBulkSelect() {
-    this.element.querySelectorAll("[data-bulk-select-target='checkbox']:checked").forEach(cb => {
+    this.element.querySelectorAll("[data-bulk-select-target='checkbox']:checked, [data-cl-bulk-select-target='item']:checked").forEach(cb => {
       cb.checked = false
       cb.dispatchEvent(new Event("change", { bubbles: true }))
     })
