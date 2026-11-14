@@ -1,64 +1,40 @@
 <% content_for :title, "Edit Media Asset" %>
 
 <%
-  status_options = MediaAsset.statuses.keys.map { |s| [s.titleize, s] }
+  status_options = MediaAsset.statuses.keys.map { |s| [ s.titleize, s ] }
 %>
 
 <div class="max-w-2xl mx-auto">
-  <%# Header with back link %>
-  <div class="flex items-center gap-4 mb-6">
-    <%= link_to media_asset_path(@media_asset), class: "text-gray-400 hover:text-gray-600 transition-colors" do %>
-      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-      </svg>
-    <% end %>
-    <h1 class="text-2xl font-bold text-gray-900">Edit Media Asset</h1>
+  <%# TODO(L4): ui_page_header back: %>
+  <div class="mb-6">
+    <%= link_to "← Back", media_asset_path(@media_asset), class: "text-sm text-body-muted hover:text-body", aria: { label: "Back to media asset" } %>
   </div>
 
-  <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-    <%= form_with model: @media_asset, class: "space-y-6" do |form| %>
-      <% if @media_asset.errors.any? %>
-        <div class="px-4 py-3 rounded-lg bg-red-50 text-red-800 text-sm">
-          <p class="font-medium mb-2"><%= pluralize(@media_asset.errors.count, "error") %> prohibited this media asset from being saved:</p>
-          <ul class="list-disc list-inside">
-            <% @media_asset.errors.full_messages.each do |message| %>
-              <li><%= message %></li>
-            <% end %>
-          </ul>
-        </div>
+  <%= ui_page_header title: "Edit Media Asset", class: "mb-6" %>
+
+  <%= ui_form_with model: @media_asset, class: "bg-surface rounded-xl shadow-sm border border-border p-6 space-y-6" do |f| %>
+    <%= f.error_summary %>
+
+    <%= f.text_field :external_name, label: "Name", placeholder: "Display name for this asset", hint: "A friendly name to identify this asset." %>
+
+    <%= f.select :status, status_options, {} %>
+
+    <%# Read-only fields for reference %>
+    <div class="pt-4 border-t border-border">
+      <h2 class="text-sm font-medium text-body-muted mb-1">Reference Information</h2>
+      <%= ui_description_list layout: :inline do |dl| %>
+        <% dl.with_item(term: "External ID") do %>
+          <span class="font-mono break-all"><%= @media_asset.external_id %></span>
+        <% end %>
+        <% dl.with_item(term: "Media Type") do %>
+          <span class="capitalize"><%= @media_asset.media_type %></span>
+        <% end %>
       <% end %>
+    </div>
 
-      <div>
-        <%= form.label :external_name, "Name", class: "block text-sm font-medium text-gray-700 mb-2" %>
-        <%= form.text_field :external_name, class: "w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors", placeholder: "Display name for this asset" %>
-        <p class="mt-1 text-xs text-gray-500">A friendly name to identify this asset.</p>
-      </div>
-
-      <div>
-        <%= form.label :status, class: "block text-sm font-medium text-gray-700 mb-2" %>
-        <%= form.select :status, status_options, {}, class: "w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors bg-white" %>
-      </div>
-
-      <%# Read-only fields for reference %>
-      <div class="pt-4 border-t border-gray-200">
-        <p class="text-xs text-gray-400 uppercase tracking-wide mb-3">Reference Information</p>
-        <dl class="grid grid-cols-2 gap-4 text-sm">
-          <div>
-            <dt class="text-gray-500">External ID</dt>
-            <dd class="text-gray-700 font-mono truncate"><%= @media_asset.external_id %></dd>
-          </div>
-          <div>
-            <dt class="text-gray-500">Media Type</dt>
-            <dd class="text-gray-700 capitalize"><%= @media_asset.media_type %></dd>
-          </div>
-        </dl>
-      </div>
-
-      <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-200">
-        <%= link_to "Cancel", media_asset_path(@media_asset), class: "px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors" %>
-        <%= form.submit "Save Changes", class: "px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors cursor-pointer" %>
-      </div>
-    <% end %>
-  </div>
+    <div class="pt-4 border-t border-border flex items-center justify-end gap-3">
+      <%= ui_button "Cancel", href: media_asset_path(@media_asset), variant: :secondary, outline: true %>
+      <%= f.submit "Save Changes", variant: :primary %>
+    </div>
+  <% end %>
 </div>
-
