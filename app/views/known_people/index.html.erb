@@ -1,55 +1,50 @@
 <% content_for :title, "Known People" %>
 
-<div class="flex items-center justify-between mb-6">
-  <div>
-    <h1 class="text-2xl font-bold text-gray-900">Known People</h1>
-    <p class="text-sm text-gray-500 mt-1">Reference photos used by the AI to identify people in your media.</p>
-  </div>
-  <%= link_to new_known_person_path, class: "inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors" do %>
-    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-    </svg>
-    Add Person
+<div class="mb-6">
+  <%= ui_page_header title: "Known People", subtitle: "Reference photos used by the AI to identify people in your media." do |header| %>
+    <% header.with_actions do %>
+      <%= ui_button href: new_known_person_path, variant: :primary do %>
+        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+        </svg>
+        Add Person
+      <% end %>
+    <% end %>
   <% end %>
 </div>
 
 <% if @known_people.empty? %>
-  <div class="text-center py-20">
-    <div class="mx-auto mb-4 w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center">
-      <svg class="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+  <%= ui_empty_state title: "No known people yet.", text: "Add reference photos so the AI can recognize band members and key subjects in your media." do |empty| %>
+    <% empty.with_icon do %>
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
       </svg>
-    </div>
-    <p class="text-lg font-medium text-gray-500 mb-2">No known people yet.</p>
-    <p class="text-sm text-gray-400 max-w-sm mx-auto">Add reference photos so the AI can recognize band members and key subjects in your media.</p>
-    <%= link_to new_known_person_path, class: "mt-6 inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors" do %>
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-      </svg>
-      Add Your First Person
     <% end %>
-  </div>
+    <% empty.with_action do %>
+      <%= ui_button "Add Your First Person", href: new_known_person_path, variant: :primary %>
+    <% end %>
+  <% end %>
 <% else %>
   <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
     <% @known_people.each do |person| %>
-      <%= link_to known_person_path(person), class: "bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md hover:border-gray-300 transition-all duration-200" do %>
-        <div class="aspect-square bg-gray-100 overflow-hidden">
-          <% if person.public_url? %>
-            <%= image_tag person.public_url, class: "w-full h-full object-cover", alt: person.name %>
-          <% else %>
-            <div class="w-full h-full flex items-center justify-center text-gray-300">
-              <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-              </svg>
-            </div>
-          <% end %>
-        </div>
-        <div class="p-3">
-          <p class="font-semibold text-gray-900 truncate"><%= person.name %></p>
-          <% if person.notes.present? %>
-            <p class="text-xs text-gray-500 mt-0.5 line-clamp-2"><%= person.notes %></p>
-          <% end %>
-        </div>
+      <%= link_to known_person_path(person), class: "block rounded-ui hover:shadow-md transition-shadow duration-200" do %>
+        <%= ui_card body: false, class: "h-full overflow-hidden" do %>
+          <div class="aspect-square bg-surface-muted overflow-hidden">
+            <% if person.public_url? %>
+              <%= image_tag person.public_url, class: "w-full h-full object-cover", alt: person.name %>
+            <% else %>
+              <div class="w-full h-full flex items-center justify-center">
+                <%= ui_avatar name: person.name, variant: :primary, class: "!size-16 !text-xl" %>
+              </div>
+            <% end %>
+          </div>
+          <div class="p-3">
+            <p class="font-semibold text-body truncate"><%= person.name %></p>
+            <% if person.notes.present? %>
+              <p class="text-xs text-body-muted mt-0.5 line-clamp-2"><%= person.notes %></p>
+            <% end %>
+          </div>
+        <% end %>
       <% end %>
     <% end %>
   </div>
