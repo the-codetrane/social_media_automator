@@ -135,7 +135,8 @@
                 <% end %>
 
                 <div class="flex flex-col gap-4">
-                  <div class="flex flex-wrap gap-2">
+                  <%# Leave room for the selection checkbox, which overlaps the card's top-left corner %>
+                  <div class="flex flex-wrap gap-2 <%= "pl-8" unless any_media %>">
                     <%= render PlatformBadgeComponent.new(platform: post.platform) %>
                     <%= render StatusBadgeComponent.new(status: post.status) %>
                   </div>
