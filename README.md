@@ -13,8 +13,6 @@ A Rails application for planning, generating, and publishing social media conten
 ## Requirements
 
 - Ruby 3.2.2
-- Node.js 24+
-- Yarn
 - SQLite 3
 
 ## Development Setup
@@ -22,7 +20,6 @@ A Rails application for planning, generating, and publishing social media conten
 ```bash
 # Install dependencies
 bundle install
-yarn install
 
 # Set up the database
 bin/rails db:prepare

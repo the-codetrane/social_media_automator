@@ -21,31 +21,21 @@
     <link rel="icon" href="/icon.png" type="image/png" sizes="512x512">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180">
 
-    <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+    <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
 
     <%= javascript_importmap_tags %>
   </head>
 
-  <body class="bg-gray-50 text-gray-900 antialiased">
+  <body class="bg-surface-subtle text-body antialiased">
     <% if authenticated? %>
       <%= render "shared/nav" %>
     <% end %>
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
       <% if notice.present? %>
-        <div class="mb-4 rounded-md bg-green-50 border border-green-200 p-4 flex items-start justify-between gap-3">
-          <p class="text-sm font-medium text-green-800"><%= notice %></p>
-          <button type="button" onclick="this.closest('div').remove()"
-                  class="flex-shrink-0 text-green-500 hover:text-green-700 transition-colors leading-none text-lg"
-                  aria-label="Dismiss">&times;</button>
-        </div>
+        <%= ui_alert notice, variant: :success, dismissible: true, class: "mb-4" %>
       <% end %>
       <% if alert.present? %>
-        <div class="mb-4 rounded-md bg-red-50 border border-red-200 p-4 flex items-start justify-between gap-3">
-          <p class="text-sm font-medium text-red-800"><%= alert %></p>
-          <button type="button" onclick="this.closest('div').remove()"
-                  class="flex-shrink-0 text-red-400 hover:text-red-600 transition-colors leading-none text-lg"
-                  aria-label="Dismiss">&times;</button>
-        </div>
+        <%= ui_alert alert, variant: :danger, dismissible: true, class: "mb-4" %>
       <% end %>
       <%= yield %>
     </main>
@@ -58,5 +48,7 @@
         <%= link_to "Privacy Policy", privacy_path, class: "hover:text-gray-600 transition-colors" %>
       </div>
     </footer>
+    <%# data-turbo-confirm opens this dialog instead of the browser confirm(). See application.js. %>
+    <%= ui_confirm_dialog %>
   </body>
 </html>

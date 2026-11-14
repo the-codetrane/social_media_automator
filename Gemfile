@@ -65,7 +65,15 @@ gem "ruby_llm"
 gem "redcarpet", "~> 3.6"
 
 # CSS Bundling tools
-gem "cssbundling-rails"
+# Tailwind CSS without Node [https://github.com/rails/tailwindcss-rails]
+gem "tailwindcss-rails"
+
+# 2100 component library.
+# RELEASE TODO: this points at the unreleased library worktree. Once the library branch
+# is released, replace it with:
+#   gem "component_library_2100", github: "2100-Enterprises/2100-component-library", tag: "vX.Y.Z"
+# then run `bundle install`.
+gem "component_library_2100", path: "../2100-component-library-sma"
 
 # Mission Control for visualizing queue
 gem "mission_control-jobs", "~> 1.3"
