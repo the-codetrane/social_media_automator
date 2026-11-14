@@ -57,7 +57,7 @@
   <%# Upload modal — the form is fetched into the frame when the CTA is clicked,
       and the dialog opens once it has loaded. The dialog keeps data-controller="modal"
       because media_assets/new closes it with modal#close. %>
-  <%= ui_modal size: :lg, data: { controller: "modal", action: "turbo:frame-load->cl-dialog#open" } do %>
+  <%= ui_modal size: :lg, aria: { label: "Upload media" }, data: { controller: "modal", action: "turbo:frame-load->cl-dialog#open" } do %>
     <%= turbo_frame_tag "media-upload-modal" %>
   <% end %>
 
