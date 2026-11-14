@@ -6,15 +6,7 @@
 %>
 
 <div class="max-w-2xl mx-auto">
-  <%# TODO(L4): ui_page_header back: %>
-  <div class="mb-3">
-    <%= link_to planned_post_path(@planned_post), aria: { label: "Back to planned post" }, class: "inline-block text-body-muted hover:text-body transition-colors" do %>
-      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-      </svg>
-    <% end %>
-  </div>
-  <%= ui_page_header title: "Edit Planned Post", class: "mb-6" %>
+  <%= ui_page_header title: "Edit Planned Post", back: {href: planned_post_path(@planned_post), label: "Planned post"}, class: "mb-6" %>
 
   <div class="bg-surface rounded-xl shadow-sm border border-border p-6">
     <%= ui_form_with model: @planned_post, class: "space-y-6" do |form| %>

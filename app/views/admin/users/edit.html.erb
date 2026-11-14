@@ -1,12 +1,7 @@
 <% content_for :title, "Edit #{@user.name}" %>
 
-<%# TODO(L4): ui_page_header back: %>
-<div class="mb-6">
-  <%= link_to "← Back", admin_user_path(@user), class: "text-sm text-body-muted hover:text-body", aria: { label: "Back to #{@user.name}" } %>
-</div>
-
 <div class="max-w-lg">
-  <%= ui_page_header title: "Edit User", class: "mb-6" %>
+  <%= ui_page_header title: "Edit User", back: {href: admin_user_path(@user), label: "User"}, class: "mb-6" %>
 
   <%= ui_form_with model: [:admin, @user], class: "bg-surface rounded-xl shadow-sm border border-border p-6 space-y-5" do |f| %>
     <%= f.error_summary %>

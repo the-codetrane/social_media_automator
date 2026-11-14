@@ -1,11 +1,6 @@
 <% content_for :title, @user.name %>
 
-<%# TODO(L4): ui_page_header back: %>
-<div class="mb-4">
-  <%= link_to "← Back to Users", admin_users_path, class: "text-sm text-body-muted hover:text-body" %>
-</div>
-
-<%= ui_page_header title: @user.name, subtitle: @user.email_address, class: "mb-6" do |header| %>
+<%= ui_page_header title: @user.name, subtitle: @user.email_address, back: {href: admin_users_path, label: "Users"}, class: "mb-6" do |header| %>
   <% header.with_badge(variant: @user.admin? ? :primary : :secondary, pill: true) { @user.admin? ? "Admin" : "User" } %>
   <% header.with_actions do %>
     <%= ui_button "Edit", href: edit_admin_user_path(@user), variant: :secondary, outline: true %>

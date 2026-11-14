@@ -6,12 +6,7 @@
 %>
 
 <div class="max-w-3xl mx-auto">
-  <%# TODO(L4): ui_page_header back: %>
-  <div class="mb-3">
-    <%= link_to "← Back", media_assets_path, class: "text-sm text-body-muted hover:text-body", aria: { label: "Back to media assets" } %>
-  </div>
-
-  <%= ui_page_header title: display_name, class: "mb-6" do |header| %>
+  <%= ui_page_header title: display_name, back: {href: media_assets_path, label: "Media assets"}, class: "mb-6" do |header| %>
     <% header.with_actions do %>
       <% if @media_asset.archived? %>
         <%= button_to "Restore", unarchive_media_asset_path(@media_asset), method: :patch,

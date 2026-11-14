@@ -5,12 +5,7 @@
 %>
 
 <div class="max-w-2xl mx-auto">
-  <%# TODO(L4): ui_page_header back: %>
-  <div class="mb-6">
-    <%= link_to "← Back", media_asset_path(@media_asset), class: "text-sm text-body-muted hover:text-body", aria: { label: "Back to media asset" } %>
-  </div>
-
-  <%= ui_page_header title: "Edit Media Asset", class: "mb-6" %>
+  <%= ui_page_header title: "Edit Media Asset", back: {href: media_asset_path(@media_asset), label: "Media asset"}, class: "mb-6" %>
 
   <%= ui_form_with model: @media_asset, class: "bg-surface rounded-xl shadow-sm border border-border p-6 space-y-6" do |f| %>
     <%= f.error_summary %>

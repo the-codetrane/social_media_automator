@@ -1,26 +1,17 @@
 <% content_for :title, @user.name %>
 
 <div class="max-w-3xl mx-auto">
-  <div class="flex items-start gap-3 mb-6">
-    <%# TODO(L4): ui_page_header back: %>
-    <%= link_to users_path, aria: { label: "Back to users" }, class: "mt-2 text-body-muted hover:text-body transition-colors" do %>
-      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-      </svg>
-    <% end %>
-    <div class="flex-1 min-w-0">
-      <%= ui_page_header title: @user.name do |header| %>
-        <% header.with_actions do %>
-          <%= ui_button href: edit_user_path(@user), variant: :primary do %>
-            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-            </svg>
-            Edit
-          <% end %>
-        <% end %>
+  <%= ui_page_header title: @user.name,
+                   back: {href: users_path, label: "Users"}, class: "mb-6" do |header| %>
+    <% header.with_actions do %>
+      <%= ui_button href: edit_user_path(@user), variant: :primary do %>
+        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+        </svg>
+        Edit
       <% end %>
-    </div>
-  </div>
+    <% end %>
+  <% end %>
 
   <%= ui_card body: false do %>
     <div class="p-6">
