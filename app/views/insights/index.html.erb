@@ -1,30 +1,28 @@
 <% content_for :title, "Insights" %>
 
-<div class="flex items-center justify-between mb-6">
-  <div>
-    <h1 class="text-2xl font-bold text-gray-900">Insights</h1>
-    <p class="text-sm text-gray-500 mt-1"><%= @posts.size %> published post<%= "s" if @posts.size != 1 %> with data</p>
-  </div>
-</div>
+<%= ui_page_header title: "Insights",
+                   subtitle: "#{@posts.size} published post#{"s" if @posts.size != 1} with data",
+                   class: "mb-6" %>
 
 <% if @weekly_series.any? { |s| s[:data].any? } %>
-  <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8"
-       data-controller="insights-chart"
-       data-insights-chart-daily-value="<%= @daily_series.to_json %>"
-       data-insights-chart-weekly-value="<%= @weekly_series.to_json %>"
-       data-insights-chart-monthly-value="<%= @monthly_series.to_json %>"
-       data-insights-chart-chart-id-value="insights-performance-chart">
+  <%= ui_card class: "mb-8",
+              data: { controller: "insights-chart",
+                      insights_chart_daily_value: @daily_series.to_json,
+                      insights_chart_weekly_value: @weekly_series.to_json,
+                      insights_chart_monthly_value: @monthly_series.to_json,
+                      insights_chart_chart_id_value: "insights-performance-chart" } do %>
     <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
-      <h2 data-insights-chart-target="title" class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Weekly Performance</h2>
-      <div class="flex rounded-lg border border-gray-200 overflow-hidden text-xs font-medium shrink-0">
+      <h2 data-insights-chart-target="title" class="text-sm font-semibold text-body-muted uppercase tracking-wide">Weekly Performance</h2>
+      <%# TODO(L2): toggle group (the insights-chart controller toggles these classes) %>
+      <div class="flex rounded-lg border border-border overflow-hidden text-xs font-medium shrink-0">
         <button data-insights-chart-target="toggle"
                 data-action="click->insights-chart#switch"
                 data-period="daily"
-                class="px-3 py-1.5 bg-white text-gray-600 hover:bg-gray-50 transition-colors border-r border-gray-200">Daily</button>
+                class="px-3 py-1.5 bg-white text-gray-600 hover:bg-gray-50 transition-colors border-r border-border">Daily</button>
         <button data-insights-chart-target="toggle"
                 data-action="click->insights-chart#switch"
                 data-period="weekly"
-                class="px-3 py-1.5 bg-indigo-600 text-white transition-colors border-r border-gray-200">Weekly</button>
+                class="px-3 py-1.5 bg-indigo-600 text-white transition-colors border-r border-border">Weekly</button>
         <button data-insights-chart-target="toggle"
                 data-action="click->insights-chart#switch"
                 data-period="monthly"
@@ -47,53 +45,37 @@
             interaction: { mode: "index" },
             elements: { point: { radius: 3, hitRadius: 8 } }
           } %>
-    <p class="text-xs text-gray-400 mt-3">Metrics are populated when you view individual post insights. Open a post's detail page to load its data.</p>
-  </div>
+    <p class="text-xs text-body-muted mt-3">Metrics are populated when you view individual post insights. Open a post's detail page to load its data.</p>
+  <% end %>
 <% end %>
 
 <% if @posts.empty? %>
-  <div class="text-center py-20 text-gray-400">
-    <p class="text-lg">No published posts found.</p>
-    <p class="text-sm mt-2">Publish a post first to see its insights here.</p>
-  </div>
+  <%= ui_empty_state title: "No published posts found.", text: "Publish a post first to see its insights here." %>
 <% else %>
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
     <% @posts.each do |post| %>
-      <%= link_to insight_path(post), class: "bg-white rounded-xl shadow-sm border border-gray-200 p-5 flex flex-col gap-4 hover:shadow-md hover:border-indigo-300 transition-all duration-200 cursor-pointer" do %>
-
-        <%# Badges %>
-        <div class="flex flex-wrap gap-2">
-          <%= render PlatformBadgeComponent.new(platform: post.platform) %>
-        </div>
-
-        <%# Caption %>
-        <% if post.caption.present? %>
-          <p class="text-sm text-gray-700 line-clamp-3 leading-relaxed"><%= post.caption.truncate(140) %></p>
-        <% else %>
-          <p class="text-sm text-gray-400 italic">No caption</p>
-        <% end %>
-
-        <%# Metadata %>
-        <dl class="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
-          <% if post.published_at.present? %>
-            <div class="col-span-2">
-              <dt class="text-gray-400 uppercase tracking-wide">Published</dt>
-              <dd class="text-green-700 font-medium"><%= post.published_at.strftime("%b %-d, %Y %H:%M") %></dd>
-            </div>
-          <% end %>
-          <div class="col-span-2">
-            <dt class="text-gray-400 uppercase tracking-wide">Owner</dt>
-            <dd class="text-gray-700"><%= post.user&.name || "—" %></dd>
+      <%= ui_card class: "h-full" do %>
+        <div class="flex h-full flex-col gap-4">
+          <div class="flex flex-wrap gap-2">
+            <%= render PlatformBadgeComponent.new(platform: post.platform) %>
           </div>
-        </dl>
 
-        <div class="mt-auto pt-3 border-t border-gray-100">
-          <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-indigo-700 bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 transition-colors">
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-            </svg>
-            View Insights
-          </span>
+          <% if post.caption.present? %>
+            <p class="text-sm text-body line-clamp-3 leading-relaxed"><%= post.caption.truncate(140) %></p>
+          <% else %>
+            <p class="text-sm text-body-muted italic">No caption</p>
+          <% end %>
+
+          <%= ui_description_list layout: :inline, dividers: false, class: "text-sm" do |dl| %>
+            <% if post.published_at.present? %>
+              <% dl.with_item(term: "Published", description: post.published_at.strftime("%b %-d, %Y %H:%M")) %>
+            <% end %>
+            <% dl.with_item(term: "Owner", description: post.user&.name || "—") %>
+          <% end %>
+
+          <div class="mt-auto pt-3 border-t border-border">
+            <%= ui_button "View Insights", href: insight_path(post), outline: true, size: :sm %>
+          </div>
         </div>
       <% end %>
     <% end %>

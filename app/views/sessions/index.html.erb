@@ -1,68 +1,46 @@
 <% content_for :title, "Sessions" %>
 
-<div class="flex items-center justify-between mb-6">
-  <div>
-    <h1 class="text-2xl font-bold text-gray-900">Sessions</h1>
-    <p class="text-sm text-gray-500 mt-1"><%= @sessions.size %> record<%= "s" if @sessions.size != 1 %></p>
-  </div>
-</div>
+<div class="space-y-6">
+  <%= ui_page_header title: "Sessions", subtitle: "#{@sessions.size} record#{"s" if @sessions.size != 1}" %>
 
-<% if @sessions.empty? %>
-  <div class="text-center py-20 text-gray-400">No sessions found.</div>
-<% else %>
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-    <% @sessions.each do |session| %>
-      <%
-        is_current = (session.id == Current.session&.id)
-      %>
-      <div class="bg-white rounded-xl shadow-sm border <%= is_current ? 'border-indigo-400 ring-2 ring-indigo-200' : 'border-gray-200' %> p-5 flex flex-col gap-4">
-
-        <%# Header %>
-        <div class="flex items-start justify-between gap-2">
-          <div class="min-w-0">
-            <p class="font-semibold text-gray-900 truncate"><%= session.user&.name || "Unknown User" %></p>
-            <p class="text-xs text-gray-500 truncate"><%= session.user&.email_address %></p>
-          </div>
-          <% if is_current %>
-            <span class="shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700">
-              Current
-            </span>
-          <% end %>
-        </div>
-
-        <%# Metadata %>
-        <dl class="grid grid-cols-1 gap-y-2 text-xs">
-          <% if session.ip_address.present? %>
-            <div>
-              <dt class="text-gray-400 uppercase tracking-wide">IP Address</dt>
-              <dd class="text-gray-700 font-mono"><%= session.ip_address %></dd>
-            </div>
-          <% end %>
-          <% if session.user_agent.present? %>
-            <div>
-              <dt class="text-gray-400 uppercase tracking-wide">User Agent</dt>
-              <dd class="text-gray-700 truncate" title="<%= session.user_agent %>">
-                <%= session.user_agent.truncate(80) %>
-              </dd>
-            </div>
-          <% end %>
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <dt class="text-gray-400 uppercase tracking-wide">Created</dt>
-              <dd class="text-gray-700"><%= session.created_at.strftime("%b %-d, %Y %H:%M") %></dd>
-            </div>
-            <div>
-              <dt class="text-gray-400 uppercase tracking-wide">Last Active</dt>
-              <dd class="text-gray-700"><%= session.updated_at.strftime("%b %-d, %Y %H:%M") %></dd>
-            </div>
-          </div>
-        </dl>
-
-        <p class="text-xs text-gray-400 border-t border-gray-100 pt-3 mt-auto">
-          Session #<%= session.id %>
-        </p>
-      </div>
+  <% if @sessions.empty? %>
+    <%= ui_empty_state title: "No sessions found" %>
+  <% else %>
+    <%= ui_table hover: true, responsive: true do |table| %>
+      <% table.with_caption(visible: false) { "Active sessions" } %>
+      <thead>
+        <tr>
+          <%= ui_table_header "User" %>
+          <%= ui_table_header "IP address" %>
+          <%= ui_table_header "Device" %>
+          <%= ui_table_header "Created" %>
+          <%= ui_table_header "Last active" %>
+        </tr>
+      </thead>
+      <tbody>
+        <% @sessions.each do |session| %>
+          <tr>
+            <td>
+              <div class="flex items-center gap-3">
+                <%= ui_avatar name: session.user&.name || "Unknown User", size: :sm %>
+                <div class="min-w-0">
+                  <p class="font-medium text-body truncate">
+                    <%= session.user&.name || "Unknown User" %>
+                    <% if session.id == Current.session&.id %>
+                      <%= ui_badge "Current", variant: :primary, class: "ml-1" %>
+                    <% end %>
+                  </p>
+                  <p class="text-xs text-body-muted truncate"><%= session.user&.email_address %></p>
+                </div>
+              </div>
+            </td>
+            <td class="font-mono text-xs"><%= session.ip_address.presence || "—" %></td>
+            <td><span title="<%= session.user_agent %>"><%= device_label(session.user_agent) %></span></td>
+            <td class="whitespace-nowrap"><%= session.created_at.strftime("%b %-d, %Y %H:%M") %></td>
+            <td class="whitespace-nowrap"><%= session.updated_at.strftime("%b %-d, %Y %H:%M") %></td>
+          </tr>
+        <% end %>
+      </tbody>
     <% end %>
-  </div>
-<% end %>
-
+  <% end %>
+</div>
