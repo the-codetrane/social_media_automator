@@ -12,385 +12,286 @@
     [ "archived",  "Archived" ],
     [ "all",       "All" ]
   ]
+  sort_base = { q: @query, availability: @availability }
+  sort_header = lambda do |label, column, **opts|
+    active = @sort == column
+    next_dir = (active && @direction == "asc") ? "desc" : "asc"
+    ui_sort_header label,
+      href: media_assets_path(sort_base.merge(sort: column, direction: next_dir, page: 1)),
+      direction: (active ? @direction&.to_sym : nil),
+      link: { data: { turbo_frame: "media-assets-list", turbo_action: "advance" } },
+      **opts
+  end
+  mime_icon = '<svg class="w-12 h-12 text-body-muted opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>'.html_safe
 %>
 
-<div data-controller="view-toggle bulk-select"
-     data-view-toggle-storage-key-value="media_assets_view"
-     data-bulk-select-param-name-value="ids">
+<div data-controller="view-toggle"
+     data-view-toggle-storage-key-value="media_assets_view">
 
-  <div class="flex items-center justify-between mb-6">
-    <div>
-      <h1 class="text-2xl font-bold text-gray-900">Media Assets</h1>
-      <p class="text-sm text-gray-500 mt-1"><%= @pagy.count %> record<%= "s" if @pagy.count != 1 %></p>
-    </div>
-    <div class="flex items-center gap-3">
-      <%= link_to new_media_asset_path,
-                  data: { turbo_frame: "media-upload-modal" },
-                  class: "inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors" do %>
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+  <%= ui_page_header title: "Media Assets", subtitle: "#{@pagy.count} record#{"s" if @pagy.count != 1}", class: "mb-6" do |header| %>
+    <% header.with_actions do %>
+      <%= ui_button href: new_media_asset_path, variant: :primary, data: { turbo_frame: "media-upload-modal" } do %>
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline-block mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M12 4v12m0-12l-4 4m4-4l4 4"/>
         </svg>
         Upload media
       <% end %>
-    <div class="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
-      <button type="button"
-              data-view-toggle-target="cardButton"
-              data-action="click->view-toggle#showCard"
-              title="Card view"
-              class="p-1.5 rounded-md transition-colors text-gray-400">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
-        </svg>
-      </button>
-      <button type="button"
-              data-view-toggle-target="tableButton"
-              data-action="click->view-toggle#showTable"
-              title="Table view"
-              class="p-1.5 rounded-md transition-colors text-gray-400">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M3 14h18M10 6h11M10 18h11M3 6h.01M3 18h.01" />
-        </svg>
-      </button>
-    </div>
-    </div>
-  </div>
+      <%# Card/table view. The choice is stored in localStorage by view_toggle_controller. %>
+      <%= ui_toggle_group name: "media_assets_view", type: :radio, style: :segmented, label: "View", legend_visible: false do |group| %>
+        <% group.with_option(value: "card", label: "Card view", icon_only: true, checked: true,
+                             data: { view_toggle_target: "cardInput", action: "change->view-toggle#showCard" }) do %>
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
+          </svg>
+        <% end %>
+        <% group.with_option(value: "table", label: "Table view", icon_only: true,
+                             data: { view_toggle_target: "tableInput", action: "change->view-toggle#showTable" }) do %>
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M3 14h18M10 6h11M10 18h11M3 6h.01M3 18h.01" />
+          </svg>
+        <% end %>
+      <% end %>
+    <% end %>
+  <% end %>
 
   <%# Upload modal — the form is fetched into the frame when the CTA is clicked,
-      and the dialog opens once it has loaded. %>
-  <dialog data-controller="modal"
-          data-action="turbo:frame-load->modal#open click->modal#closeOnBackdrop"
-          class="w-full max-w-lg rounded-xl shadow-xl border border-gray-200 p-0 backdrop:bg-gray-900/50 m-auto">
+      and the dialog opens once it has loaded. The dialog keeps data-controller="modal"
+      because media_assets/new closes it with modal#close. %>
+  <%= ui_modal size: :lg, data: { controller: "modal", action: "turbo:frame-load->cl-dialog#open" } do %>
     <%= turbo_frame_tag "media-upload-modal" %>
-  </dialog>
+  <% end %>
 
   <%# Availability filter — Available hides assets that are archived, already
       published, or on a scheduled post, so they are not picked twice. %>
-  <nav class="mb-4 flex flex-wrap gap-1 border-b border-gray-200" aria-label="Filter by availability">
+  <%= ui_nav style: :tabs, label: "Filter by availability", class: "mb-4 flex-wrap" do |nav| %>
     <% availability_tabs.each do |value, label| %>
-      <% active = @availability == value %>
-      <%= link_to label,
-            media_assets_path(availability: value, q: @query.presence, sort: @sort, direction: @direction),
-            class: "px-3 py-2 -mb-px text-sm font-medium border-b-2 transition-colors #{active ? "border-indigo-600 text-indigo-700" : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"}",
-            aria: { current: (active ? "page" : nil) } %>
+      <% nav.with_item(label,
+           href: media_assets_path(availability: value, q: @query.presence, sort: @sort, direction: @direction),
+           active: @availability == value) %>
     <% end %>
-  </nav>
-
-  <%# Search form — targets the media-assets-list turbo frame %>
-  <%= form_with url: media_assets_path,
-                method: :get,
-                data: { controller: "debounced-search",
-                        turbo_frame: "media-assets-list",
-                        turbo_action: "advance" },
-                class: "mb-4" do %>
-    <input type="hidden" name="sort" value="<%= @sort %>">
-    <input type="hidden" name="direction" value="<%= @direction %>">
-    <input type="hidden" name="availability" value="<%= @availability %>">
-    <div class="relative max-w-sm">
-      <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-        <svg class="h-4 w-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z"/>
-        </svg>
-      </div>
-      <input type="search"
-             name="q"
-             value="<%= @query %>"
-             placeholder="Search by filename…"
-             autocomplete="off"
-             data-action="input->debounced-search#search"
-             class="block w-full rounded-lg border border-gray-300 bg-white py-2 pl-9 pr-3 text-sm text-gray-900 placeholder-gray-400 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none">
-    </div>
   <% end %>
 
-  <%# Bulk action toolbar — hidden until assets are selected %>
-  <div data-bulk-select-target="actionBar"
-       class="hidden sticky top-4 z-20 mb-4 flex flex-wrap items-center gap-3 bg-white border border-gray-200 rounded-xl px-4 py-3 shadow-sm">
-    <span class="text-sm font-medium text-gray-700" data-bulk-select-target="countLabel">0 selected</span>
+  <%# Search form — targets the media-assets-list turbo frame %>
+  <%= ui_form_with url: media_assets_path,
+                   method: :get,
+                   data: { turbo_frame: "media-assets-list", turbo_action: "advance" },
+                   class: "mb-4 max-w-sm" do |f| %>
+    <%= hidden_field_tag :sort, @sort, id: nil %>
+    <%= hidden_field_tag :direction, @direction, id: nil %>
+    <%= hidden_field_tag :availability, @availability, id: nil %>
+    <%= f.search_field :q, value: @query, label: false, placeholder: "Search by filename…",
+                       autocomplete: "off", aria: { label: "Search by filename" },
+                       autosubmit: { delay: 300 }, wrapper: { class: "mb-0" } %>
+  <% end %>
 
-    <div class="ml-auto flex items-center gap-2">
+  <%# Selection and bulk actions: cl-bulk-select wraps the list and the bar, and the
+      form submits the checked ids[] to the archive / restore endpoint. %>
+  <%= form_with url: (@availability == "archived" ? bulk_unarchive_media_assets_path : bulk_archive_media_assets_path),
+                method: :patch,
+                data: { controller: "cl-bulk-select", turbo_frame: "_top" } do %>
+
+    <%= ui_bulk_action_bar label: "Media actions", noun: "asset", noun_plural: "assets", position: :top, class: "mb-4" do |bar| %>
       <% if @availability == "archived" %>
-        <%= form_with url: bulk_unarchive_media_assets_path, method: :patch,
-                      data: { action: "submit->bulk-select#injectIds", turbo_frame: "_top" } do %>
-          <button type="submit"
-                  class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors border border-indigo-200">
-            Restore
-          </button>
-        <% end %>
+        <% bar.with_action { ui_button "Restore", type: :submit, variant: :primary, outline: true, size: :sm } %>
       <% else %>
-        <%= form_with url: bulk_archive_media_assets_path, method: :patch,
-                      data: { action: "submit->bulk-select#injectIds", turbo_frame: "_top" } do %>
-          <button type="submit"
-                  class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium bg-gray-50 text-gray-700 hover:bg-gray-100 transition-colors border border-gray-300">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-            </svg>
-            Archive
-          </button>
-        <% end %>
+        <% bar.with_action { ui_button "Archive", type: :submit, variant: :secondary, outline: true, size: :sm } %>
       <% end %>
+    <% end %>
 
-      <button type="button"
-              data-action="click->bulk-select#deselectAll"
-              class="text-sm text-gray-400 hover:text-gray-600 ml-1 transition-colors">
-        Cancel
-      </button>
-    </div>
-  </div>
+    <%= turbo_frame_tag "media-assets-list",
+          data: { action: "turbo:frame-render->cl-bulk-select#clear turbo:frame-render->view-toggle#applyView" } do %>
 
-  <%= turbo_frame_tag "media-assets-list",
-        data: { action: "turbo:frame-render->bulk-select#resetSelection turbo:frame-render->view-toggle#applyView" } do %>
+      <% if @media_assets.empty? %>
+        <%= ui_empty_state title: (@availability == "available" ? "No unused media assets found." : "No media assets found.") %>
+      <% else %>
 
-    <% if @media_assets.empty? %>
-      <div class="text-center py-20 text-gray-400">
-        <%= @availability == "available" ? "No unused media assets found." : "No media assets found." %>
-      </div>
-    <% else %>
-
-      <%# ── Card view ──────────────────────────────────────────────────────── %>
-      <div data-view-toggle-target="cardView">
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          <% @media_assets.each do |asset| %>
-            <% availability = asset.availability(reserved_ids: @reserved_ids) %>
-            <div class="relative has-checked:ring-2 has-checked:ring-indigo-500 has-checked:ring-offset-1 rounded-xl">
-            <%# Selection checkbox — sibling of the link so click doesn't navigate %>
-            <label class="absolute top-3 left-3 z-10 cursor-pointer select-none">
-              <input type="checkbox"
-                     class="peer sr-only"
-                     value="<%= asset.id %>"
-                     aria-label="Select <%= asset.display_name %>"
-                     data-bulk-select-target="checkbox"
-                     data-action="change->bulk-select#toggle">
-              <span class="flex h-5 w-5 items-center justify-center rounded border-2 border-gray-300 bg-white shadow-sm
-                           peer-checked:border-indigo-600 peer-checked:bg-indigo-600 transition-colors">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="white" class="h-3 w-3">
-                  <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" />
-                </svg>
-              </span>
-            </label>
-            <%= link_to media_asset_path(asset), class: "h-full bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col hover:shadow-md hover:border-gray-300 transition-all duration-200 cursor-pointer #{"opacity-60" if availability == "archived"}", data: { turbo_frame: "_top" } do %>
-
-              <%# Media Preview Thumbnail %>
-              <% if asset.public_url? %>
-                <div class="aspect-video bg-gray-100 overflow-hidden">
-                  <% if asset.image? %>
-                    <%= image_tag asset.public_url,
-                        class: "w-full h-full object-cover",
-                        alt: decode_name(asset.external_name.presence || "Media asset") %>
-                  <% elsif asset.video? %>
-                    <video
-                      class="w-full h-full object-cover"
-                      preload="metadata"
-                      muted
-                    >
-                      <source src="<%= asset.public_url %>" type="<%= asset.mime_type || 'video/mp4' %>">
-                    </video>
+        <%# ── Card view ────────────────────────────────────────────────────── %>
+        <div data-view-toggle-target="cardView">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <% @media_assets.each do |asset| %>
+              <% availability = asset.availability(reserved_ids: @reserved_ids) %>
+              <%# data-turbo-frame="_top": the card link must leave the list frame. %>
+              <div class="relative has-checked:ring-2 has-checked:ring-primary has-checked:ring-offset-1 rounded-ui" data-turbo-frame="_top">
+                <%# Selection checkbox — it sits above the card's stretched link so a click doesn't navigate %>
+                <%= ui_selection_checkbox label: "Select #{asset.display_name}", value: asset.id,
+                      class: "absolute top-3 left-3 z-10" %>
+                <%= ui_card href: media_asset_path(asset), link_label: decode_name(asset.external_name.presence || asset.external_id),
+                      class: "h-full #{"opacity-60" if availability == "archived"}", body: false do |card| %>
+                  <% card.with_media(aspect: :video, class: "bg-surface-subtle") do %>
+                    <% if asset.public_url? %>
+                      <% if asset.image? %>
+                        <%= image_tag asset.public_url, alt: decode_name(asset.external_name.presence || "Media asset") %>
+                      <% elsif asset.video? %>
+                        <video preload="metadata" muted>
+                          <source src="<%= asset.public_url %>" type="<%= asset.mime_type || "video/mp4" %>">
+                        </video>
+                      <% end %>
+                    <% else %>
+                      <div class="h-full flex items-center justify-center"><%= mime_icon %></div>
+                    <% end %>
                   <% end %>
-                </div>
-              <% else %>
-                <div class="aspect-video bg-gray-100 flex items-center justify-center">
-                  <svg class="w-12 h-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                  </svg>
-                </div>
-              <% end %>
 
-              <div class="p-5 flex flex-col gap-4">
-                <%# Header %>
-                <div class="flex items-start justify-between gap-2">
-                  <p class="font-semibold text-gray-900 truncate flex-1">
-                    <%= decode_name(asset.external_name.presence || asset.external_id) %>
-                  </p>
-                  <div class="flex shrink-0 flex-col items-end gap-1">
-                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium <%= type_colors[asset.media_type] || 'bg-gray-100 text-gray-600' %> capitalize">
-                      <%= asset.media_type %>
-                    </span>
-                    <%= render StatusBadgeComponent.new(status: asset.status, kind: :media) %>
-                    <%= render "media_assets/availability_badge", availability: availability %>
+                  <div class="p-5 flex flex-col gap-4 flex-auto">
+                    <%# Header %>
+                    <div class="flex items-start justify-between gap-2">
+                      <p class="font-semibold text-body truncate flex-1">
+                        <%= decode_name(asset.external_name.presence || asset.external_id) %>
+                      </p>
+                      <div class="flex shrink-0 flex-col items-end gap-1">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium <%= type_colors[asset.media_type] || "bg-surface-subtle text-body-muted" %> capitalize">
+                          <%= asset.media_type %>
+                        </span>
+                        <%= render StatusBadgeComponent.new(status: asset.status, kind: :media) %>
+                        <%# The availability badge also labels archived cards, so the fade is not the only cue. %>
+                        <%= render "media_assets/availability_badge", availability: availability %>
+                      </div>
+                    </div>
+
+                    <%# Metadata grid %>
+                    <dl class="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
+                      <% if asset.width.present? && asset.height.present? %>
+                        <div>
+                          <dt class="text-body-muted uppercase tracking-wide">Dimensions</dt>
+                          <dd class="text-body"><%= asset.width %> × <%= asset.height %></dd>
+                        </div>
+                      <% end %>
+                      <% if asset.media_type == "video" && asset.duration_seconds.present? %>
+                        <div>
+                          <dt class="text-body-muted uppercase tracking-wide">Duration</dt>
+                          <dd class="text-body">
+                            <%
+                              mins = (asset.duration_seconds / 60).floor
+                              secs = (asset.duration_seconds % 60).round
+                            %>
+                            <%= mins > 0 ? "#{mins}m #{secs}s" : "#{secs}s" %>
+                          </dd>
+                        </div>
+                      <% end %>
+                      <% if asset.file_size.present? %>
+                        <div>
+                          <dt class="text-body-muted uppercase tracking-wide">File Size</dt>
+                          <dd class="text-body"><%= number_to_human_size(asset.file_size) %></dd>
+                        </div>
+                      <% end %>
+                      <% if asset.mime_type.present? %>
+                        <div>
+                          <dt class="text-body-muted uppercase tracking-wide">Format</dt>
+                          <dd class="text-body truncate"><%= asset.mime_type.split("/").last&.upcase %></dd>
+                        </div>
+                      <% end %>
+                      <div>
+                        <dt class="text-body-muted uppercase tracking-wide">First Seen</dt>
+                        <dd class="text-body"><%= asset.first_seen_at.strftime("%b %-d, %Y") %></dd>
+                      </div>
+                      <% if asset.last_processed_at.present? %>
+                        <div>
+                          <dt class="text-body-muted uppercase tracking-wide">Processed</dt>
+                          <dd class="text-body"><%= asset.last_processed_at.strftime("%b %-d, %Y") %></dd>
+                        </div>
+                      <% end %>
+                      <div>
+                        <dt class="text-body-muted uppercase tracking-wide">Posts</dt>
+                        <dd class="text-body font-semibold"><%= asset.planned_posts.size %></dd>
+                      </div>
+                    </dl>
+
+                    <p class="text-xs text-body-muted border-t border-border pt-3 mt-auto">
+                      Added <%= asset.created_at.strftime("%b %-d, %Y") %>
+                      <% if asset.published? %>
+                        · Published <%= asset.published_at.strftime("%b %-d, %Y") %>
+                      <% end %>
+                    </p>
                   </div>
-                </div>
-
-                <%# Metadata grid %>
-                <dl class="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
-                  <% if asset.width.present? && asset.height.present? %>
-                    <div>
-                      <dt class="text-gray-400 uppercase tracking-wide">Dimensions</dt>
-                      <dd class="text-gray-700"><%= asset.width %> × <%= asset.height %></dd>
-                    </div>
-                  <% end %>
-                  <% if asset.media_type == "video" && asset.duration_seconds.present? %>
-                    <div>
-                      <dt class="text-gray-400 uppercase tracking-wide">Duration</dt>
-                      <dd class="text-gray-700">
-                        <%
-                          mins = (asset.duration_seconds / 60).floor
-                          secs = (asset.duration_seconds % 60).round
-                        %>
-                        <%= mins > 0 ? "#{mins}m #{secs}s" : "#{secs}s" %>
-                      </dd>
-                    </div>
-                  <% end %>
-                  <% if asset.file_size.present? %>
-                    <div>
-                      <dt class="text-gray-400 uppercase tracking-wide">File Size</dt>
-                      <dd class="text-gray-700"><%= number_to_human_size(asset.file_size) %></dd>
-                    </div>
-                  <% end %>
-                  <% if asset.mime_type.present? %>
-                    <div>
-                      <dt class="text-gray-400 uppercase tracking-wide">Format</dt>
-                      <dd class="text-gray-700 truncate"><%= asset.mime_type.split("/").last&.upcase %></dd>
-                    </div>
-                  <% end %>
-                  <div>
-                    <dt class="text-gray-400 uppercase tracking-wide">First Seen</dt>
-                    <dd class="text-gray-700"><%= asset.first_seen_at.strftime("%b %-d, %Y") %></dd>
-                  </div>
-                  <% if asset.last_processed_at.present? %>
-                    <div>
-                      <dt class="text-gray-400 uppercase tracking-wide">Processed</dt>
-                      <dd class="text-gray-700"><%= asset.last_processed_at.strftime("%b %-d, %Y") %></dd>
-                    </div>
-                  <% end %>
-                  <div>
-                    <dt class="text-gray-400 uppercase tracking-wide">Posts</dt>
-                    <dd class="text-gray-700 font-semibold"><%= asset.planned_posts.size %></dd>
-                  </div>
-                </dl>
-
-                <p class="text-xs text-gray-400 border-t border-gray-100 pt-3 mt-auto">
-                  Added <%= asset.created_at.strftime("%b %-d, %Y") %>
-                  <% if asset.published? %>
-                    · Published <%= asset.published_at.strftime("%b %-d, %Y") %>
-                  <% end %>
-                </p>
+                <% end %>
               </div>
             <% end %>
-            </div>
-          <% end %>
+          </div>
         </div>
-      </div>
 
-      <%# ── Table view ─────────────────────────────────────────────────────── %>
-      <div data-view-toggle-target="tableView" class="hidden">
-        <% sort_base = { q: @query, availability: @availability } %>
-        <% sort_data = { turbo_frame: "media-assets-list", turbo_action: "advance" } %>
-        <div class="rounded-xl border border-gray-200 bg-white shadow-sm overflow-x-auto">
-          <table class="min-w-full divide-y divide-gray-200 text-sm">
-            <thead class="bg-gray-50">
+        <%# ── Table view ───────────────────────────────────────────────────── %>
+        <div data-view-toggle-target="tableView" class="hidden">
+          <%= ui_table hover: true, responsive: true do |table| %>
+            <% table.with_caption(visible: false) { "Media assets" } %>
+            <thead>
               <tr>
-                <th class="w-10 px-4 py-3"><span class="sr-only">Select</span></th>
-                <th class="w-14 px-4 py-3"></th>
-                <th class="px-4 py-3 text-left">
-                  <%= sort_link_to "Name", "external_name",
-                      current_sort: @sort, current_direction: @direction,
-                      base_params: sort_base, data: sort_data,
-                      class: "text-xs font-medium uppercase tracking-wide" %>
-                </th>
-                <th class="px-4 py-3 text-left">
-                  <%= sort_link_to "Type", "media_type",
-                      current_sort: @sort, current_direction: @direction,
-                      base_params: sort_base, data: sort_data,
-                      class: "text-xs font-medium uppercase tracking-wide" %>
-                </th>
-                <th class="px-4 py-3 text-left">
-                  <%= sort_link_to "Status", "status",
-                      current_sort: @sort, current_direction: @direction,
-                      base_params: sort_base, data: sort_data,
-                      class: "text-xs font-medium uppercase tracking-wide" %>
-                </th>
-                <th class="px-4 py-3 text-left">
-                  <%= sort_link_to "Published", "published_at",
-                      current_sort: @sort, current_direction: @direction,
-                      base_params: sort_base, data: sort_data,
-                      class: "text-xs font-medium uppercase tracking-wide" %>
-                </th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Dimensions</th>
-                <th class="px-4 py-3 text-left">
-                  <%= sort_link_to "File Size", "file_size",
-                      current_sort: @sort, current_direction: @direction,
-                      base_params: sort_base, data: sort_data,
-                      class: "text-xs font-medium uppercase tracking-wide" %>
-                </th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Posts</th>
-                <th class="px-4 py-3 text-left whitespace-nowrap">
-                  <%= sort_link_to "First Seen", "first_seen_at",
-                      current_sort: @sort, current_direction: @direction,
-                      base_params: sort_base, data: sort_data,
-                      class: "text-xs font-medium uppercase tracking-wide" %>
-                </th>
-                <th class="w-10 px-4 py-3"></th>
+                <th class="w-10"><%= ui_select_all_checkbox label: "Select all media assets" %></th>
+                <th class="w-14"><span class="sr-only">Preview</span></th>
+                <%= sort_header.call("Name", "external_name") %>
+                <%= sort_header.call("Type", "media_type") %>
+                <%= sort_header.call("Status", "status") %>
+                <%= sort_header.call("Published", "published_at") %>
+                <%= ui_table_header "Dimensions" %>
+                <%= sort_header.call("File Size", "file_size") %>
+                <%= ui_table_header "Posts" %>
+                <%= sort_header.call("First Seen", "first_seen_at", class: "whitespace-nowrap") %>
+                <th class="w-10"><span class="sr-only">View</span></th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-gray-100">
+            <tbody>
               <% @media_assets.each do |asset| %>
                 <% availability = asset.availability(reserved_ids: @reserved_ids) %>
-                <tr class="hover:bg-gray-50 transition-colors <%= "opacity-60" if availability == "archived" %>">
-                  <td class="px-4 py-3">
-                    <input type="checkbox"
-                           value="<%= asset.id %>"
-                           aria-label="Select <%= asset.display_name %>"
-                           data-bulk-select-target="checkbox"
-                           data-action="change->bulk-select#toggle"
-                           class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                <tr class="<%= "opacity-60" if availability == "archived" %>">
+                  <td>
+                    <%= ui_selection_checkbox label: "Select #{asset.display_name}", value: asset.id %>
                   </td>
-                  <td class="px-4 py-3">
-                    <div class="h-10 w-10 rounded-md overflow-hidden bg-gray-100 flex-shrink-0">
+                  <td>
+                    <div class="h-10 w-10 rounded-ui-sm overflow-hidden bg-surface-subtle flex-shrink-0">
                       <% if asset.public_url? %>
                         <% if asset.image? %>
-                          <%= image_tag asset.public_url,
-                              class: "h-10 w-10 object-cover",
-                              alt: "" %>
+                          <%= image_tag asset.public_url, class: "h-10 w-10 object-cover", alt: "" %>
                         <% elsif asset.video? %>
                           <video class="h-10 w-10 object-cover" preload="metadata" muted>
-                            <source src="<%= asset.public_url %>" type="<%= asset.mime_type || 'video/mp4' %>">
+                            <source src="<%= asset.public_url %>" type="<%= asset.mime_type || "video/mp4" %>">
                           </video>
                         <% end %>
                       <% else %>
-                        <div class="h-10 w-10 flex items-center justify-center">
-                          <svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="h-10 w-10 flex items-center justify-center text-body-muted opacity-50">
+                          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                           </svg>
                         </div>
                       <% end %>
                     </div>
                   </td>
-                  <td class="px-4 py-3 max-w-xs">
-                    <span class="text-gray-900 font-medium truncate block">
+                  <td class="max-w-xs">
+                    <span class="text-body font-medium truncate block">
                       <%= decode_name(asset.external_name.presence || asset.external_id) %>
                     </span>
                   </td>
-                  <td class="px-4 py-3">
-                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium <%= type_colors[asset.media_type] || 'bg-gray-100 text-gray-600' %> capitalize">
+                  <td>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium <%= type_colors[asset.media_type] || "bg-surface-subtle text-body-muted" %> capitalize">
                       <%= asset.media_type %>
                     </span>
                   </td>
-                  <td class="px-4 py-3">
+                  <td>
                     <div class="flex flex-wrap gap-1">
                       <%= render StatusBadgeComponent.new(status: asset.status, kind: :media) %>
                       <%= render "media_assets/availability_badge", availability: availability %>
                     </div>
                   </td>
-                  <td class="px-4 py-3 text-gray-600 whitespace-nowrap">
+                  <td class="text-body-muted whitespace-nowrap">
                     <%= asset.published? ? asset.published_at.strftime("%b %-d, %Y") : "—" %>
                   </td>
-                  <td class="px-4 py-3 text-gray-600 whitespace-nowrap">
+                  <td class="text-body-muted whitespace-nowrap">
                     <% if asset.width.present? && asset.height.present? %>
                       <%= asset.width %> × <%= asset.height %>
                     <% else %>
-                      <span class="text-gray-400">—</span>
+                      —
                     <% end %>
                   </td>
-                  <td class="px-4 py-3 text-gray-600 whitespace-nowrap">
+                  <td class="text-body-muted whitespace-nowrap">
                     <%= asset.file_size.present? ? number_to_human_size(asset.file_size) : "—" %>
                   </td>
-                  <td class="px-4 py-3 text-gray-700 font-semibold text-center">
+                  <td class="text-body font-semibold text-center">
                     <%= asset.planned_posts.size %>
                   </td>
-                  <td class="px-4 py-3 text-gray-600 whitespace-nowrap">
+                  <td class="text-body-muted whitespace-nowrap">
                     <%= asset.first_seen_at.strftime("%b %-d, %Y") %>
                   </td>
-                  <td class="px-4 py-3">
-                    <%= link_to media_asset_path(asset), class: "text-gray-400 hover:text-indigo-600 transition-colors", data: { turbo_frame: "_top" } do %>
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <td>
+                    <%= link_to media_asset_path(asset), class: "text-body-muted hover:text-primary transition-colors", data: { turbo_frame: "_top" },
+                          aria: { label: "View #{asset.display_name}" } do %>
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
                       </svg>
                     <% end %>
@@ -398,14 +299,14 @@
                 </tr>
               <% end %>
             </tbody>
-          </table>
+          <% end %>
         </div>
-      </div>
+
+      <% end %>
+
+      <%= ui_pagy @pagy, frame: "media-assets-list" %>
 
     <% end %>
-
-    <%= ui_pagy @pagy, frame: "media-assets-list" %>
-
   <% end %>
 
 </div>
