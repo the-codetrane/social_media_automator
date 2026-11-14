@@ -82,13 +82,21 @@ class PlannedPostsController < ApplicationController
     render json: { error: e.message }, status: :bad_gateway
   end
 
-  # JSON — powers the collaborator typeahead on the edit form.
+  # Powers the collaborator combobox on the edit form: a turbo-frame of
+  # ui_combobox_option suggestions (the frame id comes from the Turbo-Frame
+  # header), or JSON for API-style callers.
   # Instagram has no username search endpoint, so suggestions come from the
   # usernames this user has collaborated with before.
   def collaborator_search
-    render json: {
-      collaborators: PlannedPost.collaborator_suggestions(@planned_post.user, query: params[:q])
-    }
+    suggestions = PlannedPost.collaborator_suggestions(@planned_post.user, query: params[:q])
+
+    respond_to do |format|
+      format.html do
+        render partial: "planned_posts/collaborator_options",
+               locals: { suggestions: suggestions, frame_id: request.headers["Turbo-Frame"].presence || "collaborator-suggestions" }
+      end
+      format.json { render json: { collaborators: suggestions } }
+    end
   end
 
   def bulk_reschedule
