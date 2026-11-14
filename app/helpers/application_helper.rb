@@ -39,6 +39,19 @@ module ApplicationHelper
     end
   end
 
+  # button_to drawn as a library ButtonComponent: a one-button form for actions that change
+  # state. params: become hidden fields, confirm: opens the styled confirm, and the rest
+  # (variant:, outline:, size:, disabled:, data: ...) go to the button.
+  #
+  #   <%= ui_button_to "Disconnect", admin_youtube_disconnect_path, method: :delete,
+  #                    variant: :danger, outline: true, confirm: "Disconnect YouTube?" %>
+  def ui_button_to(label = nil, url, method: :post, params: {}, confirm: nil, **button_options, &block)
+    form_with(url: url, method: method, class: "contents", data: { turbo_confirm: confirm }.compact) do
+      fields = params.map { |name, value| hidden_field_tag(name, value, id: nil) }
+      safe_join(fields + [ ui_button(label, type: :submit, **button_options, &block) ])
+    end
+  end
+
   private
 
   # Page numbers around the current page, with :gap where pages are skipped.

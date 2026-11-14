@@ -47,4 +47,21 @@ class ApplicationHelperTest < ActionView::TestCase
     assert_includes html.at_css("nav")["data-turbo-frame"], "list"
     assert_includes html.text, "Showing 13–24 of 100"
   end
+
+  test "renders a one-button form with method, params and a confirm" do
+    render html: ui_button_to("Disconnect", "/admin/tiktok/disconnect", method: :delete,
+                              params: { mode: "sandbox" }, confirm: "Sure?", variant: :danger)
+
+    assert_select "form[action='/admin/tiktok/disconnect'][data-turbo-confirm='Sure?']" do
+      assert_select "input[name=_method][value=delete]"
+      assert_select "input[type=hidden][name=mode][value=sandbox]"
+      assert_select "button[type=submit]", text: "Disconnect"
+    end
+  end
+
+  test "takes the label from a block and passes disabled to the button" do
+    render html: ui_button_to("/admin/tiktok/mode", disabled: true) { "Production" }
+
+    assert_select "form:not([data-turbo-confirm]) button[type=submit][disabled]", text: "Production"
+  end
 end

@@ -1,0 +1,22 @@
+<%= ui_card class: "max-w-lg" do %>
+  <div class="flex items-center gap-3">
+    <% if logo? %>
+      <div class="size-10 shrink-0 [&>img]:size-10 [&>svg]:size-10" aria-hidden="true"><%= logo %></div>
+    <% end %>
+    <div class="min-w-0">
+      <h2 class="font-semibold text-body"><%= @name %></h2>
+      <% if @connected && @account %>
+        <p class="text-sm text-body-muted truncate"><%= @account %></p>
+      <% end %>
+    </div>
+    <%= ui_badge status, variant: status_variant, pill: true, class: "ml-auto shrink-0" %>
+  </div>
+
+  <% if details? %>
+    <div class="mt-6 pt-6 border-t border-border"><%= details %></div>
+  <% end %>
+
+  <% if content? %>
+    <div class="mt-6 flex flex-col gap-3"><%= content %></div>
+  <% end %>
+<% end %>
