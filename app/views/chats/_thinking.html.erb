@@ -1,10 +1,6 @@
 <div id="thinking" class="flex justify-start">
-  <div class="bg-gray-100 text-gray-600 rounded-2xl rounded-bl-sm px-4 py-3 text-sm flex items-center gap-2">
-    <span class="inline-flex gap-1">
-      <span class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0ms;"></span>
-      <span class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 150ms;"></span>
-      <span class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 300ms;"></span>
-    </span>
-    <span class="text-xs italic">thinking…</span>
+  <div class="bg-surface-subtle text-body-muted rounded-2xl rounded-bl-sm px-4 py-3 text-sm flex items-center gap-2">
+    <%= ui_spinner size: :sm, label: "Thinking..." %>
+    <span class="text-xs italic" aria-hidden="true">Thinking...</span>
   </div>
 </div>
