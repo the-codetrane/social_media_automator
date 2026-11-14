@@ -36,7 +36,7 @@ class MediaAssetsControllerTest < ActionDispatch::IntegrationTest
   test "index shows status badges" do
     sign_in_as(@user)
     get media_assets_path(availability: "all")
-    assert_match "processed", response.body
+    assert_match "Processed", response.body
   end
 
   test "index shows file size" do
@@ -245,12 +245,21 @@ class MediaAssetsControllerTest < ActionDispatch::IntegrationTest
       key: "Gigs/abc123", filename: "a.jpg", byte_size: 10, checksum: "x", content_type: "image/jpeg"
     )
     sign_in_as(@user)
-    get new_media_asset_path
+    get new_media_asset_path, headers: { "Turbo-Frame" => "media-upload-modal" }
     assert_response :success
     assert_select "turbo-frame#media-upload-modal form[data-controller=media-upload]"
     assert_select "select[name='media_asset[folder]'] option[value=Gigs]"
     assert_select "select[name='media_asset[folder]'] option[value=__new__]"
     assert_select "input[type=file][name='media_asset[files][]'][multiple][accept='image/*,video/*']"
+  end
+
+  test "new visited directly renders a page header and card instead of the bare modal form" do
+    sign_in_as(@user)
+    get new_media_asset_path
+    assert_response :success
+    assert_select "turbo-frame#media-upload-modal", 0
+    assert_select "h1", text: "Upload Media"
+    assert_select "form[data-controller=media-upload]"
   end
 
   test "create builds a media asset per uploaded blob and enqueues analysis" do

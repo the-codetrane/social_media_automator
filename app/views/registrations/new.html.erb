@@ -1,73 +1,26 @@
-<div class="min-h-screen bg-gray-50 flex flex-col items-center justify-center py-12 sm:px-6 lg:px-8">
+<div class="min-h-screen bg-surface-subtle flex flex-col items-center justify-center py-12 sm:px-6 lg:px-8">
   <div class="mx-auto w-full max-w-md">
-    <h1 class="text-center text-3xl font-bold tracking-tight text-gray-900">Create your account</h1>
-    <p class="mt-2 text-center text-sm text-gray-500">
+    <h1 class="text-center text-3xl font-bold tracking-tight text-body">Create your account</h1>
+    <p class="mt-2 text-center text-sm text-body-muted">
       Already have an account?
-      <%= link_to "Sign in", new_session_path, class: "font-medium text-indigo-600 hover:text-indigo-500" %>
+      <%= link_to "Sign in", new_session_path, class: "font-medium text-primary hover:text-link-hover" %>
     </p>
   </div>
 
   <div class="mt-8 mx-auto w-full max-w-md">
-    <div class="bg-blue-50 py-8 px-4 shadow rounded-lg sm:px-10">
+    <div class="bg-surface py-8 px-4 shadow rounded-lg sm:px-10">
 
-      <% if @user.errors.any? %>
-        <div class="mb-6 rounded-md bg-red-50 border border-red-200 p-4">
-          <p class="text-sm font-medium text-red-800"><%= @user.errors.full_messages.to_sentence %></p>
-        </div>
-      <% end %>
-
-      <%= form_with model: @user, url: registration_path, class: "space-y-6" do |form| %>
-        <div>
-          <%= form.label :name, "Full name", class: "block text-sm font-medium text-gray-700" %>
-          <div class="mt-1">
-            <%= form.text_field :name,
-              required: true,
-              autofocus: true,
-              autocomplete: "name",
-              placeholder: "Enter your full name",
-              class: "block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-400 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm" %>
-          </div>
-        </div>
-
-        <div>
-          <%= form.label :email_address, "Email address", class: "block text-sm font-medium text-gray-700" %>
-          <div class="mt-1">
-            <%= form.email_field :email_address,
-              required: true,
-              autocomplete: "username",
-              placeholder: "Enter your email address",
-              class: "block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-400 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm" %>
-          </div>
-        </div>
-
-        <div>
-          <%= form.label :password, "Password", class: "block text-sm font-medium text-gray-700" %>
-          <div class="mt-1">
-            <%= form.password_field :password,
-              required: true,
-              autocomplete: "new-password",
-              placeholder: "Create a password",
-              maxlength: 72,
-              class: "block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-400 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm" %>
-          </div>
-        </div>
-
-        <div>
-          <%= form.label :password_confirmation, "Confirm password", class: "block text-sm font-medium text-gray-700" %>
-          <div class="mt-1">
-            <%= form.password_field :password_confirmation,
-              required: true,
-              autocomplete: "new-password",
-              placeholder: "Confirm your password",
-              maxlength: 72,
-              class: "block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-400 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm" %>
-          </div>
-        </div>
-
-        <div>
-          <%= form.submit "Create account",
-            class: "flex w-full justify-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 cursor-pointer transition-colors duration-150" %>
-        </div>
+      <%= ui_form_with model: @user, url: registration_path, class: "space-y-6" do |form| %>
+        <%= form.error_summary %>
+        <%= form.text_field :name, label: "Full name", required: true, autofocus: true,
+              autocomplete: "name", placeholder: "Enter your full name" %>
+        <%= form.email_field :email_address, label: "Email address", required: true,
+              autocomplete: "username", placeholder: "Enter your email address" %>
+        <%= form.password_field :password, label: "Password", required: true, autocomplete: "new-password",
+              placeholder: "Create a password", maxlength: 72 %>
+        <%= form.password_field :password_confirmation, label: "Confirm password", required: true,
+              autocomplete: "new-password", placeholder: "Confirm your password", maxlength: 72 %>
+        <%= form.submit "Create account", class: "w-full" %>
       <% end %>
 
     </div>

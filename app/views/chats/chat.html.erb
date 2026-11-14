@@ -6,29 +6,25 @@
 
   <%# Main chat column %>
   <div class="flex-1 min-w-0">
-    <div class="flex items-center justify-between mb-4">
-      <div>
-        <h1 class="text-xl sm:text-2xl font-bold text-gray-900">Chat</h1>
-        <p class="text-xs sm:text-sm text-gray-500 mt-0.5">
-          <span class="font-medium text-gray-700"><%= @chat.model&.model_id || RubyLLM.config.default_model %></span>
-          &middot; session #<%= @chat.id %>
-        </p>
-      </div>
-      <%= button_to "Clear",
-            destroy_chat_path,
-            method: :delete,
-            form: { data: { turbo_confirm: "Clear this conversation and start fresh?" } },
-            class: "px-3 py-2 rounded-md text-sm font-medium bg-white border border-gray-300 text-gray-700 hover:bg-red-50 hover:border-red-300 hover:text-red-700 transition-colors" %>
-    </div>
+    <%= ui_page_header title: "Chat", class: "mb-4" do |header| %>
+      <% header.with_actions do %>
+        <%= form_with url: destroy_chat_path, method: :delete,
+              data: { turbo_confirm: "Clear this conversation and start fresh?" } do %>
+          <%= ui_button "Clear", type: :submit, outline: true, variant: :danger, size: :sm %>
+        <% end %>
+      <% end %>
+      <span class="font-medium text-body"><%= @chat.model&.model_id || RubyLLM.config.default_model %></span>
+      &middot; session #<%= @chat.id %>
+    <% end %>
 
     <div data-controller="chat"
-         class="bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col"
+         class="bg-surface rounded-xl shadow-sm border border-border flex flex-col"
          style="height: 65dvh; min-height: 380px;">
       <div id="chat-messages"
            data-chat-target="log"
            class="flex-1 overflow-y-auto px-4 sm:px-5 py-5 space-y-3">
         <% if @messages.empty? %>
-          <div id="chat-empty" class="text-center text-sm text-gray-400 py-12">
+          <div id="chat-empty" class="text-center text-sm text-body-muted py-12">
             Say something to get started.
           </div>
         <% else %>
@@ -36,60 +32,61 @@
         <% end %>
       </div>
 
-      <div class="border-t border-gray-200 px-3 sm:px-4 py-3 bg-gray-50 rounded-b-xl">
+      <div class="border-t border-border px-3 sm:px-4 py-3 bg-surface-subtle rounded-b-xl">
         <%= render "chats/form", chat: @chat %>
       </div>
     </div>
   </div>
 
+  <%# TODO(L4): model panel -> ui_radio_card_group + ui_collapse/ui_offcanvas; skipped because collapse_controller and the per-model button_to POST (model_id param) are relied on. %>
   <%# Model selector — side panel on desktop, collapsible section on mobile %>
-  <div class="w-full lg:w-64 lg:flex-shrink-0 lg:mt-16 lg:border-l lg:border-gray-200 lg:pl-5" data-controller="collapse">
+  <div class="w-full lg:w-64 lg:flex-shrink-0 lg:mt-16 lg:border-l lg:border-border lg:pl-5" data-controller="collapse">
     <button type="button"
             data-action="click->collapse#toggle"
-            class="lg:hidden w-full flex items-center justify-between px-4 py-3 bg-white rounded-xl border border-gray-200 shadow-sm text-sm font-medium text-gray-700">
-      <span>Change Model &mdash; <span class="text-indigo-600"><%= @chat.model&.model_id&.split("-")&.first(3)&.join("-") || "default" %></span></span>
-      <svg class="w-4 h-4 text-gray-400 transition-transform duration-200" data-collapse-target="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            class="lg:hidden w-full flex items-center justify-between px-4 py-3 bg-surface rounded-xl border border-border shadow-sm text-sm font-medium text-body">
+      <span>Change Model &mdash; <span class="text-primary"><%= @chat.model&.model_id&.split("-")&.first(3)&.join("-") || "default" %></span></span>
+      <svg class="w-4 h-4 text-body-muted transition-transform duration-200" data-collapse-target="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
       </svg>
     </button>
 
     <div class="hidden lg:block mt-2 lg:mt-0" data-collapse-target="content">
-      <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden lg:overflow-y-auto"
+      <div class="bg-surface rounded-xl shadow-sm border border-border overflow-hidden lg:overflow-y-auto"
            style="max-height: calc(100dvh - 14rem);">
-        <div class="px-4 py-3 border-b border-gray-100 bg-gray-50 hidden lg:block">
-          <h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Model</h2>
+        <div class="px-4 py-3 border-b border-border bg-surface-subtle hidden lg:block">
+          <h2 class="text-xs font-semibold text-body-muted">Model</h2>
         </div>
-        <div class="divide-y divide-gray-100">
+        <div class="divide-y divide-border">
           <% current_model_id = @chat.model&.model_id || RubyLLM.config.default_model %>
           <% available_models.each do |m| %>
             <% selected = current_model_id == m[:id] %>
             <%= button_to chat_model_path,
                   params: { model_id: m[:id] },
                   method: :post,
-                  class: "w-full text-left p-4 transition-colors #{selected ? 'bg-indigo-50' : 'bg-white hover:bg-gray-50'}" do %>
+                  class: "w-full text-left p-4 transition-colors #{selected ? 'bg-primary-subtle' : 'bg-surface hover:bg-surface-subtle'}" do %>
               <div class="flex items-center justify-between mb-0.5">
-                <span class="text-sm font-semibold <%= selected ? 'text-indigo-700' : 'text-gray-900' %>">
+                <span class="text-sm font-semibold <%= selected ? 'text-primary-emphasis' : 'text-body' %>">
                   <%= m[:display_name] %>
                 </span>
                 <% if selected %>
-                  <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-700">
+                  <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-primary-subtle text-primary-emphasis">
                     Active
                   </span>
                 <% end %>
               </div>
-              <p class="text-xs text-gray-400 mb-2"><%= m[:tagline] %></p>
-              <p class="text-xs text-gray-600 mb-3 leading-relaxed"><%= m[:description] %></p>
+              <p class="text-xs text-body-muted mb-2"><%= m[:tagline] %></p>
+              <p class="text-xs text-body-muted mb-3 leading-relaxed"><%= m[:description] %></p>
               <div class="space-y-1">
                 <% m[:strengths].each do |s| %>
                   <div class="flex items-start gap-1.5">
-                    <span class="text-green-500 text-xs mt-0.5 flex-shrink-0">+</span>
-                    <span class="text-xs text-gray-600"><%= s %></span>
+                    <span class="text-success text-xs mt-0.5 flex-shrink-0">+</span>
+                    <span class="text-xs text-body-muted"><%= s %></span>
                   </div>
                 <% end %>
                 <% m[:limitations].each do |l| %>
                   <div class="flex items-start gap-1.5">
-                    <span class="text-red-400 text-xs mt-0.5 flex-shrink-0">&minus;</span>
-                    <span class="text-xs text-gray-500"><%= l %></span>
+                    <span class="text-danger text-xs mt-0.5 flex-shrink-0">&minus;</span>
+                    <span class="text-xs text-body-muted"><%= l %></span>
                   </div>
                 <% end %>
               </div>

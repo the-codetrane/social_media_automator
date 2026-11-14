@@ -1,59 +1,25 @@
 <% content_for :title, "Admin — Instagram" %>
+<% user = Current.user %>
 
-<div class="flex items-center justify-between mb-6">
-  <div>
-    <h1 class="text-2xl font-bold text-gray-900">Instagram Connection</h1>
-    <p class="text-sm text-gray-500 mt-1">Authorise the app to publish posts to your Instagram Business Account.</p>
-  </div>
-  <%= link_to "← Admin", admin_users_path, class: "text-sm text-indigo-600 hover:text-indigo-800" %>
-</div>
+<%= ui_page_header title: "Instagram Connection",
+                   subtitle: "Authorise the app to publish posts to your Instagram Business Account.",
+                   back: { href: admin_users_path, label: "Admin" }, class: "mb-6" %>
 
-<% if flash[:notice] %>
-  <div class="mb-6 px-4 py-3 rounded-lg bg-green-50 text-green-800 text-sm"><%= flash[:notice] %></div>
-<% end %>
-<% if flash[:alert] %>
-  <div class="mb-6 px-4 py-3 rounded-lg bg-red-50 text-red-800 text-sm"><%= flash[:alert] %></div>
-<% end %>
+<%= render IntegrationCardComponent.new(name: "Instagram Account", connected: user&.instagram_connected?,
+                                        account: ("@#{user.instagram_username}" if user&.instagram_username.present?)) do |card| %>
+  <% card.with_logo { image_tag "instagram.svg", alt: "" } %>
 
-<div class="max-w-lg bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-  <div class="flex items-center gap-3 mb-6">
-    <img src="https://upload.wikimedia.org/wikipedia/commons/a/a5/Instagram_icon.png"
-         alt="Instagram logo" class="h-10 w-10">
-    <div>
-      <p class="font-semibold text-gray-900">Instagram Account</p>
-      <% if Current.user&.instagram_connected? %>
-        <p class="text-sm text-green-600 font-medium">
-          Connected<% if Current.user.instagram_username.present? %> — @<%= Current.user.instagram_username %><% end %>
-        </p>
-      <% else %>
-        <p class="text-sm text-gray-400">Not connected</p>
-      <% end %>
-    </div>
-  </div>
-
-  <% if Current.user&.instagram_connected? %>
-    <div class="flex flex-col gap-3">
-      <% if Current.user.instagram_token_expiring? %>
-        <%= button_to admin_instagram_refresh_token_path,
-              class: "inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-yellow-500 text-white text-sm font-medium hover:bg-yellow-600 transition-colors" do %>
-          Refresh Token (expires soon)
-        <% end %>
-      <% end %>
-      <%= link_to @auth_url,
-            class: "inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors" do %>
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-        </svg>
-        Reconnect / switch account
-      <% end %>
-      <%= button_to "Disconnect", admin_instagram_disconnect_path, method: :delete,
-            data: { turbo_confirm: "Disconnect Instagram? Scheduled posts will fail until you reconnect." },
-            class: "inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-red-50 text-red-700 text-sm font-medium hover:bg-red-100 transition-colors" %>
-    </div>
-  <% else %>
-    <%= link_to @auth_url,
-          class: "inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 text-white font-medium hover:opacity-90 transition-opacity" do %>
-      Connect Instagram Account
+  <% if user&.instagram_connected? %>
+    <% if user.instagram_token_expiring? %>
+      <%= ui_button_to "Refresh token (expires soon)", admin_instagram_refresh_token_path, variant: :warning %>
     <% end %>
+    <%= ui_button href: @auth_url, variant: :secondary, outline: true do %>
+      <%= render "admin/shared/reconnect_icon" %>
+      Reconnect / switch account
+    <% end %>
+    <%= ui_button_to "Disconnect", admin_instagram_disconnect_path, method: :delete, variant: :danger, outline: true,
+                     confirm: "Disconnect Instagram? Scheduled posts will fail until you reconnect." %>
+  <% else %>
+    <%= ui_button "Connect Instagram account", href: @auth_url, variant: :primary %>
   <% end %>
-</div>
+<% end %>

@@ -44,7 +44,7 @@ class RegistrationsControllerTest < ActionDispatch::IntegrationTest
     end
 
     assert_response :unprocessable_entity
-    assert_select "div.bg-red-50"
+    assert_select "[role=alert]"
   end
 
   test "create with duplicate email renders form with errors" do
@@ -62,7 +62,7 @@ class RegistrationsControllerTest < ActionDispatch::IntegrationTest
     end
 
     assert_response :unprocessable_entity
-    assert_select "div.bg-red-50"
+    assert_select "[role=alert]"
   end
 
   test "create with mismatched passwords renders form with errors" do

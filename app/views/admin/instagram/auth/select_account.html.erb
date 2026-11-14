@@ -1,51 +1,39 @@
 <% content_for :title, "Admin — Choose Instagram Account" %>
 
-<div class="flex items-center justify-between mb-6">
-  <h1 class="text-2xl font-bold text-gray-900">Choose an Instagram Account</h1>
-  <%= link_to "← Back", admin_instagram_connect_path, class: "text-sm text-indigo-600 hover:text-indigo-800" %>
-</div>
+<%= ui_page_header title: "Choose an Instagram Account",
+                   subtitle: "Select the Instagram Business or Creator account you want to connect.",
+                   back: { href: admin_instagram_connect_path, label: "Instagram connection" }, class: "mb-6" %>
 
-<p class="text-gray-500 mb-6">
-  Select the Instagram Business or Creator account you want to connect.
-</p>
-
-<div class="max-w-lg bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+<%= ui_card class: "max-w-lg" do %>
   <% if @ig_accounts.empty? %>
-    <div class="rounded-lg bg-yellow-50 border border-yellow-200 p-4 text-yellow-800 text-sm">
+    <%= ui_alert variant: :warning, class: "text-sm" do %>
       <strong>No Instagram Business Accounts found.</strong><br>
       Make sure your Instagram account is set to <strong>Business</strong> or <strong>Creator</strong>
       and is linked to a Facebook Page you manage.
-    </div>
-    <%= link_to "← Try again", admin_instagram_connect_path,
-          class: "mt-4 inline-block text-sm text-gray-500 hover:underline" %>
+    <% end %>
+    <%= ui_button "Try again", href: admin_instagram_connect_path, variant: :secondary, outline: true %>
   <% else %>
-    <ul class="divide-y divide-gray-100">
+    <ul class="divide-y divide-border">
       <% @ig_accounts.each do |account| %>
         <li class="py-3 flex items-center justify-between gap-4">
           <div class="flex items-center gap-3 min-w-0">
             <% if account[:profile_picture_url].present? %>
-              <img src="<%= account[:profile_picture_url] %>"
-                   alt="<%= account[:username] %>"
-                   class="h-10 w-10 rounded-full object-cover shrink-0">
+              <img src="<%= account[:profile_picture_url] %>" alt="" class="size-10 rounded-full object-cover shrink-0">
             <% else %>
-              <div class="h-10 w-10 rounded-full bg-gradient-to-tr from-purple-400 to-pink-400 flex items-center justify-center text-white font-bold text-sm shrink-0">
-                <%= account[:username].first.upcase %>
-              </div>
+              <%= ui_avatar initials: account[:username].first.upcase, variant: :primary %>
             <% end %>
             <div class="min-w-0">
-              <p class="font-medium text-gray-800 truncate">@<%= account[:username] %></p>
+              <p class="font-medium text-body truncate">@<%= account[:username] %></p>
               <% if account[:page_name].present? %>
-                <p class="text-xs text-gray-500 truncate"><%= account[:page_name] %> (Facebook Page)</p>
+                <p class="text-xs text-body-muted truncate"><%= account[:page_name] %> (Facebook Page)</p>
               <% end %>
             </div>
           </div>
 
-          <%= button_to "Connect",
-                admin_instagram_select_account_path,
-                params: { ig_user_id: account[:ig_user_id] },
-                class: "shrink-0 px-4 py-1.5 text-sm rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 text-white font-medium hover:opacity-90" %>
+          <%= ui_button_to "Connect", admin_instagram_select_account_path, params: { ig_user_id: account[:ig_user_id] },
+                           size: :sm, variant: :primary, aria: { label: "Connect @#{account[:username]}" } %>
         </li>
       <% end %>
     </ul>
   <% end %>
-</div>
+<% end %>

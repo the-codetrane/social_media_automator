@@ -1,116 +1,111 @@
 <% content_for :title, "LLM Costs" %>
 
-<div>
-  <h1 class="text-2xl font-bold text-gray-900 mb-6">LLM Cost Dashboard</h1>
+<div class="space-y-6">
+  <%= ui_page_header title: "LLM Cost Dashboard" %>
 
   <% if @error %>
-    <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6 text-sm text-red-700">
-      <strong>Could not load usage data:</strong> <%= @error %>
-    </div>
+    <%= ui_alert "Could not load usage data: #{@error}", variant: :danger %>
   <% end %>
 
-  <%# ── Summary cards ─────────────────────────────────────────────── %>
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-    <%= render "llm_costs/stat_card",
-               label: "Last 31 days",
-               value: format_llm_cost(@totals[:cost]),
-               sub:   "#{@by_model.size} model(s) with activity" %>
-
-    <%= render "llm_costs/stat_card",
-               label: "This month",
-               value: format_llm_cost(@monthly_cost),
-               sub:   "#{@monthly_rows.size} day(s) with activity" %>
-
-    <%= render "llm_costs/stat_card",
-               label: "Input tokens",
-               value: number_with_delimiter(@totals[:total_input] + @totals[:total_cache_read] + @totals[:total_cache_write]),
-               sub:   "#{number_with_delimiter(@totals[:total_cache_read])} cache read · #{number_with_delimiter(@totals[:total_cache_write])} cache write" %>
-
-    <%= render "llm_costs/stat_card",
-               label: "Output tokens",
-               value: number_with_delimiter(@totals[:total_output]),
-               sub:   "across all models" %>
-  </div>
-
-  <%# ── By-model summary ───────────────────────────────────────────── %>
-  <h2 class="text-lg font-semibold text-gray-800 mb-3">By Model</h2>
-  <div class="overflow-x-auto mb-8">
-    <table class="min-w-full text-sm border border-gray-200 rounded-lg overflow-hidden">
-      <thead class="bg-gray-50">
-        <tr>
-          <th class="px-4 py-3 text-left font-medium text-gray-600">Model</th>
-          <th class="px-4 py-3 text-right font-medium text-gray-600">Input</th>
-          <th class="px-4 py-3 text-right font-medium text-gray-600">Output</th>
-          <th class="px-4 py-3 text-right font-medium text-gray-600">Cache read</th>
-          <th class="px-4 py-3 text-right font-medium text-gray-600">Cache write</th>
-          <th class="px-4 py-3 text-right font-medium text-gray-600">Total input</th>
-          <th class="px-4 py-3 text-right font-medium text-gray-600">Cost</th>
-        </tr>
-      </thead>
-      <tbody class="divide-y divide-gray-100 bg-white">
-        <% @by_model.each do |model_id, stats| %>
-          <tr class="hover:bg-gray-50">
-            <td class="px-4 py-3 font-mono text-xs text-gray-700"><%= model_id %></td>
-            <td class="px-4 py-3 text-right text-gray-700"><%= number_with_delimiter(stats[:total_input]) %></td>
-            <td class="px-4 py-3 text-right text-gray-700"><%= number_with_delimiter(stats[:total_output]) %></td>
-            <td class="px-4 py-3 text-right text-gray-500"><%= number_with_delimiter(stats[:total_cache_read]) %></td>
-            <td class="px-4 py-3 text-right text-gray-500"><%= number_with_delimiter(stats[:total_cache_write]) %></td>
-            <td class="px-4 py-3 text-right text-gray-500"><%= number_with_delimiter(stats[:total_input] + stats[:total_cache_read] + stats[:total_cache_write]) %></td>
-            <td class="px-4 py-3 text-right font-semibold text-gray-900"><%= format_llm_cost(stats[:cost]) %></td>
-          </tr>
-        <% end %>
-        <tr class="bg-gray-50 font-semibold">
-          <td class="px-4 py-3 text-gray-700">Total</td>
-          <td class="px-4 py-3 text-right text-gray-700"><%= number_with_delimiter(@totals[:total_input]) %></td>
-          <td class="px-4 py-3 text-right text-gray-700"><%= number_with_delimiter(@totals[:total_output]) %></td>
-          <td class="px-4 py-3 text-right text-gray-500"><%= number_with_delimiter(@totals[:total_cache_read]) %></td>
-          <td class="px-4 py-3 text-right text-gray-500"><%= number_with_delimiter(@totals[:total_cache_write]) %></td>
-          <td class="px-4 py-3 text-right text-gray-500"><%= number_with_delimiter(@totals[:total_input] + @totals[:total_cache_read] + @totals[:total_cache_write]) %></td>
-          <td class="px-4 py-3 text-right text-gray-900"><%= format_llm_cost(@totals[:cost]) %></td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-
-  <%# ── Daily breakdown ────────────────────────────────────────────── %>
-  <h2 class="text-lg font-semibold text-gray-800 mb-3">Daily Breakdown</h2>
-  <% if @daily_rows.empty? %>
-    <p class="text-gray-500 text-sm">No usage data available.</p>
+  <% if @by_model.empty? && @daily_rows.empty? %>
+    <%= ui_empty_state title: "No usage data available", text: "LLM usage from the last 31 days will appear here." %>
   <% else %>
-    <div class="overflow-x-auto">
-      <table class="min-w-full text-sm border border-gray-200 rounded-lg overflow-hidden">
-        <thead class="bg-gray-50">
+    <%# Summary cards %>
+    <%= ui_stats columns: 4, label: "Usage summary" do |stats| %>
+      <% stats.with_stat label: "Last 31 days",
+                         value: format_llm_cost(@totals[:cost]),
+                         hint: "#{@by_model.size} model(s) with activity" %>
+      <% stats.with_stat label: "This month",
+                         value: format_llm_cost(@monthly_cost),
+                         hint: "#{@monthly_rows.size} day(s) with activity" %>
+      <% stats.with_stat label: "Input tokens",
+                         value: number_with_delimiter(@totals[:total_input] + @totals[:total_cache_read] + @totals[:total_cache_write]),
+                         hint: "#{number_with_delimiter(@totals[:total_cache_read])} cache read · #{number_with_delimiter(@totals[:total_cache_write])} cache write" %>
+      <% stats.with_stat label: "Output tokens",
+                         value: number_with_delimiter(@totals[:total_output]),
+                         hint: "across all models" %>
+    <% end %>
+
+    <section>
+      <h2 class="text-lg font-semibold text-body mb-3">By Model</h2>
+      <%= ui_table hover: true, responsive: true do |table| %>
+        <% table.with_caption(visible: false) { "Usage and cost by model" } %>
+        <thead>
           <tr>
-            <th class="px-4 py-3 text-left font-medium text-gray-600">Date</th>
-            <th class="px-4 py-3 text-left font-medium text-gray-600">Model</th>
-            <th class="px-4 py-3 text-right font-medium text-gray-600">Input</th>
-            <th class="px-4 py-3 text-right font-medium text-gray-600">Output</th>
-            <th class="px-4 py-3 text-right font-medium text-gray-600">Cache read</th>
-            <th class="px-4 py-3 text-right font-medium text-gray-600">Cache write</th>
-            <th class="px-4 py-3 text-right font-medium text-gray-600">Total input</th>
-            <th class="px-4 py-3 text-right font-medium text-gray-600">Cost</th>
+            <%= ui_table_header "Model", class: "text-left" %>
+            <%= ui_table_header "Input", class: "text-right" %>
+            <%= ui_table_header "Output", class: "text-right" %>
+            <%= ui_table_header "Cache read", class: "text-right" %>
+            <%= ui_table_header "Cache write", class: "text-right" %>
+            <%= ui_table_header "Total input", class: "text-right" %>
+            <%= ui_table_header "Cost", class: "text-right" %>
           </tr>
         </thead>
-        <tbody class="divide-y divide-gray-100 bg-white">
-          <% @daily_rows.each do |row| %>
-            <tr class="hover:bg-gray-50">
-              <td class="px-4 py-3 text-gray-700"><%= row[:day] %></td>
-              <td class="px-4 py-3 font-mono text-xs text-gray-600"><%= row[:model_name] %></td>
-              <td class="px-4 py-3 text-right text-gray-700"><%= number_with_delimiter(row[:total_input]) %></td>
-              <td class="px-4 py-3 text-right text-gray-700"><%= number_with_delimiter(row[:total_output]) %></td>
-              <td class="px-4 py-3 text-right text-gray-500"><%= number_with_delimiter(row[:total_cache_read]) %></td>
-              <td class="px-4 py-3 text-right text-gray-500"><%= number_with_delimiter(row[:total_cache_write]) %></td>
-              <td class="px-4 py-3 text-right text-gray-500"><%= number_with_delimiter(row[:total_input] + row[:total_cache_read] + row[:total_cache_write]) %></td>
-              <td class="px-4 py-3 text-right font-medium text-gray-900"><%= format_llm_cost(row[:cost]) %></td>
+        <tbody>
+          <% @by_model.each do |model_id, stats| %>
+            <tr>
+              <td class="font-mono text-xs"><%= model_id %></td>
+              <td class="text-right"><%= number_with_delimiter(stats[:total_input]) %></td>
+              <td class="text-right"><%= number_with_delimiter(stats[:total_output]) %></td>
+              <td class="text-right text-body-muted"><%= number_with_delimiter(stats[:total_cache_read]) %></td>
+              <td class="text-right text-body-muted"><%= number_with_delimiter(stats[:total_cache_write]) %></td>
+              <td class="text-right text-body-muted"><%= number_with_delimiter(stats[:total_input] + stats[:total_cache_read] + stats[:total_cache_write]) %></td>
+              <td class="text-right font-semibold"><%= format_llm_cost(stats[:cost]) %></td>
             </tr>
           <% end %>
+          <tr class="bg-surface-subtle font-semibold">
+            <td>Total</td>
+            <td class="text-right"><%= number_with_delimiter(@totals[:total_input]) %></td>
+            <td class="text-right"><%= number_with_delimiter(@totals[:total_output]) %></td>
+            <td class="text-right text-body-muted"><%= number_with_delimiter(@totals[:total_cache_read]) %></td>
+            <td class="text-right text-body-muted"><%= number_with_delimiter(@totals[:total_cache_write]) %></td>
+            <td class="text-right text-body-muted"><%= number_with_delimiter(@totals[:total_input] + @totals[:total_cache_read] + @totals[:total_cache_write]) %></td>
+            <td class="text-right"><%= format_llm_cost(@totals[:cost]) %></td>
+          </tr>
         </tbody>
-      </table>
-    </div>
-    <p class="text-xs text-gray-400 mt-2">
-      Source: Local message history &middot; Last 31 days &middot; Data refreshes every 5 minutes.
-      Cost amounts are estimates based on published per-token pricing.
-      <em>Total input</em> = uncached input + cache read + cache write.
-    </p>
+      <% end %>
+    </section>
+
+    <section>
+      <h2 class="text-lg font-semibold text-body mb-3">Daily Breakdown</h2>
+      <% if @daily_rows.empty? %>
+        <%= ui_empty_state title: "No usage data available" %>
+      <% else %>
+        <%= ui_table hover: true, responsive: true do |table| %>
+          <% table.with_caption(visible: false) { "Daily usage and cost by model" } %>
+          <thead>
+            <tr>
+              <%= ui_table_header "Date", class: "text-left" %>
+              <%= ui_table_header "Model", class: "text-left" %>
+              <%= ui_table_header "Input", class: "text-right" %>
+              <%= ui_table_header "Output", class: "text-right" %>
+              <%= ui_table_header "Cache read", class: "text-right" %>
+              <%= ui_table_header "Cache write", class: "text-right" %>
+              <%= ui_table_header "Total input", class: "text-right" %>
+              <%= ui_table_header "Cost", class: "text-right" %>
+            </tr>
+          </thead>
+          <tbody>
+            <% @daily_rows.each do |row| %>
+              <tr>
+                <td><%= row[:day] %></td>
+                <td class="font-mono text-xs text-body-muted"><%= row[:model_name] %></td>
+                <td class="text-right"><%= number_with_delimiter(row[:total_input]) %></td>
+                <td class="text-right"><%= number_with_delimiter(row[:total_output]) %></td>
+                <td class="text-right text-body-muted"><%= number_with_delimiter(row[:total_cache_read]) %></td>
+                <td class="text-right text-body-muted"><%= number_with_delimiter(row[:total_cache_write]) %></td>
+                <td class="text-right text-body-muted"><%= number_with_delimiter(row[:total_input] + row[:total_cache_read] + row[:total_cache_write]) %></td>
+                <td class="text-right font-medium"><%= format_llm_cost(row[:cost]) %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        <% end %>
+        <p class="text-xs text-body-muted mt-2">
+          Source: Local message history &middot; Last 31 days &middot; Data refreshes every 5 minutes.
+          Cost amounts are estimates based on published per-token pricing.
+          <em>Total input</em> = uncached input + cache read + cache write.
+        </p>
+      <% end %>
+    </section>
   <% end %>
 </div>

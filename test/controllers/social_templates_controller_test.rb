@@ -230,7 +230,7 @@ class SocialTemplatesControllerTest < ActionDispatch::IntegrationTest
       social_template: { name: @social_template.name, platform: @social_template.platform }
     }
     assert_response :unprocessable_entity
-    assert_select ".bg-red-50"
+    assert_select "[role=alert]"
   end
 
   # Destroy action tests

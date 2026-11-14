@@ -1,298 +1,182 @@
 <% content_for :title, "Planned Posts" %>
 
-<div data-controller="bulk-select view-toggle"
+<%# One shared form carries the selected ids (post_ids[]) for both bulk actions. The row checkboxes
+    and the dialog fields attach to it with the form attribute; each action's submit button picks
+    the route (formaction) and the HTTP verb (_method). %>
+<% bulk_form_id = "bulk-posts-form" %>
+<% platform_variants = { "facebook" => :info, "youtube" => :danger, "tiktok" => :dark } %>
+<% status_variants = { "draft" => :secondary, "scheduled" => :info, "published" => :success, "failed" => :danger } %>
+<% any_media = @planned_posts.any? { |post| post.media_asset&.public_url.present? } %>
+
+<div data-controller="cl-bulk-select view-toggle"
      data-view-toggle-storage-key-value="planned_posts_view">
 
-  <div class="flex items-center justify-between mb-6">
-    <div>
-      <h1 class="text-2xl font-bold text-gray-900">Planned Posts</h1>
-      <p class="text-sm text-gray-500 mt-1"><%= @pagy.count %> record<%= "s" if @pagy.count != 1 %></p>
-    </div>
-    <div class="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
-      <button type="button"
-              data-view-toggle-target="cardButton"
-              data-action="click->view-toggle#showCard"
-              title="Card view"
-              class="p-1.5 rounded-md transition-colors text-gray-400">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
-        </svg>
-      </button>
-      <button type="button"
-              data-view-toggle-target="tableButton"
-              data-action="click->view-toggle#showTable"
-              title="Table view"
-              class="p-1.5 rounded-md transition-colors text-gray-400">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M3 14h18M10 6h11M10 18h11M3 6h.01M3 18h.01" />
-        </svg>
-      </button>
-    </div>
-  </div>
-
-  <%# Filter bar %>
-  <%= form_with url: planned_posts_path,
-                method: :get,
-                data: { controller: "filter-form",
-                        action: "change->filter-form#submit",
-                        turbo_frame: "planned-posts-list",
-                        turbo_action: "advance" },
-                class: "flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-2 sm:gap-3 mb-4" do %>
-
-    <%# Platform toggles %>
-    <div class="flex items-center gap-1.5">
-      <span class="text-xs font-medium text-gray-500 mr-1">Platform</span>
-
-      <label class="cursor-pointer select-none">
-        <input type="checkbox" name="platforms[]" value="instagram"
-               class="peer sr-only"
-               <%= "checked" if @platforms.include?("instagram") %>>
-        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border transition-colors
-                     bg-gray-100 text-gray-400 border-transparent
-                     peer-checked:bg-pink-100 peer-checked:text-pink-800 peer-checked:border-pink-200">
-          Instagram
-        </span>
-      </label>
-
-      <label class="cursor-pointer select-none">
-        <input type="checkbox" name="platforms[]" value="facebook"
-               class="peer sr-only"
-               <%= "checked" if @platforms.include?("facebook") %>>
-        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border transition-colors
-                     bg-gray-100 text-gray-400 border-transparent
-                     peer-checked:bg-blue-100 peer-checked:text-blue-700 peer-checked:border-blue-200">
-          Facebook
-        </span>
-      </label>
-
-      <label class="cursor-pointer select-none">
-        <input type="checkbox" name="platforms[]" value="youtube"
-               class="peer sr-only"
-               <%= "checked" if @platforms.include?("youtube") %>>
-        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border transition-colors
-                     bg-gray-100 text-gray-400 border-transparent
-                     peer-checked:bg-red-100 peer-checked:text-red-700 peer-checked:border-red-200">
-          YouTube
-        </span>
-      </label>
-
-      <label class="cursor-pointer select-none">
-        <input type="checkbox" name="platforms[]" value="tiktok"
-               class="peer sr-only"
-               <%= "checked" if @platforms.include?("tiktok") %>>
-        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border transition-colors
-                     bg-gray-100 text-gray-400 border-transparent
-                     peer-checked:bg-gray-900 peer-checked:text-white peer-checked:border-gray-900">
-          TikTok
-        </span>
-      </label>
-    </div>
-
-    <div class="hidden sm:block h-5 w-px bg-gray-200"></div>
-
-    <%# Status toggle (radio — exactly one always selected) %>
-    <div class="flex items-center gap-1.5">
-      <span class="text-xs font-medium text-gray-500 mr-1">Status</span>
-
-      <div class="inline-flex rounded-full border border-gray-200 bg-gray-100 p-0.5">
-        <label class="cursor-pointer select-none">
-          <input type="radio" name="status" value="draft"
-                 class="peer sr-only"
-                 <%= "checked" if @status == "draft" %>>
-          <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium transition-colors
-                       text-gray-500 peer-checked:bg-white peer-checked:text-gray-800 peer-checked:shadow-sm">
-            Draft
-          </span>
-        </label>
-
-        <label class="cursor-pointer select-none">
-          <input type="radio" name="status" value="scheduled"
-                 class="peer sr-only"
-                 <%= "checked" if @status == "scheduled" %>>
-          <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium transition-colors
-                       text-gray-500 peer-checked:bg-white peer-checked:text-blue-800 peer-checked:shadow-sm">
-            Scheduled
-          </span>
-        </label>
-
-        <label class="cursor-pointer select-none">
-          <input type="radio" name="status" value="published"
-                 class="peer sr-only"
-                 <%= "checked" if @status == "published" %>>
-          <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium transition-colors
-                       text-gray-500 peer-checked:bg-white peer-checked:text-green-800 peer-checked:shadow-sm">
-            Published
-          </span>
-        </label>
-
-        <label class="cursor-pointer select-none">
-          <input type="radio" name="status" value="failed"
-                 class="peer sr-only"
-                 <%= "checked" if @status == "failed" %>>
-          <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium transition-colors
-                       text-gray-500 peer-checked:bg-white peer-checked:text-red-800 peer-checked:shadow-sm">
-            Failed
-          </span>
-        </label>
-      </div>
-    </div>
+  <%= ui_page_header title: "Planned Posts", subtitle: "#{@pagy.count} record#{"s" if @pagy.count != 1}", class: "mb-6" do |header| %>
+    <% header.with_actions do %>
+      <%= ui_toggle_group name: "view", type: :radio, style: :segmented, size: :sm, label: "View", legend_visible: false do |group| %>
+        <% group.with_option(value: "card", checked: true, icon_only: true, label: "Card view",
+                             data: { view_toggle_target: "cardInput", action: "change->view-toggle#select" }) do %>
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
+            </svg>
+        <% end %>
+        <% group.with_option(value: "table", icon_only: true, label: "Table view",
+                             data: { view_toggle_target: "tableInput", action: "change->view-toggle#select" }) do %>
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M3 14h18M10 6h11M10 18h11M3 6h.01M3 18h.01" />
+            </svg>
+        <% end %>
+      <% end %>
+    <% end %>
   <% end %>
 
-  <%# Bulk action toolbar — hidden until posts are selected %>
-  <div data-bulk-select-target="actionBar"
-       class="hidden sticky top-4 z-20 mb-4 flex items-center gap-3 bg-white border border-gray-200 rounded-xl px-4 py-3 shadow-sm">
-    <span class="text-sm font-medium text-gray-700"
-          data-bulk-select-target="countLabel">0 selected</span>
+  <%# Filter bar: every change submits the GET form into the list frame %>
+  <%= form_with url: planned_posts_path,
+                method: :get,
+                data: { turbo_frame: "planned-posts-list", turbo_action: "advance" },
+                class: "flex flex-col sm:flex-row sm:flex-wrap sm:items-start gap-4 sm:gap-6 mb-4" do %>
+    <%= ui_toggle_group name: "platforms", type: :checkbox, style: :pills, size: :sm, label: "Platform", autosubmit: true do |group| %>
+      <% %w[instagram facebook youtube tiktok].each do |platform| %>
+        <% group.with_option(platform == "tiktok" ? "TikTok" : (platform == "youtube" ? "YouTube" : platform.capitalize),
+                             value: platform, checked: @platforms.include?(platform), variant: platform_variants[platform]) %>
+      <% end %>
+    <% end %>
 
-    <div class="ml-auto flex items-center gap-2">
-      <button type="button"
-              data-action="click->bulk-select#openRescheduleModal"
-              class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors border border-indigo-200">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-        </svg>
-        Reschedule
-      </button>
+    <%# Status is a radio group: exactly one is always selected %>
+    <%= ui_toggle_group name: "status", type: :radio, style: :segmented, size: :sm, label: "Status", autosubmit: true do |group| %>
+      <% %w[draft scheduled published failed].each do |status| %>
+        <% group.with_option(status.capitalize, value: status, checked: @status == status, variant: status_variants[status]) %>
+      <% end %>
+    <% end %>
+  <% end %>
 
-      <button type="button"
-              data-action="click->bulk-select#openDeleteModal"
-              class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium bg-red-50 text-red-700 hover:bg-red-100 transition-colors border border-red-200">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-        </svg>
-        Delete
-      </button>
+  <%= form_with url: bulk_destroy_planned_posts_path, method: :post, id: bulk_form_id do %><% end %>
 
-      <button type="button"
-              data-action="click->bulk-select#deselectAll"
-              class="text-sm text-gray-400 hover:text-gray-600 ml-1 transition-colors">
-        Cancel
-      </button>
-    </div>
-  </div>
+  <%# Bulk action bar: hidden until posts are selected %>
+  <%= ui_bulk_action_bar label: "Post actions", noun: "post", noun_plural: "posts", position: :top, class: "mb-4" do |bar| %>
+    <% bar.with_action do %>
+      <%= ui_modal title: "Reschedule Posts", size: :sm, centered: true do |modal| %>
+        <% modal.with_trigger(variant: :primary, outline: true, size: :sm) { "Reschedule" } %>
+        <p class="text-sm text-body-muted mb-4">Shift each selected post's scheduled time forward by:</p>
+        <div class="flex gap-3">
+          <%= ui_form_field(label: "Amount", control_id: "bulk-reschedule-amount", class: "w-24") do |field| %>
+            <%= number_field_tag "amount", 1, min: 1, max: 10, form: bulk_form_id, **field.control_options %>
+          <% end %>
+          <%= ui_form_field(label: "Unit", control_id: "bulk-reschedule-unit", class: "flex-1") do |field| %>
+            <%= select_tag "unit", options_for_select([ [ "Hours", "hours" ], [ "Days", "days" ], [ "Weeks", "weeks" ] ], "days"),
+                           form: bulk_form_id, **field.control_options(kind: :select) %>
+          <% end %>
+        </div>
+        <% modal.with_footer do %>
+          <%= ui_button "Cancel", outline: true, variant: :secondary, data: { action: "cl-dialog#close" } %>
+          <%= ui_button "Reschedule", type: :submit, variant: :primary, form: bulk_form_id,
+                        formaction: bulk_reschedule_planned_posts_path, name: "_method", value: "patch" %>
+        <% end %>
+      <% end %>
+    <% end %>
+
+    <% bar.with_action do %>
+      <%= ui_modal title: "Delete Posts", size: :sm, centered: true do |modal| %>
+        <% modal.with_trigger(variant: :danger, outline: true, size: :sm) { "Delete" } %>
+        <p class="text-sm text-body-muted">
+          Permanently delete
+          <strong class="text-body"><span data-cl-bulk-select-target="count">0</span> post(s)</strong>?
+          This cannot be undone.
+        </p>
+        <% modal.with_footer do %>
+          <%= ui_button "Cancel", outline: true, variant: :secondary, data: { action: "cl-dialog#close" } %>
+          <%= ui_button "Delete", type: :submit, variant: :danger, form: bulk_form_id,
+                        formaction: bulk_destroy_planned_posts_path, name: "_method", value: "delete" %>
+        <% end %>
+      <% end %>
+    <% end %>
+  <% end %>
 
   <%# Post grid %>
   <%= turbo_frame_tag "planned-posts-list",
-        data: { action: "turbo:frame-render->bulk-select#resetSelection turbo:frame-render->view-toggle#applyView" } do %>
+        data: { action: "turbo:frame-render->view-toggle#applyView" } do %>
     <% if @planned_posts.empty? %>
-      <div class="text-center py-20 text-gray-400">No planned posts found.</div>
+      <%= ui_empty_state title: "No planned posts found." %>
     <% else %>
 
       <%# ── Card view ──────────────────────────────────────────────────────── %>
       <div data-view-toggle-target="cardView">
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           <% @planned_posts.each do |post| %>
-            <div class="relative has-checked:ring-2 has-checked:ring-indigo-500 has-checked:ring-offset-1 rounded-xl">
+            <% snippet = post.caption.present? ? post.caption.truncate(40) : "post #{post.id}" %>
+            <div class="relative rounded-ui has-checked:ring-2 has-checked:ring-primary has-checked:ring-offset-1">
+              <%# Selection checkbox: a sibling of the card so a click doesn't open it %>
+              <span class="absolute top-3 left-3 z-10 flex rounded bg-surface p-1 shadow-sm">
+                <%= ui_selection_checkbox label: "Select post: #{snippet}", value: post.id, name: "post_ids[]", form: bulk_form_id %>
+              </span>
 
-              <%# Selection checkbox — sibling of the link so click doesn't navigate %>
-              <label class="absolute top-3 left-3 z-10 cursor-pointer select-none">
-                <input type="checkbox"
-                       class="peer sr-only"
-                       value="<%= post.id %>"
-                       data-bulk-select-target="checkbox"
-                       data-action="change->bulk-select#toggle">
-                <span class="flex h-5 w-5 items-center justify-center rounded border-2 border-gray-300 bg-white shadow-sm
-                             peer-checked:border-indigo-600 peer-checked:bg-indigo-600 transition-colors">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="white" class="h-3 w-3">
-                    <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" />
-                  </svg>
-                </span>
-              </label>
-
-              <%= link_to planned_post_path(post), data: { turbo_frame: "_top" }, class: "block bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col gap-4 hover:shadow-md hover:border-gray-300 transition-all duration-200 cursor-pointer" do %>
-
-                <%# Thumbnail %>
-                <% thumb_url = post.media_asset&.public_url %>
-                <% if thumb_url.present? && post.media_asset.image? %>
-                  <div class="w-full aspect-video bg-gray-100 overflow-hidden">
-                    <%= image_tag thumb_url,
-                        class: "w-full h-full object-cover",
-                        loading: "lazy",
-                        alt: "" %>
-                  </div>
-                <% elsif thumb_url.present? && post.media_asset.video? %>
-                  <div class="w-full aspect-video bg-gray-900 flex items-center justify-center">
-                    <svg class="w-10 h-10 text-white/60" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M8 5v14l11-7z"/>
-                    </svg>
-                  </div>
-                <% else %>
-                  <div class="w-full aspect-video bg-gray-100 flex items-center justify-center text-gray-300">
-                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                    </svg>
-                  </div>
+              <%# The link sits inside a turbo frame, so send it to the whole page %>
+              <%= ui_card href: planned_post_path(post), link_label: "Planned post: #{snippet}",
+                          class: "h-full", data: { turbo_frame: "_top" } do |card| %>
+                <% if any_media %>
+                  <% card.with_media(aspect: :video) do %>
+                    <% thumb_url = post.media_asset&.public_url %>
+                    <% if thumb_url.present? && post.media_asset.image? %>
+                      <%= image_tag thumb_url, loading: "lazy", alt: "" %>
+                    <% elsif thumb_url.present? && post.media_asset.video? %>
+                      <div class="flex size-full items-center justify-center bg-dark">
+                        <svg class="w-10 h-10 text-white/60" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                          <path d="M8 5v14l11-7z"/>
+                        </svg>
+                      </div>
+                    <% else %>
+                      <div class="flex size-full items-center justify-center bg-surface-subtle text-body-muted">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                      </div>
+                    <% end %>
+                  <% end %>
                 <% end %>
 
-                <div class="px-5 pb-5 flex flex-col gap-4">
+                <div class="flex flex-col gap-4">
+                  <%# Leave room for the selection checkbox, which overlaps the card's top-left corner %>
+                  <div class="flex flex-wrap gap-2 <%= "pl-8" unless any_media %>">
+                    <%= render PlatformBadgeComponent.new(platform: post.platform) %>
+                    <%= render StatusBadgeComponent.new(status: post.status) %>
+                  </div>
 
-                <%# Badges row %>
-                <div class="flex flex-wrap gap-2">
-                  <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium <%= platform_color_classes(post.platform) %> capitalize">
-                    <%= post.platform %>
-                  </span>
-                  <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium <%= status_color_classes(post.status) %> capitalize">
-                    <%= post.status %>
-                  </span>
+                  <% if post.caption.present? %>
+                    <p class="text-sm text-body line-clamp-3 leading-relaxed"><%= post.caption.truncate(160) %></p>
+                  <% else %>
+                    <p class="text-sm text-body-muted italic">No caption</p>
+                  <% end %>
+
+                  <% if post.hashtags.present? %>
+                    <p class="text-xs text-primary truncate"><%= post.hashtags %></p>
+                  <% end %>
+
+                  <%= ui_description_list dividers: false, class: "text-sm" do |dl| %>
+                    <% if post.scheduled_at.present? %>
+                      <% dl.with_item(term: "Scheduled At", description: post.scheduled_at.strftime("%b %-d, %Y %H:%M"), class: "py-1") %>
+                    <% end %>
+                    <% if post.published_at.present? %>
+                      <% dl.with_item(term: "Published At", description: post.published_at.strftime("%b %-d, %Y %H:%M"), class: "py-1") %>
+                    <% end %>
+                    <% dl.with_item(term: "Media Asset", class: "py-1") do %>
+                      <span class="block truncate"><%= decode_name(post.media_asset&.external_name.presence || post.media_asset&.external_id) || "—" %></span>
+                    <% end %>
+                    <% dl.with_item(term: "Owner", description: post.user&.name || "—", class: "py-1") %>
+                    <% if post.social_template.present? %>
+                      <% dl.with_item(term: "Template", class: "py-1") do %>
+                        <span class="block truncate"><%= post.social_template.name %></span>
+                      <% end %>
+                    <% end %>
+                    <% if post.external_post_id.present? %>
+                      <% dl.with_item(term: "External Post ID", class: "py-1") do %>
+                        <span class="block truncate font-mono"><%= post.external_post_id %></span>
+                      <% end %>
+                    <% end %>
+                  <% end %>
                 </div>
-
-                <%# Caption %>
-                <% if post.caption.present? %>
-                  <p class="text-sm text-gray-700 line-clamp-3 leading-relaxed">
-                    <%= post.caption.truncate(160) %>
-                  </p>
-                <% else %>
-                  <p class="text-sm text-gray-400 italic">No caption</p>
-                <% end %>
-
-                <%# Hashtags %>
-                <% if post.hashtags.present? %>
-                  <p class="text-xs text-indigo-600 truncate"><%= post.hashtags %></p>
-                <% end %>
-
-                <%# Metadata grid %>
-                <dl class="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
-                  <% if post.scheduled_at.present? %>
-                    <div class="col-span-2">
-                      <dt class="text-gray-400 uppercase tracking-wide">Scheduled At</dt>
-                      <dd class="text-gray-700 font-medium"><%= post.scheduled_at.strftime("%b %-d, %Y %H:%M") %></dd>
-                    </div>
-                  <% end %>
-                  <% if post.published_at.present? %>
-                    <div class="col-span-2">
-                      <dt class="text-gray-400 uppercase tracking-wide">Published At</dt>
-                      <dd class="text-green-700 font-medium"><%= post.published_at.strftime("%b %-d, %Y %H:%M") %></dd>
-                    </div>
-                  <% end %>
-                  <div class="col-span-2">
-                    <dt class="text-gray-400 uppercase tracking-wide">Media Asset</dt>
-                    <dd class="text-gray-700 truncate">
-                      <%= decode_name(post.media_asset&.external_name.presence || post.media_asset&.external_id) || "—" %>
-                    </dd>
-                  </div>
-                  <div class="col-span-2">
-                    <dt class="text-gray-400 uppercase tracking-wide">Owner</dt>
-                    <dd class="text-gray-700"><%= post.user&.name || "—" %></dd>
-                  </div>
-                  <% if post.social_template.present? %>
-                    <div class="col-span-2">
-                      <dt class="text-gray-400 uppercase tracking-wide">Template</dt>
-                      <dd class="text-gray-700 truncate"><%= post.social_template.name %></dd>
-                    </div>
-                  <% end %>
-                  <% if post.external_post_id.present? %>
-                    <div class="col-span-2">
-                      <dt class="text-gray-400 uppercase tracking-wide">External Post ID</dt>
-                      <dd class="text-gray-700 font-mono truncate"><%= post.external_post_id %></dd>
-                    </div>
-                  <% end %>
-                </dl>
-
-                <p class="text-xs text-gray-400 border-t border-gray-100 pt-3 mt-auto">
+                <% card.with_footer(class: "text-xs text-body-muted") do %>
                   Created <%= post.created_at.strftime("%b %-d, %Y") %>
-                </p>
-
-                </div><%# /inner padding div %>
+                <% end %>
               <% end %>
             </div>
           <% end %>
@@ -301,170 +185,71 @@
 
       <%# ── Table view ─────────────────────────────────────────────────────── %>
       <div data-view-toggle-target="tableView" class="hidden">
-        <div class="rounded-xl border border-gray-200 bg-white shadow-sm overflow-x-auto">
-          <table class="min-w-full divide-y divide-gray-200 text-sm">
-            <% sort_base = { platforms: @platforms, status: @status } %>
-            <% sort_data = { turbo_frame: "planned-posts-list", turbo_action: "advance" } %>
-            <thead class="bg-gray-50">
+        <% sort_base = { platforms: @platforms, status: @status } %>
+        <% sort_data = { turbo_frame: "planned-posts-list", turbo_action: "advance" } %>
+        <% date_col = @status == "published" ? "published_at" : "scheduled_at" %>
+        <% sort_href = ->(col) { url_for(sort_base.merge(sort: col, direction: (@sort == col && @direction == "asc") ? "desc" : "asc", page: 1)) } %>
+        <% sort_dir = ->(col) { @sort == col ? @direction.to_sym : nil } %>
+        <%= ui_table hover: true, responsive: true do |table| %>
+          <% table.with_caption(visible: false) { "Planned posts" } %>
+          <thead>
+            <tr>
+              <th class="w-10"><%= ui_select_all_checkbox label: "Select all posts" %></th>
+              <%= ui_sort_header "Platform", href: sort_href.call("platform"), direction: sort_dir.call("platform"), link: { data: sort_data } %>
+              <%= ui_table_header "Status" %>
+              <%= ui_table_header "Caption" %>
+              <%= ui_sort_header(@status == "published" ? "Published At" : "Scheduled At", href: sort_href.call(date_col),
+                                 direction: sort_dir.call(date_col), class: "whitespace-nowrap", link: { data: sort_data }) %>
+              <%= ui_table_header "Owner" %>
+              <%= ui_table_header "Media Asset" %>
+              <th class="w-10"><span class="sr-only">Open</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @planned_posts.each do |post| %>
+              <% snippet = post.caption.present? ? post.caption.truncate(40) : "post #{post.id}" %>
               <tr>
-                <th class="w-10 px-4 py-3"></th>
-                <th class="px-4 py-3 text-left">
-                  <%= sort_link_to "Platform", "platform",
-                      current_sort: @sort, current_direction: @direction,
-                      base_params: sort_base, data: sort_data,
-                      class: "text-xs font-medium uppercase tracking-wide" %>
-                </th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Status</th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Caption</th>
-                <th class="px-4 py-3 text-left whitespace-nowrap">
-                  <% date_col = @status == "published" ? "published_at" : "scheduled_at" %>
-                  <%= sort_link_to(@status == "published" ? "Published At" : "Scheduled At", date_col,
-                      current_sort: @sort, current_direction: @direction,
-                      base_params: sort_base, data: sort_data,
-                      class: "text-xs font-medium uppercase tracking-wide") %>
-                </th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Owner</th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Media Asset</th>
-                <th class="w-10 px-4 py-3"></th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-100">
-              <% @planned_posts.each do |post| %>
-                <tr class="hover:bg-gray-50 transition-colors">
-                  <td class="px-4 py-3">
-                    <label class="cursor-pointer select-none">
-                      <input type="checkbox"
-                             class="peer sr-only"
-                             value="<%= post.id %>"
-                             data-bulk-select-target="checkbox"
-                             data-action="change->bulk-select#toggle">
-                      <span class="flex h-5 w-5 items-center justify-center rounded border-2 border-gray-300 bg-white shadow-sm
-                                   peer-checked:border-indigo-600 peer-checked:bg-indigo-600 transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="white" class="h-3 w-3">
-                          <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" />
-                        </svg>
-                      </span>
-                    </label>
-                  </td>
-                  <td class="px-4 py-3">
-                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium <%= platform_color_classes(post.platform) %> capitalize">
-                      <%= post.platform %>
-                    </span>
-                  </td>
-                  <td class="px-4 py-3">
-                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium <%= status_color_classes(post.status) %> capitalize">
-                      <%= post.status %>
-                    </span>
-                  </td>
-                  <td class="px-4 py-3 max-w-xs">
-                    <% if post.caption.present? %>
-                      <p class="text-gray-700 truncate"><%= post.caption.truncate(80) %></p>
-                    <% else %>
-                      <p class="text-gray-400 italic">No caption</p>
-                    <% end %>
-                  </td>
-                  <td class="px-4 py-3 whitespace-nowrap">
-                    <% if post.scheduled_at.present? %>
-                      <span class="text-gray-600"><%= post.scheduled_at.strftime("%b %-d, %Y %H:%M") %></span>
-                    <% elsif post.published_at.present? %>
-                      <span class="text-green-700"><%= post.published_at.strftime("%b %-d, %Y %H:%M") %></span>
-                    <% else %>
-                      <span class="text-gray-400">—</span>
-                    <% end %>
-                  </td>
-                  <td class="px-4 py-3 text-gray-600 whitespace-nowrap"><%= post.user&.name || "—" %></td>
-                  <td class="px-4 py-3 text-gray-600 max-w-xs">
-                    <span class="truncate block"><%= decode_name(post.media_asset&.external_name.presence || post.media_asset&.external_id) || "—" %></span>
-                  </td>
-                  <td class="px-4 py-3">
-                    <%= link_to planned_post_path(post), data: { turbo_frame: "_top" }, class: "text-gray-400 hover:text-indigo-600 transition-colors" do %>
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <td>
+                  <%# Disabled while hidden so it isn't counted or submitted twice (view_toggle_controller toggles it) %>
+                  <%= ui_selection_checkbox label: "Select post: #{snippet}", value: post.id, name: "post_ids[]", form: bulk_form_id, disabled: true %>
+                </td>
+                <td><%= render PlatformBadgeComponent.new(platform: post.platform) %></td>
+                <td><%= render StatusBadgeComponent.new(status: post.status) %></td>
+                <td class="max-w-xs">
+                  <% if post.caption.present? %>
+                    <p class="truncate"><%= post.caption.truncate(80) %></p>
+                  <% else %>
+                    <p class="text-body-muted italic">No caption</p>
+                  <% end %>
+                </td>
+                <td class="whitespace-nowrap">
+                  <% if post.scheduled_at.present? %>
+                    <span><%= post.scheduled_at.strftime("%b %-d, %Y %H:%M") %></span>
+                  <% elsif post.published_at.present? %>
+                    <span class="text-success"><%= post.published_at.strftime("%b %-d, %Y %H:%M") %></span>
+                  <% else %>
+                    <span class="text-body-muted">—</span>
+                  <% end %>
+                </td>
+                <td class="whitespace-nowrap"><%= post.user&.name || "—" %></td>
+                <td class="max-w-xs">
+                  <span class="truncate block"><%= decode_name(post.media_asset&.external_name.presence || post.media_asset&.external_id) || "—" %></span>
+                </td>
+                <td>
+                  <%= link_to planned_post_path(post), data: { turbo_frame: "_top" }, aria: { label: "Open planned post: #{snippet}" },
+                              class: "text-body-muted hover:text-primary transition-colors" do %>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
                       </svg>
-                    <% end %>
-                  </td>
-                </tr>
-              <% end %>
-            </tbody>
-          </table>
-        </div>
+                  <% end %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        <% end %>
       </div>
 
-    <%= render "shared/pagination", pagy: @pagy, frame: "planned-posts-list" %>
+      <%= ui_pagy @pagy, frame: "planned-posts-list" %>
     <% end %>
   <% end %>
-
-  <%# ── Reschedule Modal ─────────────────────────────────────────────────── %>
-  <div data-bulk-select-target="rescheduleModal"
-       data-action="click->bulk-select#closeOnBackdrop"
-       class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-    <div class="bg-white rounded-xl shadow-xl w-full max-w-sm mx-4 p-6">
-      <h2 class="text-lg font-semibold text-gray-900 mb-1">Reschedule Posts</h2>
-      <p class="text-sm text-gray-500 mb-5">Shift each selected post's scheduled time forward by:</p>
-
-      <%= form_with url: bulk_reschedule_planned_posts_path,
-                    method: :patch,
-                    data: { action: "submit->bulk-select#injectIds" } do |f| %>
-        <div class="flex gap-3 mb-6">
-          <%= f.number_field :amount,
-                value: 1, in: 1..10,
-                class: "w-20 text-center rounded-md border border-gray-300 px-2 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none" %>
-          <%= f.select :unit,
-                [["Hours", "hours"], ["Days", "days"], ["Weeks", "weeks"]],
-                { selected: "days" },
-                class: "flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none" %>
-        </div>
-
-        <div class="flex gap-2">
-          <button type="button"
-                  data-action="click->bulk-select#closeRescheduleModal"
-                  class="flex-1 px-4 py-2 rounded-md border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
-            Cancel
-          </button>
-          <%= f.submit "Reschedule",
-                class: "flex-1 px-4 py-2 rounded-md bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 transition-colors cursor-pointer" %>
-        </div>
-      <% end %>
-    </div>
-  </div>
-
-  <%# ── Delete Confirmation Modal ───────────────────────────────────────── %>
-  <div data-bulk-select-target="deleteModal"
-       data-action="click->bulk-select#closeOnBackdrop"
-       class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-    <div class="bg-white rounded-xl shadow-xl w-full max-w-sm mx-4 p-6">
-      <div class="flex items-start gap-3 mb-4">
-        <div class="flex-shrink-0 flex h-10 w-10 items-center justify-center rounded-full bg-red-100">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
-          </svg>
-        </div>
-        <div>
-          <h2 class="text-lg font-semibold text-gray-900">Delete Posts</h2>
-          <p class="text-sm text-gray-500 mt-1">
-            Permanently delete
-            <strong class="text-gray-800"><span data-bulk-select-target="deleteCount">0</span> post(s)</strong>?
-            This cannot be undone.
-          </p>
-        </div>
-      </div>
-
-      <%= form_with url: bulk_destroy_planned_posts_path,
-                    method: :delete,
-                    data: { action: "submit->bulk-select#injectIds" } do %>
-        <div class="flex gap-2">
-          <button type="button"
-                  data-action="click->bulk-select#closeDeleteModal"
-                  class="flex-1 px-4 py-2 rounded-md border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
-            Cancel
-          </button>
-          <button type="submit"
-                  class="flex-1 px-4 py-2 rounded-md bg-red-600 text-white text-sm font-medium hover:bg-red-700 transition-colors">
-            Delete
-          </button>
-        </div>
-      <% end %>
-    </div>
-  </div>
-
 </div>

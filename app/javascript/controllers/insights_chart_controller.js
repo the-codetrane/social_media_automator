@@ -26,10 +26,10 @@ export default class extends Controller {
   #updateToggles(period) {
     this.toggleTargets.forEach(btn => {
       const active = btn.dataset.period === period
-      btn.classList.toggle("bg-indigo-600", active)
-      btn.classList.toggle("text-white", active)
-      btn.classList.toggle("bg-white", !active)
-      btn.classList.toggle("text-gray-600", !active)
+      btn.classList.toggle("bg-primary", active)
+      btn.classList.toggle("text-primary-on", active)
+      btn.classList.toggle("bg-surface", !active)
+      btn.classList.toggle("text-body-muted", !active)
     })
   }
 

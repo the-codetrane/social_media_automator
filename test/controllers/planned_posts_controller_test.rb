@@ -705,7 +705,9 @@ class PlannedPostsControllerTest < ActionDispatch::IntegrationTest
     get edit_planned_post_path(@planned_post)
 
     assert_response :success
-    assert_select "[data-controller='collaborator-select']"
+    assert_select "[role='group']"
+    assert_select "input[type='hidden'][name='planned_post[collaborators][]']"
+    assert_select "[data-controller='collaborator-select']", count: 0
     assert_select "[data-controller='audio-select']"
   end
 
@@ -835,11 +837,36 @@ class PlannedPostsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(@user)
     @planned_post.update!(platform_payload: { "collaborators" => [ "chef_alex", "bakery_co" ] })
 
-    get collaborator_search_planned_post_path(@planned_post), params: { q: "chef" }
+    get collaborator_search_planned_post_path(@planned_post, format: :json), params: { q: "chef" }
 
     assert_response :success
     body = JSON.parse(response.body)
     assert_equal [ { "username" => "chef_alex", "count" => 1 } ], body["collaborators"]
+  end
+
+  test "collaborator_search renders combobox options in the requested turbo frame" do
+    sign_in_as(@user)
+    @planned_post.update!(platform_payload: { "collaborators" => [ "chef_alex", "bakery_co" ] })
+
+    get collaborator_search_planned_post_path(@planned_post), params: { q: "@chef" },
+        headers: { "Turbo-Frame" => "collab-frame" }
+
+    assert_response :success
+    assert_select "turbo-frame#collab-frame" do
+      assert_select "[role='option']", count: 1
+      assert_select "[role='option'][data-value='chef_alex']", text: /@chef_alex/
+      assert_select "[role='option']", text: /used 1×/
+    end
+  end
+
+  test "edit pre-fills existing collaborators as hidden inputs" do
+    sign_in_as(@user)
+    @planned_post.update!(platform_payload: { "collaborators" => [ "chef_alex", "bakery_co" ] })
+
+    get edit_planned_post_path(@planned_post)
+
+    assert_select "input[type='hidden'][name='planned_post[collaborators][]'][value='chef_alex']"
+    assert_select "input[type='hidden'][name='planned_post[collaborators][]'][value='bakery_co']"
   end
 
   test "collaborator_search requires a signed-in user" do

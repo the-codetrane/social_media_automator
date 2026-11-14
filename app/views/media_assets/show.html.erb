@@ -1,75 +1,35 @@
 <% content_for :title, decode_name(@media_asset.external_name.presence || @media_asset.external_id) %>
 
 <%
-  status_colors = {
-    "discovered" => "bg-yellow-100 text-yellow-800",
-    "processed"  => "bg-green-100 text-green-800",
-    "failed"     => "bg-red-100 text-red-800"
-  }
-  type_colors = {
-    "image" => "bg-purple-100 text-purple-800",
-    "video" => "bg-pink-100 text-pink-800"
-  }
+  display_name = decode_name(@media_asset.external_name.presence || @media_asset.external_id)
+  type_variants = { "image" => :info, "video" => :primary }
 %>
 
 <div class="max-w-3xl mx-auto">
-  <%# Header with back link and edit CTA %>
-  <div class="flex flex-wrap items-start justify-between gap-3 mb-6">
-    <div class="flex items-center gap-3">
-      <%= link_to media_assets_path, class: "text-gray-400 hover:text-gray-600 transition-colors" do %>
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-        </svg>
-      <% end %>
-      <h1 class="text-xl sm:text-2xl font-bold text-gray-900 truncate max-w-[200px] sm:max-w-none"><%= decode_name(@media_asset.external_name.presence || @media_asset.external_id) %></h1>
-    </div>
-    <div class="flex items-center gap-2">
+  <%= ui_page_header title: display_name, back: {href: media_assets_path, label: "Media assets"}, class: "mb-6" do |header| %>
+    <% header.with_actions do %>
       <% if @media_asset.archived? %>
-        <%= button_to unarchive_media_asset_path(@media_asset), method: :patch,
-              class: "inline-flex items-center gap-2 px-4 py-2 border border-gray-300 bg-white text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors" do %>
-          Restore
-        <% end %>
+        <%= ui_button_to "Restore", unarchive_media_asset_path(@media_asset), method: :patch, variant: :secondary, outline: true %>
       <% else %>
-        <%= button_to archive_media_asset_path(@media_asset), method: :patch,
-              title: "Hide this asset from pickers and search. It can be restored later.",
-              class: "inline-flex items-center gap-2 px-4 py-2 border border-gray-300 bg-white text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors" do %>
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
-          </svg>
-          Archive
-        <% end %>
+        <%= ui_button_to "Archive", archive_media_asset_path(@media_asset), method: :patch, variant: :secondary, outline: true,
+                         title: "Hide this asset from pickers and search. It can be restored later." %>
       <% end %>
-      <%= link_to edit_media_asset_path(@media_asset), class: "inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors" do %>
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-        </svg>
-        Edit
-      <% end %>
-    </div>
-  </div>
-
-  <% if flash[:notice] %>
-    <div class="mb-6 px-4 py-3 rounded-lg bg-green-50 text-green-800 text-sm">
-      <%= flash[:notice] %>
-    </div>
+      <%= ui_button "Edit", href: edit_media_asset_path(@media_asset), variant: :primary %>
+    <% end %>
   <% end %>
 
-  <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+  <%= ui_card body: false do %>
     <%# Main info section %>
     <div class="p-6">
       <%# Badges row %>
       <div class="flex flex-wrap gap-2 mb-6">
-        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium <%= type_colors[@media_asset.media_type] || 'bg-gray-100 text-gray-600' %> capitalize">
-          <%= @media_asset.media_type %>
-        </span>
-        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium <%= status_colors[@media_asset.status] || 'bg-gray-100 text-gray-600' %> capitalize">
-          <%= @media_asset.status %>
-        </span>
+        <%= ui_badge @media_asset.media_type.to_s.capitalize, variant: type_variants.fetch(@media_asset.media_type, :secondary), pill: true, class: "text-sm" %>
+        <%= render StatusBadgeComponent.new(status: @media_asset.status, kind: :media, class: "text-sm") %>
         <%= render "media_assets/availability_badge", availability: @media_asset.availability(reserved_ids: @reserved_ids), size: :large %>
       </div>
 
       <% if @media_asset.archived? %>
-        <p class="mb-6 px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 text-sm text-gray-600">
+        <p class="mb-6 px-4 py-3 rounded-lg bg-surface-subtle border border-border text-sm text-body-muted">
           Archived <%= @media_asset.archived_at.strftime("%B %-d, %Y") %>. It is hidden from the post editor's picker and the agent's search until restored.
         </p>
       <% end %>
@@ -77,8 +37,8 @@
       <%# Media Preview %>
       <% if @media_asset.public_url? %>
         <div class="mb-6">
-          <p class="text-xs text-gray-400 uppercase tracking-wide mb-2">Preview</p>
-          <div class="rounded-lg overflow-hidden bg-gray-100 w-full sm:max-w-md">
+          <h2 class="text-sm font-medium text-body-muted mb-2">Preview</h2>
+          <div class="rounded-lg overflow-hidden bg-surface-subtle w-full sm:max-w-md">
             <% if @media_asset.image? %>
               <%= image_tag @media_asset.public_url,
                   class: "w-full h-auto object-contain",
@@ -100,93 +60,66 @@
       <%# Location / GPS %>
       <% if @media_asset.geocoded? %>
         <div class="mb-6">
-          <p class="text-xs text-gray-400 uppercase tracking-wide mb-2">Location</p>
+          <h2 class="text-sm font-medium text-body-muted mb-2">Location</h2>
           <% if @media_asset.address.present? %>
-            <p class="text-sm text-gray-700 mb-3"><%= @media_asset.address %></p>
+            <p class="text-sm text-body mb-3"><%= @media_asset.address %></p>
           <% end %>
-          <div class="rounded-lg overflow-hidden border border-gray-200">
+          <div class="rounded-lg overflow-hidden border border-border">
             <iframe src="<%= osm_embed_url(@media_asset.latitude, @media_asset.longitude) %>"
                     title="Map of <%= @media_asset.address.presence || "asset location" %>"
                     class="w-full h-64 border-0" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
           </div>
-          <p class="mt-2 text-xs text-gray-400">
+          <p class="mt-2 text-xs text-body-muted">
             <span class="font-mono"><%= @media_asset.latitude %>, <%= @media_asset.longitude %></span>
             ·
             <%= link_to "View larger map", osm_link_url(@media_asset.latitude, @media_asset.longitude),
-                  target: "_blank", rel: "noopener", class: "text-blue-600 hover:underline" %>
+                  target: "_blank", rel: "noopener", class: "text-primary hover:underline" %>
           </p>
         </div>
       <% end %>
 
+      <%# Planned posts count %>
+      <%= ui_stat label: "Planned posts", value: @posts_using.size, class: "mb-6 sm:max-w-xs" %>
+
       <%# Main metadata %>
-      <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-6">
+      <%= ui_detail_list do |dl| %>
         <% if @media_asset.width.present? && @media_asset.height.present? %>
-          <div>
-            <dt class="text-xs text-gray-400 uppercase tracking-wide mb-1">Dimensions</dt>
-            <dd class="text-lg text-gray-900"><%= @media_asset.width %> × <%= @media_asset.height %></dd>
-          </div>
+          <% dl.with_item(term: "Dimensions", description: "#{@media_asset.width} × #{@media_asset.height}") %>
         <% end %>
         <% if @media_asset.media_type == "video" && @media_asset.duration_seconds.present? %>
-          <div>
-            <dt class="text-xs text-gray-400 uppercase tracking-wide mb-1">Duration</dt>
-            <dd class="text-lg text-gray-900">
-              <%
-                mins = (@media_asset.duration_seconds / 60).floor
-                secs = (@media_asset.duration_seconds % 60).round
-              %>
-              <%= mins > 0 ? "#{mins}m #{secs}s" : "#{secs}s" %>
-            </dd>
-          </div>
+          <%
+            mins = (@media_asset.duration_seconds / 60).floor
+            secs = (@media_asset.duration_seconds % 60).round
+          %>
+          <% dl.with_item(term: "Duration", description: (mins > 0 ? "#{mins}m #{secs}s" : "#{secs}s")) %>
         <% end %>
         <% if @media_asset.file_size.present? %>
-          <div>
-            <dt class="text-xs text-gray-400 uppercase tracking-wide mb-1">File Size</dt>
-            <dd class="text-lg text-gray-900"><%= number_to_human_size(@media_asset.file_size) %></dd>
-          </div>
+          <% dl.with_item(term: "File Size", description: number_to_human_size(@media_asset.file_size)) %>
         <% end %>
         <% if @media_asset.mime_type.present? %>
-          <div>
-            <dt class="text-xs text-gray-400 uppercase tracking-wide mb-1">MIME Type</dt>
-            <dd class="text-lg text-gray-900"><%= @media_asset.mime_type %></dd>
-          </div>
+          <% dl.with_item(term: "MIME Type", description: @media_asset.mime_type) %>
         <% end %>
-        <div>
-          <dt class="text-xs text-gray-400 uppercase tracking-wide mb-1">First Seen</dt>
-          <dd class="text-lg text-gray-900"><%= @media_asset.first_seen_at.strftime("%B %-d, %Y") %></dd>
-        </div>
+        <% dl.with_item(term: "First Seen", description: @media_asset.first_seen_at.strftime("%B %-d, %Y")) %>
         <% if @media_asset.last_processed_at.present? %>
-          <div>
-            <dt class="text-xs text-gray-400 uppercase tracking-wide mb-1">Last Processed</dt>
-            <dd class="text-lg text-gray-900"><%= @media_asset.last_processed_at.strftime("%B %-d, %Y") %></dd>
-          </div>
+          <% dl.with_item(term: "Last Processed", description: @media_asset.last_processed_at.strftime("%B %-d, %Y")) %>
         <% end %>
-        <div>
-          <dt class="text-xs text-gray-400 uppercase tracking-wide mb-1">Planned Posts</dt>
-          <dd class="text-2xl font-semibold text-gray-900"><%= @posts_using.size %></dd>
-        </div>
-        <div>
-          <dt class="text-xs text-gray-400 uppercase tracking-wide mb-1">First Published</dt>
-          <dd class="text-lg text-gray-900"><%= @media_asset.published? ? @media_asset.published_at.strftime("%B %-d, %Y") : "Never" %></dd>
-        </div>
-        <div>
-          <dt class="text-xs text-gray-400 uppercase tracking-wide mb-1">Added</dt>
-          <dd class="text-lg text-gray-900"><%= @media_asset.created_at.strftime("%B %-d, %Y") %></dd>
-        </div>
-      </dl>
+        <% dl.with_item(term: "First Published", description: (@media_asset.published? ? @media_asset.published_at.strftime("%B %-d, %Y") : "Never")) %>
+        <% dl.with_item(term: "Added", description: @media_asset.created_at.strftime("%B %-d, %Y")) %>
+      <% end %>
     </div>
 
     <%# Posts that use this asset, including as a carousel member %>
     <% if @posts_using.any? %>
-      <div class="border-t border-gray-200 px-6 py-4">
-        <p class="text-xs text-gray-400 uppercase tracking-wide mb-3">Used in posts</p>
-        <ul class="divide-y divide-gray-100">
+      <div class="border-t border-border px-6 py-4">
+        <h2 class="text-sm font-medium text-body-muted mb-3">Used in posts</h2>
+        <ul class="divide-y divide-border">
           <% @posts_using.each do |post| %>
             <li>
-              <%= link_to planned_post_path(post), class: "flex items-center justify-between gap-3 py-2 text-sm hover:bg-gray-50 -mx-2 px-2 rounded" do %>
-                <span class="text-gray-700 capitalize truncate">
+              <%= link_to planned_post_path(post), class: "flex items-center justify-between gap-3 py-2 text-sm hover:bg-surface-subtle -mx-2 px-2 rounded" do %>
+                <span class="text-body capitalize truncate">
                   <%= post.platform %> <%= post.post_type unless post.post_type == "single" %> · <%= post.caption.to_s.truncate(60).presence || "No caption" %>
                 </span>
-                <span class="shrink-0 text-xs text-gray-500">
+                <span class="shrink-0 text-xs text-body-muted">
                   <span class="capitalize"><%= post.status %></span>
                   <% if (when_at = post.published_at || post.scheduled_at) %>
                     · <%= when_at.strftime("%b %-d, %Y") %>
@@ -200,36 +133,25 @@
     <% end %>
 
     <%# Collapsible additional details %>
-    <div class="border-t border-gray-200" data-controller="collapse">
-      <button
-        type="button"
-        class="w-full flex items-center justify-between px-6 py-4 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-        data-action="click->collapse#toggle"
-      >
-        <span>Additional Details</span>
-        <svg class="w-5 h-5 text-gray-400 transition-transform duration-200 rotate-180" data-collapse-target="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-        </svg>
-      </button>
-      <div class="px-6 pb-6" data-collapse-target="content">
-        <dl class="grid grid-cols-1 gap-4 text-sm">
-          <div>
-            <dt class="text-gray-400 uppercase tracking-wide text-xs mb-1">External ID</dt>
-            <dd class="text-gray-700 font-mono break-all"><%= @media_asset.external_id %></dd>
-          </div>
-          <% if @media_asset.raw_metadata.present? %>
-            <% metadata = @media_asset.raw_metadata %>
-            <% metadata = JSON.parse(metadata) if metadata.is_a?(String) %>
-            <% metadata.each do |key, value| %>
-              <div>
-                <dt class="text-gray-400 uppercase tracking-wide text-xs mb-1"><%= key.humanize %></dt>
-                <dd class="text-gray-700 font-mono text-xs break-all"><%= value %></dd>
-              </div>
+    <div class="border-t border-border">
+      <%= ui_accordion do |accordion| %>
+        <% accordion.with_item(title: "Additional Details") do %>
+          <%= ui_description_list do |dl| %>
+            <% dl.with_item(term: "External ID") do %>
+              <span class="font-mono break-all"><%= @media_asset.external_id %></span>
+            <% end %>
+            <% if @media_asset.raw_metadata.present? %>
+              <% metadata = @media_asset.raw_metadata %>
+              <% metadata = JSON.parse(metadata) if metadata.is_a?(String) %>
+              <% metadata.each do |key, value| %>
+                <% dl.with_item(term: key.humanize) do %>
+                  <span class="font-mono text-xs break-all"><%= value %></span>
+                <% end %>
+              <% end %>
             <% end %>
           <% end %>
-        </dl>
-      </div>
+        <% end %>
+      <% end %>
     </div>
-  </div>
+  <% end %>
 </div>
-

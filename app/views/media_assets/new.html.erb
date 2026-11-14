@@ -1,6 +1,7 @@
 <% content_for :title, "Upload Media" %>
 
-<%= turbo_frame_tag "media-upload-modal" do %>
+<% framed = turbo_frame_request? %>
+<% upload_form = capture do %>
   <%= form_with url: media_assets_path,
                 scope: :media_asset,
                 data: { controller: "media-upload",
@@ -9,59 +10,74 @@
                         turbo_frame: "_top" },
                 class: "flex flex-col" do |form| %>
 
-    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-      <h2 class="text-lg font-semibold text-gray-900">Upload media</h2>
-      <button type="button"
-              data-action="click->modal#close"
-              class="text-gray-400 hover:text-gray-600 transition-colors leading-none text-2xl"
-              aria-label="Close">&times;</button>
-    </div>
+    <% if framed %>
+      <div class="flex items-center justify-between px-6 py-4 border-b border-border">
+        <h2 class="text-lg font-semibold text-body">Upload media</h2>
+        <button type="button"
+                data-action="click->modal#close"
+                class="text-body-muted hover:text-body transition-colors leading-none text-2xl"
+                aria-label="Close">&times;</button>
+      </div>
+    <% end %>
 
     <div class="px-6 py-5 flex flex-col gap-5">
       <% if alert.present? %>
-        <p class="text-sm text-red-700 bg-red-50 border border-red-200 rounded-md px-3 py-2"><%= alert %></p>
+        <p class="text-sm text-danger-emphasis bg-danger-subtle border border-danger-border rounded-md px-3 py-2"><%= alert %></p>
       <% end %>
 
       <%# Destination folder %>
       <div>
-        <%= form.label :folder, "Destination", class: "block text-sm font-medium text-gray-700 mb-1" %>
+        <%= form.label :folder, "Destination", class: "block text-sm font-medium text-body mb-1" %>
         <%= form.select :folder,
                         options_for_select(@folders) + options_for_select([ [ "New folder…", "__new__" ] ]),
                         { prompt: "Choose a folder" },
                         required: true,
                         data: { media_upload_target: "folderSelect", action: "change->media-upload#folderChanged" },
-                        class: "w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" %>
+                        class: "w-full px-3 py-2 border border-border rounded-lg text-sm bg-surface focus:ring-2 focus:ring-primary focus:border-primary" %>
         <%= form.text_field :new_folder,
                             placeholder: "e.g. Gigs/2026 Hook & Ladder",
                             data: { media_upload_target: "newFolderInput" },
-                            class: "hidden mt-2 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" %>
-        <p class="mt-1 text-xs text-gray-500">Folder in the Spaces bucket the files will be stored under.</p>
+                            class: "hidden mt-2 w-full px-3 py-2 border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-primary" %>
+        <p class="mt-1 text-xs text-body-muted">Folder in the Spaces bucket the files will be stored under.</p>
       </div>
 
       <%# Files %>
       <div>
-        <%= form.label :files, "Photos & videos", class: "block text-sm font-medium text-gray-700 mb-1" %>
+        <%= form.label :files, "Photos & videos", class: "block text-sm font-medium text-body mb-1" %>
         <%= form.file_field :files,
                             multiple: true,
                             accept: "image/*,video/*",
                             required: true,
                             data: { media_upload_target: "fileInput", action: "change->media-upload#filesChanged" },
-                            class: "block w-full text-sm text-gray-700 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:bg-indigo-50 file:text-indigo-700 file:text-sm file:font-medium hover:file:bg-indigo-100 cursor-pointer" %>
+                            class: "block w-full text-sm text-body file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:bg-primary-subtle file:text-primary-emphasis file:text-sm file:font-medium hover:file:bg-primary-subtle cursor-pointer" %>
         <ul data-media-upload-target="fileList" class="mt-3 flex flex-col gap-2 text-sm empty:hidden"></ul>
       </div>
 
-      <p data-media-upload-target="error" class="hidden text-sm text-red-700 bg-red-50 border border-red-200 rounded-md px-3 py-2"></p>
+      <p data-media-upload-target="error" class="hidden text-sm text-danger-emphasis bg-danger-subtle border border-danger-border rounded-md px-3 py-2"></p>
     </div>
 
-    <div class="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50 rounded-b-xl">
-      <button type="button"
-              data-action="click->modal#close"
-              class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-        Cancel
-      </button>
+    <div class="flex items-center justify-end gap-3 px-6 py-4 border-t border-border bg-surface-subtle rounded-b-xl">
+      <% if framed %>
+        <%= ui_button "Cancel", variant: :secondary, outline: true, data: { action: "click->modal#close" } %>
+      <% else %>
+        <%= ui_button "Cancel", href: media_assets_path, variant: :secondary, outline: true %>
+      <% end %>
       <%= form.submit "Upload",
                       data: { media_upload_target: "submit" },
-                      class: "px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed" %>
+                      class: "px-4 py-2 bg-primary text-primary-on text-sm font-medium rounded-lg hover:opacity-90 transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed" %>
     </div>
   <% end %>
+<% end %>
+
+<% if framed %>
+  <%= turbo_frame_tag "media-upload-modal" do %>
+    <%= upload_form %>
+  <% end %>
+<% else %>
+  <div class="max-w-2xl mx-auto">
+    <%= ui_page_header title: "Upload Media", class: "mb-6" %>
+    <%= ui_card body: false do %>
+      <%= upload_form %>
+    <% end %>
+  </div>
 <% end %>

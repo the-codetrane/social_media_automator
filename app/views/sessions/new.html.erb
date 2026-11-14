@@ -1,67 +1,30 @@
-<div class="min-h-screen bg-gray-50 flex flex-col items-center justify-center py-12 sm:px-6 lg:px-8">
+<div class="min-h-screen bg-surface-subtle flex flex-col items-center justify-center py-12 sm:px-6 lg:px-8">
   <div class="mx-auto w-full max-w-md">
     <div class="flex justify-center mb-4">
       <%= link_to root_path, class: "flex items-center gap-3" do %>
         <%= image_tag "/icon.png", alt: "Cain & Co.", class: "w-12 h-12" %>
-        <span class="text-xl font-bold text-gray-900">Social Media Automator</span>
+        <span class="text-xl font-bold text-body">Social Media Automator</span>
       <% end %>
     </div>
-    <h1 class="text-center text-3xl font-bold tracking-tight text-gray-900">Sign in to your account</h1>
-    <p class="mt-2 text-center text-sm text-gray-500">
+    <h1 class="text-center text-3xl font-bold tracking-tight text-body">Sign in to your account</h1>
+    <p class="mt-2 text-center text-sm text-body-muted">
       Don't have an account?
-      <%= link_to "Create one", new_registration_path, class: "font-medium text-indigo-600 hover:text-indigo-500" %>
+      <%= link_to "Create one", new_registration_path, class: "font-medium text-primary hover:text-link-hover" %>
     </p>
   </div>
 
   <div class="mt-8 mx-auto w-full max-w-md">
-    <div class="bg-blue-50 py-8 px-4 shadow rounded-lg sm:px-10">
+    <div class="bg-surface py-8 px-4 shadow rounded-lg sm:px-10">
 
-      <% if flash[:alert] %>
-        <div class="mb-6 rounded-md bg-red-50 border border-red-200 p-4">
-          <p class="text-sm font-medium text-red-800"><%= flash[:alert] %></p>
-        </div>
-      <% end %>
-
-      <% if flash[:notice] %>
-        <div class="mb-6 rounded-md bg-green-50 border border-green-200 p-4">
-          <p class="text-sm font-medium text-green-800"><%= flash[:notice] %></p>
-        </div>
-      <% end %>
-
-      <%= form_with url: session_path, class: "space-y-6" do |form| %>
-        <div>
-          <%= form.label :email_address, "Email address", class: "block text-sm font-medium text-gray-700" %>
-          <div class="mt-1">
-            <%= form.email_field :email_address,
-              required: true,
-              autofocus: true,
-              autocomplete: "username",
-              placeholder: "Enter your email address",
-              value: params[:email_address],
-              class: "block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-400 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm" %>
-          </div>
-        </div>
-
-        <div>
-          <%= form.label :password, "Password", class: "block text-sm font-medium text-gray-700" %>
-          <div class="mt-1">
-            <%= form.password_field :password,
-              required: true,
-              autocomplete: "current-password",
-              placeholder: "Enter your password",
-              maxlength: 72,
-              class: "block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-400 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm" %>
-          </div>
-        </div>
-
+      <%= ui_form_with url: session_path, class: "space-y-6" do |form| %>
+        <%= form.email_field :email_address, label: "Email address", required: true, autofocus: true,
+              autocomplete: "username", placeholder: "Enter your email address", value: params[:email_address] %>
+        <%= form.password_field :password, label: "Password", required: true, autocomplete: "current-password",
+              placeholder: "Enter your password", maxlength: 72 %>
         <div class="flex items-center justify-between">
-          <%= link_to "Forgot your password?", new_password_path, class: "text-sm font-medium text-indigo-600 hover:text-indigo-500" %>
+          <%= link_to "Forgot your password?", new_password_path, class: "text-sm font-medium text-primary hover:text-link-hover" %>
         </div>
-
-        <div>
-          <%= form.submit "Sign in",
-            class: "flex w-full justify-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 cursor-pointer transition-colors duration-150" %>
-        </div>
+        <%= form.submit "Sign in", class: "w-full" %>
       <% end %>
 
     </div>

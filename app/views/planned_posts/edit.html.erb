@@ -6,102 +6,51 @@
 %>
 
 <div class="max-w-2xl mx-auto">
-  <%# Header with back link %>
-  <div class="flex items-center gap-4 mb-6">
-    <%= link_to planned_post_path(@planned_post), class: "text-gray-400 hover:text-gray-600 transition-colors" do %>
-      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-      </svg>
-    <% end %>
-    <h1 class="text-2xl font-bold text-gray-900">Edit Planned Post</h1>
-  </div>
+  <%= ui_page_header title: "Edit Planned Post", back: {href: planned_post_path(@planned_post), label: "Planned post"}, class: "mb-6" %>
 
-  <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-    <%= form_with model: @planned_post, class: "space-y-6" do |form| %>
-      <% if @planned_post.errors.any? %>
-        <div class="px-4 py-3 rounded-lg bg-red-50 text-red-800 text-sm">
-          <p class="font-medium mb-2"><%= pluralize(@planned_post.errors.count, "error") %> prohibited this post from being saved:</p>
-          <ul class="list-disc list-inside">
-            <% @planned_post.errors.full_messages.each do |message| %>
-              <li><%= message %></li>
-            <% end %>
-          </ul>
-        </div>
-      <% end %>
+  <div class="bg-surface rounded-xl shadow-sm border border-border p-6">
+    <%= ui_form_with model: @planned_post, class: "space-y-6" do |form| %>
+      <%= form.error_summary %>
 
       <% if @reuse_warnings.any? %>
-        <div class="px-4 py-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-900 text-sm">
+        <%= ui_alert variant: :warning do %>
           <p class="font-medium mb-1">This post reuses media:</p>
           <ul class="list-disc list-inside">
             <% @reuse_warnings.each do |warning| %>
               <li><%= warning %></li>
             <% end %>
           </ul>
-        </div>
+        <% end %>
       <% end %>
 
-      <div>
-        <%= form.label :caption, class: "block text-sm font-medium text-gray-700 mb-2" %>
-        <%= form.text_area :caption, rows: 5, class: "w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors resize-none", placeholder: "Write your caption here..." %>
-      </div>
+      <%= form.text_area :caption, rows: 5, placeholder: "Write your caption here..." %>
+      <%# No caption max length is available in this view, so no counter: yet. %>
 
-      <div>
-        <%= form.label :hashtags, class: "block text-sm font-medium text-gray-700 mb-2" %>
-        <%= form.text_field :hashtags, class: "w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors", placeholder: "#example #hashtags" %>
-        <p class="mt-1 text-xs text-gray-500">Space-separated hashtags to include with your post.</p>
-      </div>
+      <%= form.text_field :hashtags, placeholder: "#example #hashtags", hint: "Space-separated hashtags to include with your post." %>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <%= form.label :status, class: "block text-sm font-medium text-gray-700 mb-2" %>
-          <%= form.select :status, status_options, {}, class: "w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors bg-white" %>
-        </div>
-        <div>
-          <%= form.label :scheduled_at, "Scheduled At", class: "block text-sm font-medium text-gray-700 mb-2" %>
-          <%= form.datetime_local_field :scheduled_at, class: "w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" %>
-        </div>
+        <%= form.select :status, status_options %>
+        <%= form.datetime_local_field :scheduled_at, label: "Scheduled At" %>
       </div>
 
       <%# Post type toggle + media selection %>
       <div data-controller="post-type" class="space-y-6">
         <div>
-          <p class="block text-sm font-medium text-gray-700 mb-2">Post Type</p>
-          <div class="flex gap-4 mb-4">
-            <label class="flex items-center gap-2 cursor-pointer">
-              <%= form.radio_button :post_type, "single",
-                    checked: current_post_type == "single",
-                    class: "text-indigo-600 focus:ring-indigo-500",
-                    data: { action: "change->post-type#update" } %>
-              <span class="text-sm text-gray-700">Single</span>
-            </label>
-            <label class="flex items-center gap-2 cursor-pointer">
-              <%= form.radio_button :post_type, "carousel",
-                    checked: current_post_type == "carousel",
-                    class: "text-indigo-600 focus:ring-indigo-500",
-                    data: { action: "change->post-type#update" } %>
-              <span class="text-sm text-gray-700">Carousel</span>
-            </label>
-            <%# Instagram and Facebook are the platforms with a Stories publisher. %>
-            <% if @planned_post.instagram? || @planned_post.facebook? %>
-              <label class="flex items-center gap-2 cursor-pointer">
-                <%= form.radio_button :post_type, "story",
-                      checked: current_post_type == "story",
-                      class: "text-indigo-600 focus:ring-indigo-500",
-                      data: { action: "change->post-type#update" } %>
-                <span class="text-sm text-gray-700">Story</span>
-              </label>
-            <% end %>
-          </div>
+          <%# post_type_controller listens for change events bubbling up from the radios in this fieldset. %>
+          <% post_type_choices = [["Single", "single", "One image or video"], ["Carousel", "carousel", "2-10 assets"]] %>
+          <%# Instagram and Facebook are the platforms with a Stories publisher. %>
+          <% post_type_choices << ["Story", "story", "24-hour story"] if @planned_post.instagram? || @planned_post.facebook? %>
+          <%= form.radio_cards :post_type, post_type_choices, label: "Post Type", columns: 3,
+                checked: current_post_type, class: "mb-4",
+                data: { action: "change->post-type#update" } %>
 
           <%# Single media asset section — a story picks one asset the same way %>
           <div data-post-type-target="singleSection" class="<%= 'hidden' if current_post_type == 'carousel' %>">
-            <%= form.label :media_asset_id, "Media Asset", class: "block text-sm font-medium text-gray-700 mb-2" %>
-            <%= form.select :media_asset_id, grouped_media_asset_options(@media_assets, @asset_availability, @planned_post.media_asset_id), {}, class: "w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors bg-white" %>
-            <p class="mt-1 text-xs text-gray-500">Assets that are archived, already published, or on another scheduled post are listed after the available ones.</p>
+            <%= form.select :media_asset_id, grouped_media_asset_options(@media_assets, @asset_availability, @planned_post.media_asset_id), { label: "Media Asset", hint: "Assets that are archived, already published, or on another scheduled post are listed after the available ones." } %>
           </div>
 
           <p data-post-type-target="storyNote"
-             class="<%= 'hidden' unless current_post_type == 'story' %> mt-3 px-3 py-2 text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg">
+             class="<%= 'hidden' unless current_post_type == 'story' %> mt-3 px-3 py-2 text-xs text-warning-emphasis bg-warning-subtle border border-warning-border rounded-lg">
             Stories show a single image or video for 24 hours. Meta's Stories API accepts no caption,
             hashtags, collaborators or audio — those fields stay on this record but are not sent when
             it publishes, and a published story is not verified afterwards. Use a 9:16 asset
@@ -114,25 +63,25 @@
                data-controller="carousel-select"
                data-carousel-select-initial-ids-value="<%= @carousel_asset_ids.to_json %>">
 
-            <p class="block text-sm font-medium text-gray-700 mb-2">Carousel Assets <span class="font-normal text-gray-500">(select 2–10, drag to reorder)</span></p>
+            <p class="block text-sm font-medium text-body mb-2">Carousel Assets <span class="font-normal text-body-muted">(select 2–10, drag to reorder)</span></p>
 
             <%# Search %>
             <input type="text"
                    data-carousel-select-target="search"
                    data-action="input->carousel-select#filter"
                    placeholder="Search assets..."
-                   class="w-full px-3 py-2 mb-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors">
+                   class="w-full px-3 py-2 mb-2 border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-primary transition-colors">
 
-            <label class="inline-flex items-center gap-2 mb-2 text-xs text-gray-600 cursor-pointer">
+            <label class="inline-flex items-center gap-2 mb-2 text-xs text-body-muted cursor-pointer">
               <input type="checkbox"
                      data-carousel-select-target="showUsed"
                      data-action="change->carousel-select#filter"
-                     class="rounded text-indigo-600 focus:ring-indigo-500">
+                     class="rounded text-primary focus:ring-primary">
               Show archived, published and scheduled assets
             </label>
 
             <%# Picker: scrollable checkbox list %>
-            <div class="border border-gray-200 rounded-lg overflow-y-auto max-h-48 mb-3 divide-y divide-gray-100">
+            <div class="border border-border rounded-lg overflow-y-auto max-h-48 mb-3 divide-y divide-border-subtle">
               <% if @media_assets.any? %>
                 <% @media_assets.each do |asset| %>
                   <%
@@ -142,20 +91,20 @@
                   <% availability = @asset_availability[asset.id] %>
                   <label data-carousel-select-target="option"
                          data-used="<%= availability != "available" %>"
-                         class="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 cursor-pointer <%= "hidden" if availability != "available" && !is_checked %>">
+                         class="flex items-center gap-3 px-3 py-2 hover:bg-surface-subtle cursor-pointer <%= "hidden" if availability != "available" && !is_checked %>">
                     <input type="checkbox"
                            data-carousel-select-target="checkbox"
                            data-action="change->carousel-select#toggle"
                            data-name="<%= asset_name %>"
                            value="<%= asset.id %>"
                            <%= "checked" if is_checked %>
-                           class="rounded text-indigo-600 focus:ring-indigo-500">
-                    <span class="text-sm text-gray-700 truncate flex-1"><%= asset_name %></span>
+                           class="rounded text-primary focus:ring-primary">
+                    <span class="text-sm text-body truncate flex-1"><%= asset_name %></span>
                     <%= render "media_assets/availability_badge", availability: availability %>
                   </label>
                 <% end %>
               <% else %>
-                <p class="px-3 py-4 text-sm text-gray-400 text-center">No processed media assets available.</p>
+                <p class="px-3 py-4 text-sm text-body-muted text-center">No processed media assets available.</p>
               <% end %>
             </div>
 
@@ -177,29 +126,22 @@
         <% end %>
       </div>
 
-      <div>
-        <%= form.label :social_template_id, "Social Template", class: "block text-sm font-medium text-gray-700 mb-2" %>
-        <%= form.collection_select :social_template_id, @social_templates, :id, :name, { include_blank: "— No template —" }, class: "w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors bg-white" %>
-      </div>
+      <%= form.select :social_template_id, @social_templates.map { |t| [t.name, t.id] }, { include_blank: "— No template —", label: "Social Template" } %>
 
       <%# Read-only fields for reference %>
-      <div class="pt-4 border-t border-gray-200">
-        <p class="text-xs text-gray-400 uppercase tracking-wide mb-3">Reference Information</p>
-        <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-          <div>
-            <dt class="text-gray-500">Platform</dt>
-            <dd class="text-gray-700 capitalize"><%= @planned_post.platform %></dd>
-          </div>
-          <div>
-            <dt class="text-gray-500">Owner</dt>
-            <dd class="text-gray-700"><%= @planned_post.user.name %></dd>
-          </div>
-        </dl>
+      <div class="pt-4 border-t border-border">
+        <p class="<%= ThemeHelper::LABEL %> mb-1">Reference Information</p>
+        <%= ui_description_list layout: :inline, dividers: false do |dl| %>
+          <% dl.with_item(term: "Platform") do %>
+            <span class="capitalize"><%= @planned_post.platform %></span>
+          <% end %>
+          <% dl.with_item(term: "Owner", description: @planned_post.user.name) %>
+        <% end %>
       </div>
 
-      <div class="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-2 sm:gap-3 pt-4 border-t border-gray-200">
-        <%= link_to "Cancel", planned_post_path(@planned_post), class: "w-full sm:w-auto text-center px-4 py-2.5 sm:py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors border border-gray-300 rounded-lg sm:border-0 sm:rounded-none" %>
-        <%= form.submit "Save Changes", class: "w-full sm:w-auto px-4 py-2.5 sm:py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors cursor-pointer" %>
+      <div class="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-2 sm:gap-3 pt-4 border-t border-border">
+        <%= ui_button "Cancel", href: planned_post_path(@planned_post), variant: :secondary, outline: true %>
+        <%= form.submit "Save Changes", variant: :primary %>
       </div>
     <% end %>
   </div>
