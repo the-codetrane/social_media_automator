@@ -2,13 +2,13 @@
     absence of a badge is the signal that the asset is free to use. %>
 <%
   badges = {
-    "archived"  => [ "Archived",  "bg-gray-200 text-gray-700" ],
-    "published" => [ "Published", "bg-blue-100 text-blue-800" ],
-    "reserved"  => [ "Scheduled", "bg-amber-100 text-amber-800" ]
+    "archived"  => [ "Archived",  :secondary ],
+    "published" => [ "Published", :info ],
+    "reserved"  => [ "Scheduled", :warning ]
   }
-  label, classes = badges[availability]
-  size = local_assigns[:size] == :large ? "px-3 py-1 text-sm" : "px-2 py-0.5 text-xs"
+  label, variant = badges[availability]
+  size_class = local_assigns[:size] == :large ? "text-base" : nil
 %>
 <% if label %>
-  <span class="inline-flex items-center rounded-full font-medium <%= size %> <%= classes %>"><%= label %></span>
+  <%= ui_badge label, variant: variant, pill: true, class: size_class %>
 <% end %>
