@@ -5,13 +5,7 @@
   </div>
 
   <div class="mt-8 mx-auto w-full max-w-md">
-    <div class="bg-blue-50 py-8 px-4 shadow rounded-lg sm:px-10">
-
-      <% if flash[:alert] %>
-        <div class="mb-6 rounded-md bg-red-50 border border-red-200 p-4">
-          <p class="text-sm font-medium text-red-800"><%= flash[:alert] %></p>
-        </div>
-      <% end %>
+    <div class="bg-surface py-8 px-4 shadow rounded-lg sm:px-10">
 
       <%= form_with url: passwords_path, class: "space-y-6" do |form| %>
         <div>
