@@ -1,23 +1,24 @@
 <%# Instagram-only publishing options: co-authors and Reels audio. %>
-<div class="pt-4 border-t border-gray-200 space-y-6">
-  <p class="text-xs text-gray-400 uppercase tracking-wide">Instagram Options</p>
+<div class="pt-4 border-t border-border space-y-6">
+  <p class="text-xs text-body-muted uppercase tracking-wide">Instagram Options</p>
 
   <%# ------------------------------------------------------------------ %>
   <%# Collaborators                                                       %>
   <%# ------------------------------------------------------------------ %>
+  <%# TODO(L7): replace with a multi-value Combobox/tags mode once the library has one. %>
   <div data-controller="collaborator-select"
        data-collaborator-select-url-value="<%= collaborator_search_planned_post_path(planned_post) %>"
        data-collaborator-select-max-value="<%= Instagram::PublishOptions::MAX_COLLABORATORS %>"
        data-collaborator-select-initial-value="<%= collaborators.to_json %>">
 
     <div class="flex items-baseline justify-between mb-2">
-      <label for="collaborator_input" class="block text-sm font-medium text-gray-700">Collaborators</label>
-      <span class="text-xs text-gray-400" data-collaborator-select-target="counter"></span>
+      <label for="collaborator_input" class="block text-sm font-medium text-body">Collaborators</label>
+      <span class="text-xs text-body-muted" data-collaborator-select-target="counter"></span>
     </div>
 
     <%# Chips + text entry share one bordered box so they read as one field %>
     <div class="relative">
-      <div class="flex flex-wrap items-center gap-1.5 w-full px-2 py-1.5 border border-gray-300 rounded-lg bg-white focus-within:ring-2 focus-within:ring-indigo-500 focus-within:border-indigo-500 transition-colors">
+      <div class="flex flex-wrap items-center gap-1.5 w-full px-2 py-1.5 border border-border rounded-lg bg-surface focus-within:ring-2 focus-within:ring-primary focus-within:border-primary transition-colors">
         <span data-collaborator-select-target="chips" class="contents"></span>
         <input type="text"
                id="collaborator_input"
@@ -30,12 +31,12 @@
 
       <%# Suggestion dropdown %>
       <div data-collaborator-select-target="suggestions"
-           class="hidden absolute z-10 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden max-h-56 overflow-y-auto"></div>
+           class="hidden absolute z-10 left-0 right-0 mt-1 bg-surface border border-border rounded-lg shadow-lg overflow-hidden max-h-56 overflow-y-auto"></div>
     </div>
 
     <div data-collaborator-select-target="hiddenInputs"></div>
 
-    <p class="mt-1 text-xs text-gray-500">
+    <p class="mt-1 text-xs text-body-muted">
       Co-authors see the post on their own profile once they accept. Suggestions come from accounts
       you have tagged before — type any username to add a new one. Not supported on Stories.
     </p>
@@ -44,11 +45,12 @@
   <%# ------------------------------------------------------------------ %>
   <%# Reels audio                                                         %>
   <%# ------------------------------------------------------------------ %>
+  <%# TODO(L7): f.combobox :audio_id once the search endpoint renders ui_combobox_option frames. %>
   <div data-controller="audio-select"
        data-audio-select-url-value="<%= audio_search_planned_post_path(planned_post) %>"
        data-audio-select-initial-value="<%= (selected_audio || {}).to_json %>">
 
-    <label for="audio_search_input" class="block text-sm font-medium text-gray-700 mb-2">Audio</label>
+    <label for="audio_search_input" class="block text-sm font-medium text-body mb-2">Audio</label>
 
     <%# Currently attached track %>
     <div data-audio-select-target="selected" class="hidden mb-2"></div>
@@ -61,23 +63,23 @@
                data-action="input->audio-select#search"
                placeholder="Search audio, or leave blank for trending…"
                autocomplete="off"
-               class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors">
+               class="flex-1 px-3 py-2 border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-primary transition-colors">
 
         <select data-audio-select-target="type"
                 data-action="change->audio-select#search"
-                class="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors">
+                class="px-3 py-2 border border-border rounded-lg text-sm bg-surface focus:ring-2 focus:ring-primary focus:border-primary transition-colors">
           <option value="music">Music</option>
           <option value="original_sound">Original sounds</option>
         </select>
       </div>
 
       <div data-audio-select-target="results"
-           class="hidden border border-gray-200 rounded-lg divide-y divide-gray-100 max-h-64 overflow-y-auto"></div>
+           class="hidden border border-border rounded-lg divide-y divide-border-subtle max-h-64 overflow-y-auto"></div>
     </div>
 
     <div data-audio-select-target="hiddenInputs"></div>
 
-    <p class="mt-1 text-xs text-gray-500">
+    <p class="mt-1 text-xs text-body-muted">
       Applies to video posts, which publish as Reels. Only audio Meta has licensed for third-party
       use is listed, so the catalogue is smaller than the Instagram app's.
     </p>
