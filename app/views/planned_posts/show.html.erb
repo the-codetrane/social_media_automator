@@ -2,24 +2,9 @@
 
 
 <div class="max-w-3xl mx-auto">
-  <%# TODO(L4): ui_page_header back: %>
-  <div class="flex items-center justify-between gap-3 mb-3">
-    <%= link_to planned_posts_path, aria: { label: "Back to planned posts" }, class: "text-body-muted hover:text-body transition-colors" do %>
-      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-      </svg>
-    <% end %>
-    <div class="flex items-center gap-1">
-        <%= @prev_post \
-          ? link_to(planned_post_path(@prev_post), title: "Previous post", aria: { label: "Previous post" }, class: "p-1 rounded text-body-muted hover:text-body hover:bg-surface-subtle transition-colors") { tag.svg(class: "w-4 h-4", fill: "none", stroke: "currentColor", viewBox: "0 0 24 24") { tag.path(stroke_linecap: "round", stroke_linejoin: "round", stroke_width: "2", d: "M15 19l-7-7 7-7") } }
-          : tag.span(class: "p-1 text-border", aria: { hidden: true }) { tag.svg(class: "w-4 h-4", fill: "none", stroke: "currentColor", viewBox: "0 0 24 24") { tag.path(stroke_linecap: "round", stroke_linejoin: "round", stroke_width: "2", d: "M15 19l-7-7 7-7") } } %>
-        <%= @next_post \
-          ? link_to(planned_post_path(@next_post), title: "Next post", aria: { label: "Next post" }, class: "p-1 rounded text-body-muted hover:text-body hover:bg-surface-subtle transition-colors") { tag.svg(class: "w-4 h-4", fill: "none", stroke: "currentColor", viewBox: "0 0 24 24") { tag.path(stroke_linecap: "round", stroke_linejoin: "round", stroke_width: "2", d: "M9 5l7 7-7 7") } }
-          : tag.span(class: "p-1 text-border", aria: { hidden: true }) { tag.svg(class: "w-4 h-4", fill: "none", stroke: "currentColor", viewBox: "0 0 24 24") { tag.path(stroke_linecap: "round", stroke_linejoin: "round", stroke_width: "2", d: "M9 5l7 7-7 7") } } %>
-    </div>
-  </div>
-
-  <%= ui_page_header title: "Planned Post", class: "mb-6" do |header| %>
+  <%= ui_page_header title: "Planned Post", back: {href: planned_posts_path, label: "Planned posts"}, class: "mb-6" do |header| %>
+    <% header.with_pager(prev: {href: @prev_post && planned_post_path(@prev_post), label: "Previous post"},
+                         next: {href: @next_post && planned_post_path(@next_post), label: "Next post"}) %>
     <% header.with_actions do %>
       <%# Only Instagram and Facebook have a PostVerifier; offering Re-verify for
           any other platform just queues a job that raises. %>

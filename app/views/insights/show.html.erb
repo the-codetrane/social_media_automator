@@ -2,34 +2,16 @@
   permalink    = @insights[:permalink] || @post.platform_payload&.dig("permalink_url")
   product_type = @insights[:product_type]
   platform_label = @post.facebook? ? "Facebook" : product_type&.capitalize || "Instagram"
-  nav_link_classes = "p-1 rounded text-body-muted hover:text-body hover:bg-surface-subtle transition-colors"
-  nav_off_classes  = "p-1 text-border"
-  prev_icon = tag.svg(class: "w-4 h-4", fill: "none", stroke: "currentColor", viewBox: "0 0 24 24", "aria-hidden": "true") { tag.path(stroke_linecap: "round", stroke_linejoin: "round", stroke_width: "2", d: "M15 19l-7-7 7-7") }
-  next_icon = tag.svg(class: "w-4 h-4", fill: "none", stroke: "currentColor", viewBox: "0 0 24 24", "aria-hidden": "true") { tag.path(stroke_linecap: "round", stroke_linejoin: "round", stroke_width: "2", d: "M9 5l7 7-7 7") }
 %>
 
 <div class="max-w-4xl mx-auto">
-  <%# TODO(L4): ui_page_header back: %>
-  <div class="mb-3">
-    <%= link_to insights_path, "aria-label": "Back to insights", class: "inline-flex text-body-muted hover:text-body transition-colors" do %>
-      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-      </svg>
-    <% end %>
-  </div>
-
   <%= ui_page_header title: "Post Insights",
+                     back: {href: insights_path, label: "Insights"},
                      subtitle: "#{platform_label} · Published #{@post.published_at.strftime("%b %-d, %Y")}",
                      class: "mb-6" do |header| %>
+    <% header.with_pager(prev: {href: @prev_post && insight_path(@prev_post), label: "Older post"},
+                         next: {href: @next_post && insight_path(@next_post), label: "Newer post"}) %>
     <% header.with_actions do %>
-      <div class="flex items-center gap-1">
-        <%= @prev_post \
-          ? link_to(insight_path(@prev_post), title: "Older post", "aria-label": "Older post", class: nav_link_classes) { prev_icon }
-          : tag.span(prev_icon, class: nav_off_classes) %>
-        <%= @next_post \
-          ? link_to(insight_path(@next_post), title: "Newer post", "aria-label": "Newer post", class: nav_link_classes) { next_icon }
-          : tag.span(next_icon, class: nav_off_classes) %>
-      </div>
       <% if permalink.present? %>
         <%= ui_button href: permalink, target: "_blank", rel: "noopener", variant: :primary, size: :sm do %>
           View on <%= @post.facebook? ? "Facebook" : "Instagram" %>

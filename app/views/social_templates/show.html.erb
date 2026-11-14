@@ -1,34 +1,25 @@
 <% content_for :title, @social_template.name %>
 
 <div class="max-w-3xl mx-auto">
-  <div class="flex items-start gap-3 mb-6">
-    <%# TODO(L4): ui_page_header back: %>
-    <%= link_to social_templates_path, aria: { label: "Back to social templates" }, class: "mt-2 text-body-muted hover:text-body transition-colors" do %>
-      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-      </svg>
-    <% end %>
-    <div class="flex-1 min-w-0">
-      <%= ui_page_header title: @social_template.name do |header| %>
-        <% header.with_actions do %>
-          <%= button_to social_template_path(@social_template), method: :delete,
-              data: { turbo_confirm: "Delete \"#{@social_template.name}\"? This cannot be undone." },
-              class: "inline-flex items-center justify-center gap-2 px-4 py-2 min-h-11 bg-surface border border-danger text-danger text-sm font-medium rounded-ui hover:bg-danger/10 transition-colors cursor-pointer" do %>
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-            </svg>
-            Delete
-          <% end %>
-          <%= ui_button href: edit_social_template_path(@social_template), variant: :primary do %>
-            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-            </svg>
-            Edit
-          <% end %>
-        <% end %>
+  <%= ui_page_header title: @social_template.name,
+                   back: {href: social_templates_path, label: "Social templates"}, class: "mb-6" do |header| %>
+    <% header.with_actions do %>
+      <%= button_to social_template_path(@social_template), method: :delete,
+          data: { turbo_confirm: "Delete \"#{@social_template.name}\"? This cannot be undone." },
+          class: "inline-flex items-center justify-center gap-2 px-4 py-2 min-h-11 bg-surface border border-danger text-danger text-sm font-medium rounded-ui hover:bg-danger/10 transition-colors cursor-pointer" do %>
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+        </svg>
+        Delete
       <% end %>
-    </div>
-  </div>
+      <%= ui_button href: edit_social_template_path(@social_template), variant: :primary do %>
+        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+        </svg>
+        Edit
+      <% end %>
+    <% end %>
+  <% end %>
 
   <%= ui_card body: false do %>
     <div class="p-6">
