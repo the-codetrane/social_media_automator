@@ -1,6 +1,10 @@
 require "test_helper"
 
 class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
+  # Library components name icon-only buttons and fields with aria-label (the account
+  # menu, chip remove buttons), so let Capybara's button/field locators match it.
+  Capybara.enable_aria_label = true
+
   driven_by :selenium, using: :headless_chrome, screen_size: [ 1400, 1400 ] do |options|
     # Every test signs in with the password "password". After a sign-in Chrome
     # checks the credential against Google's leak database and can raise a
@@ -29,7 +33,8 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
     fill_in_and_confirm "Password", with: password
     click_on "Sign in"
 
-    assert_button "Sign out", wait: 15
+    # Sign out lives in the account dropdown, so wait for its trigger instead.
+    assert_selector "button[aria-label='Account menu']", wait: 15
   end
 
   # fill_in, then wait for the value to actually be in the field and re-type

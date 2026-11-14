@@ -6,7 +6,7 @@ class AudioPickerTest < ApplicationSystemTestCase
   test "the edit page connects every Stimulus controller without errors" do
     page.driver.browser.logs.get(:browser) # discard sign-in noise
     visit edit_planned_post_path(planned_posts(:draft_post))
-    assert_selector "[role='group']", text: "Collaborators"
+    assert_selector "[role='combobox'][aria-label='Collaborators'], [role='combobox'][id='collaborator_input']"
 
     errors = page.driver.browser.logs.get(:browser).map(&:message).grep(/Error connecting controller/)
     assert_empty errors

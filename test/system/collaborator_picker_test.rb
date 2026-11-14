@@ -37,6 +37,7 @@ class CollaboratorPickerTest < ApplicationSystemTestCase
 
     click_on "Save Changes"
 
+    assert_current_path planned_post_path(@planned_post)
     assert_equal [ "brand_new_account" ], @planned_post.reload.platform_payload["collaborators"]
   end
 
@@ -49,6 +50,7 @@ class CollaboratorPickerTest < ApplicationSystemTestCase
 
     click_on "Save Changes"
 
+    assert_current_path planned_post_path(@planned_post)
     assert_equal [ "bakery_co" ], @planned_post.reload.platform_payload["collaborators"]
   end
 end
