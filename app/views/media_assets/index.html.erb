@@ -151,13 +151,13 @@
                     <dl class="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
                       <% if asset.width.present? && asset.height.present? %>
                         <div>
-                          <dt class="text-body-muted uppercase tracking-wide">Dimensions</dt>
+                          <dt class="text-body-muted">Dimensions</dt>
                           <dd class="text-body"><%= asset.width %> × <%= asset.height %></dd>
                         </div>
                       <% end %>
                       <% if asset.media_type == "video" && asset.duration_seconds.present? %>
                         <div>
-                          <dt class="text-body-muted uppercase tracking-wide">Duration</dt>
+                          <dt class="text-body-muted">Duration</dt>
                           <dd class="text-body">
                             <%
                               mins = (asset.duration_seconds / 60).floor
@@ -169,28 +169,28 @@
                       <% end %>
                       <% if asset.file_size.present? %>
                         <div>
-                          <dt class="text-body-muted uppercase tracking-wide">File Size</dt>
+                          <dt class="text-body-muted">File Size</dt>
                           <dd class="text-body"><%= number_to_human_size(asset.file_size) %></dd>
                         </div>
                       <% end %>
                       <% if asset.mime_type.present? %>
                         <div>
-                          <dt class="text-body-muted uppercase tracking-wide">Format</dt>
+                          <dt class="text-body-muted">Format</dt>
                           <dd class="text-body truncate"><%= asset.mime_type.split("/").last&.upcase %></dd>
                         </div>
                       <% end %>
                       <div>
-                        <dt class="text-body-muted uppercase tracking-wide">First Seen</dt>
+                        <dt class="text-body-muted">First Seen</dt>
                         <dd class="text-body"><%= asset.first_seen_at.strftime("%b %-d, %Y") %></dd>
                       </div>
                       <% if asset.last_processed_at.present? %>
                         <div>
-                          <dt class="text-body-muted uppercase tracking-wide">Processed</dt>
+                          <dt class="text-body-muted">Processed</dt>
                           <dd class="text-body"><%= asset.last_processed_at.strftime("%b %-d, %Y") %></dd>
                         </div>
                       <% end %>
                       <div>
-                        <dt class="text-body-muted uppercase tracking-wide">Posts</dt>
+                        <dt class="text-body-muted">Posts</dt>
                         <dd class="text-body font-semibold"><%= asset.planned_posts.size %></dd>
                       </div>
                     </dl>
