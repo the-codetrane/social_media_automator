@@ -63,12 +63,8 @@
     <div class="p-6">
       <%# Badges row %>
       <div class="flex flex-wrap gap-2 mb-6">
-        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium <%= platform_color_classes(@planned_post.platform) %>">
-          <%= platform_display_name(@planned_post.platform) %>
-        </span>
-        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium <%= status_color_classes(@planned_post.status) %> capitalize">
-          <%= @planned_post.status %>
-        </span>
+        <%= render PlatformBadgeComponent.new(platform: @planned_post.platform, class: "text-sm") %>
+        <%= render StatusBadgeComponent.new(status: @planned_post.status, class: "text-sm") %>
       </div>
 
       <%# Why a publish failed, so diagnosing it doesn't mean reading server logs. %>

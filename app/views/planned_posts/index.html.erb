@@ -228,12 +228,8 @@
 
                 <%# Badges row %>
                 <div class="flex flex-wrap gap-2">
-                  <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium <%= platform_color_classes(post.platform) %> capitalize">
-                    <%= post.platform %>
-                  </span>
-                  <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium <%= status_color_classes(post.status) %> capitalize">
-                    <%= post.status %>
-                  </span>
+                  <%= render PlatformBadgeComponent.new(platform: post.platform) %>
+                  <%= render StatusBadgeComponent.new(status: post.status) %>
                 </div>
 
                 <%# Caption %>
@@ -347,14 +343,10 @@
                     </label>
                   </td>
                   <td class="px-4 py-3">
-                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium <%= platform_color_classes(post.platform) %> capitalize">
-                      <%= post.platform %>
-                    </span>
+                    <%= render PlatformBadgeComponent.new(platform: post.platform) %>
                   </td>
                   <td class="px-4 py-3">
-                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium <%= status_color_classes(post.status) %> capitalize">
-                      <%= post.status %>
-                    </span>
+                    <%= render StatusBadgeComponent.new(status: post.status) %>
                   </td>
                   <td class="px-4 py-3 max-w-xs">
                     <% if post.caption.present? %>
