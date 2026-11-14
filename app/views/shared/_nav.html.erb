@@ -1,25 +1,31 @@
-<%# Flat until the library's navbar menus (L1) land; then Content and Analytics become menus. %>
 <% account_name = Current.user&.name.presence || Current.user&.email_address %>
 <% admin_active = controller.class.module_parent == Admin %>
-<% nav_items = [
-  ["Users", users_path, controller_name == "users" && !admin_active],
-  (["Admin", admin_users_path, admin_active] if Current.user&.admin?),
-  ["Planned Posts", planned_posts_path, controller_name == "planned_posts"],
-  ["Media Assets", media_assets_path, controller_name == "media_assets"],
-  ["Templates", social_templates_path, controller_name == "social_templates"],
-  ["Chat", chat_path, controller_name == "chats"],
-  ["Known People", known_people_path, controller_name == "known_people"],
-  ["Insights", insights_path, controller_name == "insights"],
-  ["LLM Costs", llm_costs_path, controller_name == "llm_costs"]
-].compact %>
+<% content_pages = [
+  ["Planned Posts", planned_posts_path, "planned_posts"],
+  ["Media Assets", media_assets_path, "media_assets"],
+  ["Templates", social_templates_path, "social_templates"]
+] %>
+<% analytics_pages = [
+  ["Insights", insights_path, "insights"],
+  ["LLM Costs", llm_costs_path, "llm_costs"]
+] %>
 
-<%= ui_navbar label: "Main", expand: :xl, theme: :surface, class: "border-b border-border mb-8" do |navbar| %>
+<%= ui_navbar label: "Main", expand: :md, theme: :surface, class: "border-b border-border mb-8" do |navbar| %>
   <% navbar.with_brand(href: root_path, class: "flex items-center gap-2") do %>
     <%= image_tag "/icon.png", alt: "", class: "w-7 h-7 shrink-0" %>
     <span class="font-bold text-sm tracking-tight">SMA</span>
   <% end %>
-  <% nav_items.each do |label, path, active| %>
-    <% navbar.with_item(label, href: path, active: active) %>
+  <% navbar.with_item("Users", href: users_path, active: controller_name == "users" && !admin_active) %>
+  <% if Current.user&.admin? %>
+    <% navbar.with_item("Admin", href: admin_users_path, active: admin_active) %>
+  <% end %>
+  <% navbar.with_menu("Content", active: content_pages.any? { |_, _, c| c == controller_name }) do |menu| %>
+    <% content_pages.each { |label, path, c| menu.with_item(label, href: path, active: controller_name == c) } %>
+  <% end %>
+  <% navbar.with_item("Chat", href: chat_path, active: controller_name == "chats") %>
+  <% navbar.with_item("Known People", href: known_people_path, active: controller_name == "known_people") %>
+  <% navbar.with_menu("Analytics", active: analytics_pages.any? { |_, _, c| c == controller_name }) do |menu| %>
+    <% analytics_pages.each { |label, path, c| menu.with_item(label, href: path, active: controller_name == c) } %>
   <% end %>
   <% if authenticated? %>
     <% navbar.with_actions do %>
