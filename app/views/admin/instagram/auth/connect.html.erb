@@ -10,8 +10,7 @@
 
 <div class="max-w-lg bg-white rounded-xl shadow-sm border border-gray-200 p-8">
   <div class="flex items-center gap-3 mb-6">
-    <img src="https://upload.wikimedia.org/wikipedia/commons/a/a5/Instagram_icon.png"
-         alt="Instagram logo" class="h-10 w-10">
+    <%= image_tag "instagram.svg", alt: "Instagram logo", class: "h-10 w-10" %>
     <div>
       <p class="font-semibold text-gray-900">Instagram Account</p>
       <% if Current.user&.instagram_connected? %>
