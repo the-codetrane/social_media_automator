@@ -61,7 +61,7 @@ export default class extends Controller {
   }
 
   #resetBulkSelect() {
-    this.element.querySelectorAll("[data-bulk-select-target='checkbox']:checked, [data-cl-bulk-select-target='item']:checked").forEach(cb => {
+    this.element.querySelectorAll("[data-cl-bulk-select-target='item']:checked").forEach(cb => {
       cb.checked = false
       cb.dispatchEvent(new Event("change", { bubbles: true }))
     })
