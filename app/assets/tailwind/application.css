@@ -24,12 +24,126 @@
   --radius-ui:    0.5rem;
   --radius-ui-lg: 0.75rem;
 
-  /* Platform brand colours, used by PlatformBadgeComponent. */
-  --color-instagram: var(--color-pink-600);
-  --color-youtube:   var(--color-red-600);
-  --color-facebook:  var(--color-blue-600);
-  --color-tiktok:    var(--color-gray-900);
+  /* The status colours from Tailwind's palette, as the app had them: solid 600 fills, and
+     pale 100 surfaces with 800 text for badges and alerts. */
+  --color-secondary:          var(--color-gray-600);
+  --color-secondary-subtle:   var(--color-gray-100);
+  --color-secondary-emphasis: var(--color-gray-600);
+  --color-secondary-border:   var(--color-gray-200);
+  --color-success:            var(--color-green-600);
+  --color-success-subtle:     var(--color-green-100);
+  --color-success-emphasis:   var(--color-green-800);
+  --color-success-border:     var(--color-green-200);
+  --color-danger:             var(--color-red-600);
+  --color-danger-subtle:      var(--color-red-100);
+  --color-danger-emphasis:    var(--color-red-700);
+  --color-danger-border:      var(--color-red-200);
+  --color-warning-subtle:     var(--color-yellow-100);
+  --color-warning-emphasis:   var(--color-yellow-800);
+  --color-warning-border:     var(--color-yellow-200);
+  --color-info:               var(--color-blue-600);
+  --color-info-on:            #fff;
+  --color-info-subtle:        var(--color-blue-100);
+  --color-info-emphasis:      var(--color-blue-800);
+  --color-info-border:        var(--color-blue-200);
+  --color-primary-subtle-strong: var(--color-indigo-100);
+
+  /* Platform brand colours, used by PlatformBadgeComponent: a pale fill and its text. */
+  --color-instagram-subtle:   var(--color-pink-100);
+  --color-instagram-emphasis: var(--color-pink-800);
+  --color-youtube-subtle:     var(--color-red-100);
+  --color-youtube-emphasis:   var(--color-red-700);
+  --color-facebook-subtle:    var(--color-blue-100);
+  --color-facebook-emphasis:  var(--color-blue-700);
+  --color-tiktok-subtle:      var(--color-gray-900);
+  --color-tiktok-emphasis:    var(--color-white);
+
+  /* Tailwind 4.3 changed its default sans stack to Bootstrap's; this is 4.2's, which the app
+     was designed with. */
+  --font-sans: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
+               "Noto Color Emoji";
 }
+
+/* The app's density: the library sizes its controls (buttons, fields, menus, pagination) at
+   text-base; the app sets them at text-sm from the sm breakpoint. Phones keep 16px so iOS
+   doesn't zoom into fields on focus. */
+@media (width >= 40rem) {
+  :root {
+    --text-base: var(--text-sm);
+    --text-base--line-height: var(--text-sm--line-height);
+  }
+}
+
+/* Header cells line up with their column; th is centred by default. In the base layer, so a
+   cell's own text-right still wins. */
+@layer base {
+  th { text-align: start; }
+}
+
+/* Toggle groups as the app's filter chips and segmented controls (ThemeHelper#ui_toggle_group
+   adds the hooks). The library colours an option from the variant tokens, so redefining
+   them here restyles the options without touching its markup: a checked chip takes its
+   variant's pale shade, and a checked segment turns white on a grey track. */
+.app-toggle {
+  --radius-ui: 9999px;
+  --color-border: transparent;
+  --text-sm: var(--text-xs);
+  --text-sm--line-height: var(--text-xs--line-height);
+}
+.app-toggle legend {
+  float: left;
+  margin: 0 0.5rem 0 0;
+  padding-block: 0.25rem;
+  font-size: var(--text-xs);
+  font-weight: 500;
+  color: var(--color-gray-500);
+}
+.app-toggle .tg-check { display: none !important; }
+.app-toggle .peer:focus-visible + span { outline: 2px solid var(--color-indigo-500); outline-offset: 1px; }
+
+.app-toggle-pills {
+  --color-surface: var(--color-gray-100);
+  --color-body: var(--color-gray-400);
+  --color-primary: var(--color-primary-subtle-strong);
+  --color-primary-on: var(--color-primary-emphasis);
+  --color-secondary: var(--color-secondary-subtle);
+  --color-secondary-on: var(--color-secondary-emphasis);
+  --color-success: var(--color-success-subtle);
+  --color-success-on: var(--color-success-emphasis);
+  --color-danger: var(--color-danger-subtle);
+  --color-danger-on: var(--color-danger-emphasis);
+  --color-warning: var(--color-warning-subtle);
+  --color-warning-on: var(--color-warning-emphasis);
+  --color-info: var(--color-info-subtle);
+  --color-info-on: var(--color-info-emphasis);
+  --color-dark: var(--color-gray-900);
+  --color-dark-on: var(--color-white);
+}
+
+.app-toggle-segmented {
+  --color-surface: transparent;
+  --color-body: var(--color-gray-500);
+  --color-primary: var(--color-white);
+  --color-primary-on: var(--color-primary-emphasis);
+  --color-secondary: var(--color-white);
+  --color-secondary-on: var(--color-gray-800);
+  --color-success: var(--color-white);
+  --color-success-on: var(--color-success-emphasis);
+  --color-danger: var(--color-white);
+  --color-danger-on: var(--color-danger-emphasis);
+  --color-warning: var(--color-white);
+  --color-warning-on: var(--color-warning-emphasis);
+  --color-info: var(--color-white);
+  --color-info-on: var(--color-info-emphasis);
+}
+.app-toggle-segmented > div {
+  gap: 0.125rem;
+  padding: 0.125rem;
+  border: 1px solid var(--color-gray-200);
+  border-radius: 9999px;
+  background: var(--color-gray-100);
+}
+.app-toggle-segmented .peer:checked + span { box-shadow: var(--shadow-sm); }
 
 /* Markdown rendered inside assistant chat bubbles. Tailwind v4 preflight
    strips default list/heading styles, so we restore minimal typography. */

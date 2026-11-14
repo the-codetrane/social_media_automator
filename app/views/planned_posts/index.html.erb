@@ -5,7 +5,7 @@
     the route (formaction) and the HTTP verb (_method). %>
 <% bulk_form_id = "bulk-posts-form" %>
 <% platform_variants = { "facebook" => :info, "youtube" => :danger, "tiktok" => :dark } %>
-<% status_variants = { "draft" => :secondary, "scheduled" => :primary, "published" => :success, "failed" => :danger } %>
+<% status_variants = { "draft" => :secondary, "scheduled" => :info, "published" => :success, "failed" => :danger } %>
 <% any_media = @planned_posts.any? { |post| post.media_asset&.public_url.present? } %>
 
 <div data-controller="cl-bulk-select view-toggle"

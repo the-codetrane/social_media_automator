@@ -1,5 +1,5 @@
-# A pill naming a social platform, in the platform's brand colour (the --color-<platform>
-# tokens in app/assets/tailwind/application.css).
+# A pill naming a social platform, in the platform's colours (the --color-<platform>-subtle
+# and -emphasis tokens in app/assets/tailwind/application.css).
 class PlatformBadgeComponent < ComponentLibrary2100::BadgeComponent
   NAMES = {
     "instagram" => "Instagram",
@@ -9,10 +9,10 @@ class PlatformBadgeComponent < ComponentLibrary2100::BadgeComponent
   }.freeze
 
   COLORS = {
-    "instagram" => "bg-instagram border-instagram",
-    "youtube" => "bg-youtube border-youtube",
-    "facebook" => "bg-facebook border-facebook",
-    "tiktok" => "bg-tiktok border-tiktok"
+    "instagram" => "bg-instagram-subtle text-instagram-emphasis",
+    "youtube" => "bg-youtube-subtle text-youtube-emphasis",
+    "facebook" => "bg-facebook-subtle text-facebook-emphasis",
+    "tiktok" => "bg-tiktok-subtle text-tiktok-emphasis"
   }.freeze
 
   def self.display_name(platform)
@@ -21,8 +21,8 @@ class PlatformBadgeComponent < ComponentLibrary2100::BadgeComponent
 
   def initialize(platform:, **html_options)
     @platform = platform.to_s
-    color = COLORS.fetch(@platform, "bg-secondary border-secondary")
-    super(variant: :dark, pill: true, **html_options.merge(class: [ color, "text-white", html_options[:class] ]))
+    color = COLORS.fetch(@platform, ThemeHelper::SUBTLE[:secondary])
+    super(variant: :secondary, pill: true, **html_options.merge(class: [ color, ThemeHelper::BADGE, html_options[:class] ]))
   end
 
   def content = self.class.display_name(@platform)

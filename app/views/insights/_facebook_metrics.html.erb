@@ -87,7 +87,7 @@
 <%# All metrics table %>
 <%= ui_card body: false do |card| %>
   <% card.with_header { tag.h2("All Metrics", class: "text-sm font-semibold text-body-muted") } %>
-  <%= ui_table hover: true, responsive: true, class: "mb-0" do |table| %>
+  <%= ui_table hover: true, responsive: true, card: false, class: "mb-0" do |table| %>
     <% table.with_caption(visible: false) { "All metrics" } %>
     <thead>
       <tr>

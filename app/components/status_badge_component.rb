@@ -3,7 +3,7 @@ class StatusBadgeComponent < ComponentLibrary2100::BadgeComponent
   VARIANTS = {
     post: {
       "draft" => :secondary,
-      "scheduled" => :primary,
+      "scheduled" => :info,
       "published" => :success,
       "failed" => :danger,
       "canceled" => :warning
@@ -17,7 +17,9 @@ class StatusBadgeComponent < ComponentLibrary2100::BadgeComponent
 
   def initialize(status:, kind: :post, **html_options)
     @status = status.to_s
-    super(variant: VARIANTS.fetch(kind).fetch(@status, :secondary), pill: true, **html_options)
+    variant = VARIANTS.fetch(kind).fetch(@status, :secondary)
+    classes = [ ThemeHelper::SUBTLE.fetch(variant), ThemeHelper::BADGE, html_options[:class] ]
+    super(variant: variant, pill: true, **html_options.merge(class: classes))
   end
 
   def content = @status.humanize

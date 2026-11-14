@@ -9,12 +9,10 @@
   <%= ui_page_header title: display_name, back: {href: media_assets_path, label: "Media assets"}, class: "mb-6" do |header| %>
     <% header.with_actions do %>
       <% if @media_asset.archived? %>
-        <%= button_to "Restore", unarchive_media_asset_path(@media_asset), method: :patch,
-              class: "inline-flex items-center px-3 py-1.5 border border-border bg-surface text-body text-base font-medium rounded-lg hover:bg-surface-subtle transition-colors cursor-pointer" %>
+        <%= ui_button_to "Restore", unarchive_media_asset_path(@media_asset), method: :patch, variant: :secondary, outline: true %>
       <% else %>
-        <%= button_to "Archive", archive_media_asset_path(@media_asset), method: :patch,
-              title: "Hide this asset from pickers and search. It can be restored later.",
-              class: "inline-flex items-center px-3 py-1.5 border border-border bg-surface text-body text-base font-medium rounded-lg hover:bg-surface-subtle transition-colors cursor-pointer" %>
+        <%= ui_button_to "Archive", archive_media_asset_path(@media_asset), method: :patch, variant: :secondary, outline: true,
+                         title: "Hide this asset from pickers and search. It can be restored later." %>
       <% end %>
       <%= ui_button "Edit", href: edit_media_asset_path(@media_asset), variant: :primary %>
     <% end %>
@@ -84,7 +82,7 @@
       <%= ui_stat label: "Planned posts", value: @posts_using.size, class: "mb-6 sm:max-w-xs" %>
 
       <%# Main metadata %>
-      <%= ui_description_list layout: :inline do |dl| %>
+      <%= ui_detail_list do |dl| %>
         <% if @media_asset.width.present? && @media_asset.height.present? %>
           <% dl.with_item(term: "Dimensions", description: "#{@media_asset.width} × #{@media_asset.height}") %>
         <% end %>

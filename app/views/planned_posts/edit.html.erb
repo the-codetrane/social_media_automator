@@ -130,7 +130,7 @@
 
       <%# Read-only fields for reference %>
       <div class="pt-4 border-t border-border">
-        <p class="text-xs text-body-muted mb-1">Reference Information</p>
+        <p class="<%= ThemeHelper::LABEL %> mb-1">Reference Information</p>
         <%= ui_description_list layout: :inline, dividers: false do |dl| %>
           <% dl.with_item(term: "Platform") do %>
             <span class="capitalize"><%= @planned_post.platform %></span>

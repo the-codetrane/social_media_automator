@@ -12,63 +12,61 @@
   <% end %>
 <% end %>
 
-<div class="bg-surface rounded-xl shadow-sm border border-border">
-  <%= ui_table hover: true, responsive: true do |table| %>
-    <% table.with_caption(visible: false) { "Users" } %>
-    <thead>
+<%= ui_table hover: true, responsive: true do |table| %>
+  <% table.with_caption(visible: false) { "Users" } %>
+  <thead>
+    <tr>
+      <%= ui_table_header "User" %>
+      <%= ui_table_header "Role" %>
+      <%= ui_table_header "Instagram" %>
+      <%= ui_table_header "Joined" %>
+      <%= ui_table_header "Actions", class: "text-right" %>
+    </tr>
+  </thead>
+  <tbody>
+    <% @users.each do |user| %>
       <tr>
-        <%= ui_table_header "User" %>
-        <%= ui_table_header "Role" %>
-        <%= ui_table_header "Instagram" %>
-        <%= ui_table_header "Joined" %>
-        <%= ui_table_header "Actions", class: "text-right" %>
-      </tr>
-    </thead>
-    <tbody>
-      <% @users.each do |user| %>
-        <tr>
-          <td>
-            <div class="flex items-center gap-3">
-              <%= ui_avatar name: user.name, variant: :primary %>
-              <div>
-                <p class="text-sm font-semibold text-body"><%= user.name %></p>
-                <p class="text-xs text-body-muted"><%= user.email_address %></p>
-              </div>
+        <td>
+          <div class="flex items-center gap-3">
+            <%= ui_avatar name: user.name, variant: :primary %>
+            <div>
+              <p class="text-sm font-semibold text-body"><%= user.name %></p>
+              <p class="text-xs text-body-muted"><%= user.email_address %></p>
             </div>
-          </td>
-          <td>
-            <% if user.admin? %>
-              <%= ui_badge "Admin", variant: :primary, pill: true %>
+          </div>
+        </td>
+        <td>
+          <% if user.admin? %>
+            <%= ui_badge "Admin", variant: :primary, pill: true %>
+          <% else %>
+            <%= ui_badge "User", variant: :secondary, pill: true %>
+          <% end %>
+        </td>
+        <td>
+          <% if user.instagram_connected? %>
+            <% if user.instagram_token_expiring? %>
+              <%= ui_badge "Token expiring", variant: :warning, pill: true %>
             <% else %>
-              <%= ui_badge "User", variant: :secondary, pill: true %>
+              <%= ui_badge "Connected", variant: :success, pill: true %>
             <% end %>
-          </td>
-          <td>
-            <% if user.instagram_connected? %>
-              <% if user.instagram_token_expiring? %>
-                <%= ui_badge "Token expiring", variant: :warning, pill: true %>
-              <% else %>
-                <%= ui_badge "Connected", variant: :success, pill: true %>
-              <% end %>
-            <% else %>
-              <span class="text-xs text-body-muted" aria-label="Not connected">—</span>
+          <% else %>
+            <span class="text-xs text-body-muted" aria-label="Not connected">—</span>
+          <% end %>
+        </td>
+        <td class="whitespace-nowrap text-body-muted"><%= user.created_at.strftime("%b %-d, %Y") %></td>
+        <td class="text-right">
+          <%= ui_dropdown(placement: "bottom-end") do |menu| %>
+            <% menu.with_trigger(variant: :secondary, outline: true, size: :sm, aria: { label: "Actions for #{user.name}" }) { "…" } %>
+            <% menu.with_item("View", href: admin_user_path(user)) %>
+            <% menu.with_item("Edit", href: edit_admin_user_path(user)) %>
+            <% unless user == Current.user %>
+              <% menu.with_divider %>
+              <% menu.with_item("Delete", href: admin_user_path(user), method: :delete,
+                                data: { turbo_confirm: "Delete #{user.name}? This cannot be undone." }) %>
             <% end %>
-          </td>
-          <td class="whitespace-nowrap text-body-muted"><%= user.created_at.strftime("%b %-d, %Y") %></td>
-          <td class="text-right">
-            <%= ui_dropdown(placement: "bottom-end") do |menu| %>
-              <% menu.with_trigger(variant: :secondary, outline: true, size: :sm, aria: { label: "Actions for #{user.name}" }) { "…" } %>
-              <% menu.with_item("View", href: admin_user_path(user)) %>
-              <% menu.with_item("Edit", href: edit_admin_user_path(user)) %>
-              <% unless user == Current.user %>
-                <% menu.with_divider %>
-                <% menu.with_item("Delete", href: admin_user_path(user), method: :delete,
-                                  data: { turbo_confirm: "Delete #{user.name}? This cannot be undone." }) %>
-              <% end %>
-            <% end %>
-          </td>
-        </tr>
-      <% end %>
-    </tbody>
-  <% end %>
-</div>
+          <% end %>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+<% end %>

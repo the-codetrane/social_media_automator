@@ -8,6 +8,7 @@
 #   <% end %>
 class IntegrationCardComponent < ViewComponent::Base
   include ComponentLibrary2100::Helpers
+  include ThemeHelper
 
   renders_one :logo
   renders_one :details

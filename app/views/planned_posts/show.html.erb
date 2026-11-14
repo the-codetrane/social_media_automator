@@ -62,7 +62,7 @@
       <%# Media Preview %>
       <% if @carousel_assets&.any? %>
         <div class="mb-6">
-          <p class="text-xs text-body-muted mb-2">Media (<%= @carousel_assets.size %> items)</p>
+          <p class="<%= ThemeHelper::LABEL %> mb-2">Media (<%= @carousel_assets.size %> items)</p>
           <div class="relative w-full sm:max-w-md rounded-lg overflow-hidden bg-surface-subtle" data-controller="carousel">
             <% @carousel_assets.each_with_index do |asset, i| %>
               <div data-carousel-target="slide" class="<%= i > 0 ? 'hidden' : '' %>">
@@ -113,7 +113,7 @@
         </div>
       <% elsif @planned_post.media_asset.public_url? %>
         <div class="mb-6">
-          <p class="text-xs text-body-muted mb-2">Media</p>
+          <p class="<%= ThemeHelper::LABEL %> mb-2">Media</p>
           <div class="rounded-lg overflow-hidden bg-surface-subtle w-full sm:max-w-md">
             <% if @planned_post.media_asset.image? %>
               <%= image_tag @planned_post.media_asset.public_url,
@@ -136,7 +136,7 @@
       <%# Caption %>
       <% if @planned_post.caption.present? %>
         <div class="mb-6">
-          <p class="text-xs text-body-muted mb-2">Caption</p>
+          <p class="<%= ThemeHelper::LABEL %> mb-2">Caption</p>
           <p class="text-body leading-relaxed whitespace-pre-wrap"><%= @planned_post.caption %></p>
         </div>
       <% end %>
@@ -144,13 +144,13 @@
       <%# Hashtags %>
       <% if @planned_post.hashtags.present? %>
         <div class="mb-6">
-          <p class="text-xs text-body-muted mb-2">Hashtags</p>
+          <p class="<%= ThemeHelper::LABEL %> mb-2">Hashtags</p>
           <p class="text-primary"><%= @planned_post.hashtags %></p>
         </div>
       <% end %>
 
       <%# Main metadata %>
-      <%= ui_description_list layout: :inline do |dl| %>
+      <%= ui_detail_list do |dl| %>
         <% if @planned_post.scheduled_at.present? %>
           <% dl.with_item(term: "Scheduled At", description: @planned_post.scheduled_at.strftime("%B %-d, %Y at %H:%M")) %>
         <% end %>
