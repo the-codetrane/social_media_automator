@@ -19,6 +19,14 @@ class PlannedPostsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test "index card links break out of the list turbo frame" do
+    sign_in_as(@user)
+    get planned_posts_path
+    assert_select "turbo-frame#planned-posts-list a[href^='/planned_posts/'][aria-label^='Planned post:']", minimum: 1 do |links|
+      links.each { |link| assert_equal "_top", link["data-turbo-frame"] }
+    end
+  end
+
   test "index defaults to showing scheduled posts only" do
     sign_in_as(@user)
     get planned_posts_path
