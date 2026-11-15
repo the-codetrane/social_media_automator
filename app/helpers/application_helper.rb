@@ -39,6 +39,21 @@ module ApplicationHelper
     end
   end
 
+  # A whole-card link (ui_card's stretched-link style) for cards inside a Turbo Frame.
+  # ui_card's href: renders a bare <a> that takes no data attributes, and Turbo reads
+  # data-turbo-frame from the link itself, never from an ancestor, so a card in a frame
+  # would load its target into the frame and fail with "did not contain the expected
+  # <turbo-frame>". This draws the same link with data-turbo-frame set (default: "_top").
+  #
+  #   <%= ui_frame_card href: post_path(post), link_label: post.title, class: "h-full" do |card| %>
+  def ui_frame_card(href:, link_label:, frame: "_top", **options, &block)
+    card = ComponentLibrary2100::CardComponent
+    options[:class] = [ card::LINKED, options[:class] ].compact.join(" ")
+    link = link_to("", href, class: card::LINK, aria: { label: link_label }, data: { turbo_frame: frame })
+
+    ui_card(**options) { |c| safe_join([ link, capture(c, &block) ]) }
+  end
+
   # button_to drawn as a library ButtonComponent: a one-button form for actions that change
   # state. params: become hidden fields, confirm: opens the styled confirm, and the rest
   # (variant:, outline:, size:, disabled:, data: ...) go to the button.

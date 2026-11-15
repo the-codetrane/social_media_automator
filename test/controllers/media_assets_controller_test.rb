@@ -26,6 +26,14 @@ class MediaAssetsControllerTest < ActionDispatch::IntegrationTest
     assert_match "reel.mp4", response.body
   end
 
+  test "index card links break out of the list turbo frame" do
+    sign_in_as(@user)
+    get media_assets_path(availability: "all")
+    assert_select "turbo-frame#media-assets-list a[href='#{media_asset_path(@media_asset)}'][aria-label]" do |links|
+      links.each { |link| assert_equal "_top", link["data-turbo-frame"] }
+    end
+  end
+
   test "index shows media type badges" do
     sign_in_as(@user)
     get media_assets_path(availability: "all")

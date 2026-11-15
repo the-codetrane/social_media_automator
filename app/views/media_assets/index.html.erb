@@ -110,12 +110,12 @@
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             <% @media_assets.each do |asset| %>
               <% availability = asset.availability(reserved_ids: @reserved_ids) %>
-              <%# data-turbo-frame="_top": the card link must leave the list frame. %>
-              <div class="relative has-checked:ring-2 has-checked:ring-primary has-checked:ring-offset-1 rounded-ui" data-turbo-frame="_top">
+              <div class="relative has-checked:ring-2 has-checked:ring-primary has-checked:ring-offset-1 rounded-ui">
                 <%# Selection checkbox — it sits above the card's stretched link so a click doesn't navigate %>
                 <%= ui_selection_checkbox label: "Select #{asset.display_name}", value: asset.id,
                       class: "absolute top-3 left-3 z-10" %>
-                <%= ui_card href: media_asset_path(asset), link_label: decode_name(asset.external_name.presence || asset.external_id),
+                <%# ui_frame_card: the card link must leave the list frame for the show page. %>
+                <%= ui_frame_card href: media_asset_path(asset), link_label: decode_name(asset.external_name.presence || asset.external_id),
                       class: "h-full #{"opacity-60" if availability == "archived"}", body: false do |card| %>
                   <% card.with_media(aspect: :video, class: "bg-surface-subtle") do %>
                     <% if asset.public_url? %>

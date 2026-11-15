@@ -111,8 +111,8 @@
               </span>
 
               <%# The link sits inside a turbo frame, so send it to the whole page %>
-              <%= ui_card href: planned_post_path(post), link_label: "Planned post: #{snippet}",
-                          class: "h-full", data: { turbo_frame: "_top" } do |card| %>
+              <%= ui_frame_card href: planned_post_path(post), link_label: "Planned post: #{snippet}",
+                                class: "h-full" do |card| %>
                 <% if any_media %>
                   <% card.with_media(aspect: :video) do %>
                     <% thumb_url = post.media_asset&.public_url %>
