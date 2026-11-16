@@ -69,7 +69,7 @@ gem "redcarpet", "~> 3.6"
 gem "tailwindcss-rails"
 
 # 2100 component library
-gem "component_library_2100", github: "2100-Enterprises/2100-component-library", tag: "v0.13.0"
+gem "component_library_2100", github: "2100-Enterprises/2100-component-library", tag: "v0.12.3"
 
 # Mission Control for visualizing queue
 gem "mission_control-jobs", "~> 1.3"
